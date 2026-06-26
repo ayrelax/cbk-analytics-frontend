@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CBK Analytics — Caesars</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg0:#080c18;--bg1:#0d1426;--bg2:#131d38;--bg3:#1a2647;--bg4:#223060;--acc:#3b82f6;--acc2:#60a5fa;--acc3:#93c5fd;--grn:#10b981;--grn2:#34d399;--red:#ef4444;--red2:#f87171;--amb:#f59e0b;--amb2:#fcd34d;--pur:#8b5cf6;--txt1:#e2e8f0;--txt2:#94a3b8;--txt3:#64748b;--bdr:#1e2d4a;--bdr2:#2a3f6b;font-family:'Courier New',monospace}
+body{background:var(--bg0);color:var(--txt1);font-family:'Courier New',monospace;font-size:12px}
+.top-bar{background:var(--bg1);border-bottom:1px solid var(--bdr2);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:13px;font-weight:700;letter-spacing:3px;color:var(--acc2)}
+.logo span{color:var(--txt3)}
+.live-badge{display:flex;align-items:center;gap:5px;background:#ef444420;border:1px solid #ef4444;color:#ef4444;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:3px}
+.dot{width:6px;height:6px;background:var(--red);border-radius:50%;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.clock{font-size:11px;color:var(--txt3);letter-spacing:1px}
+.nav{background:var(--bg1);border-bottom:1px solid var(--bdr);display:flex;overflow-x:auto}
+.nav-btn{padding:10px 16px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--txt3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit}
+.nav-btn:hover{color:var(--txt1);background:var(--bg2)}
+.nav-btn.active{color:var(--acc2);border-bottom-color:var(--acc2)}
+.content{padding:16px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;padding:12px 14px}
+.kpi-label{font-size:9px;letter-spacing:2px;color:var(--txt3);margin-bottom:6px;text-transform:uppercase}
+.kpi-val{font-size:22px;font-weight:700;color:var(--txt1)}
+.kpi-sub{font-size:9px;color:var(--txt3);margin-top:3px}
+.panel{background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;margin-bottom:12px}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--bdr)}
+.panel-title{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--txt2);text-transform:uppercase}
+table.data{width:100%;border-collapse:collapse}
+table.data th{font-size:9px;letter-spacing:1.5px;color:var(--txt3);text-align:left;padding:7px 10px;border-bottom:1px solid var(--bdr);text-transform:uppercase}
+table.data td{font-size:11px;color:var(--txt2);padding:7px 10px;border-bottom:1px solid var(--bdr)}
+table.data tr:hover td{background:var(--bg2);color:var(--txt1)}
+.bold{color:var(--txt1);font-weight:600}
+.acc{color:var(--acc3)}
+.grn{color:var(--grn2)}
+.red{color:var(--red2)}
+.amb{color:var(--amb2)}
+.muted{color:var(--txt3)}
+.up{color:var(--grn)}
+.dn{color:var(--red)}
+.field{background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;padding:7px 10px;font-size:11px;color:var(--txt1);outline:none;font-family:inherit;width:100%}
+.field:focus{border-color:var(--acc)}
+.btn{font-size:9px;padding:5px 10px;border-radius:2px;cursor:pointer;border:1px solid var(--bdr2);color:var(--txt3);background:none;letter-spacing:1px;font-family:inherit}
+.btn:hover{background:var(--bg3);color:var(--txt1)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.success{background:var(--grn);border-color:var(--grn);color:#000}
+.search-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.pr-bar{display:inline-block;height:3px;background:var(--bg4);border-radius:2px;vertical-align:middle;margin-left:6px;position:relative;width:60px}
+.pr-fill{position:absolute;top:0;left:0;height:3px;border-radius:2px;background:var(--acc)}
+.sec-tabs{display:flex;background:var(--bg2);border-radius:4px;padding:2px;margin-bottom:12px}
+.sec-tab{flex:1;padding:6px 8px;font-size:9px;letter-spacing:1.5px;text-align:center;cursor:pointer;border-radius:2px;color:var(--txt3);border:none;background:none;font-family:inherit;text-transform:uppercase}
+.sec-tab.active{background:var(--acc);color:#fff;font-weight:700}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.update-banner{background:var(--bg3);border:1px solid var(--amb);border-radius:4px;padding:8px 12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:10px;color:var(--amb)}
+.field-sm{background:var(--bg2);border:1px solid var(--bdr2);border-radius:2px;padding:3px 6px;font-size:11px;color:var(--txt1);width:64px;text-align:right;font-family:inherit;outline:none}
+.dropzone{border:2px dashed var(--bdr2);border-radius:6px;padding:40px;text-align:center;cursor:pointer;margin-bottom:16px}
+.dropzone:hover{border-color:var(--acc);background:#3b82f610}
+.odds-fav{color:var(--red2);font-family:monospace}
+.odds-dog{color:var(--grn2);font-family:monospace}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">CAESARS <span>// </span>CBK ANALYTICS</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="live-badge"><div class="dot"></div>LIVE</div>
+    <div class="clock" id="clock"></div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('dashboard',this)">DASHBOARD</button>
+  <button class="nav-btn" onclick="showPage('ratings',this)">POWER RATINGS</button>
+  <button class="nav-btn" onclick="showPage('preseason',this)">PRESEASON LOADER</button>
+  <button class="nav-btn" onclick="showPage('spreads',this)">GAME SPREADS</button>
+  <button class="nav-btn" onclick="showPage('futures',this)">FUTURES</button>
+  <button class="nav-btn" onclick="showPage('ncaa',this)">NCAA TOURNAMENT</button>
+  <button class="nav-btn" onclick="showPage('tools',this)">ODDS TOOLS</button>
+</div>
+
+<div class="content">
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard">
+    <div id="sync-banner" class="update-banner" style="display:none">
+      <div class="dot" style="width:6px;height:6px;background:var(--amb);border-radius:50%;display:inline-block"></div>
+      <span id="sync-msg">Loading...</span>
+      <button class="btn primary" style="margin-left:auto" onclick="manualSync()">⟳ SYNC NOW</button>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Teams tracked</div><div class="kpi-val" id="kpi-teams">—</div><div class="kpi-sub">All D-I</div></div>
+      <div class="kpi"><div class="kpi-label">Top PR</div><div class="kpi-val" id="kpi-top-pr">—</div><div class="kpi-sub" id="kpi-top-team">—</div></div>
+      <div class="kpi"><div class="kpi-label">PRs updated today</div><div class="kpi-val" id="kpi-updated">—</div><div class="kpi-sub" id="kpi-games">—</div></div>
+      <div class="kpi"><div class="kpi-label">Backend status</div><div class="kpi-val" id="kpi-status" style="font-size:14px">—</div><div class="kpi-sub">API health</div></div>
+    </div>
+    <div class="split">
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Top 25 Power Ratings</div></div>
+        <table class="data"><thead><tr><th>#</th><th>TEAM</th><th>CONF</th><th>PR</th><th>HC</th><th>VS PRE</th></tr></thead>
+        <tbody id="dash-pr-body"></tbody></table>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">Today's Lines</div></div>
+        <table class="data"><thead><tr><th>MATCHUP</th><th>SPREAD</th><th>TOTAL</th><th>ML FAV</th></tr></thead>
+        <tbody id="dash-lines-body"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- POWER RATINGS -->
+  <div id="page-ratings" style="display:none">
+    <div class="search-bar">
+      <input class="field" id="pr-search" placeholder="Search team..." oninput="filterPR()" style="flex:1">
+      <select class="field" id="conf-filter" onchange="filterPR()" style="width:120px">
+        <option value="">ALL CONFS</option>
+      </select>
+      <button class="btn primary" onclick="loadTeams()">⟳ REFRESH</button>
+      <button class="btn" onclick="exportCSV()">↓ EXPORT</button>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr"><div class="panel-title" id="pr-count">Power Ratings</div></div>
+      <table class="data">
+        <thead><tr><th>#</th><th>TEAM</th><th>CONF</th><th>W-L</th><th>POWER RTG</th><th>VS PRE</th><th>HC</th><th>UPDATED</th><th></th></tr></thead>
+        <tbody id="pr-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PRESEASON LOADER -->
+  <div id="page-preseason" style="display:none">
+    <div style="font-size:11px;color:var(--txt2);margin-bottom:12px;letter-spacing:1px">DROP YOUR EXCEL FILE — Both ABC order and by-conference layouts are supported</div>
+    <div class="dropzone" onclick="document.getElementById('excel-input').click()" id="dropzone">
+      <div style="font-size:32px;color:var(--txt3);margin-bottom:10px">↑</div>
+      <div style="font-size:14px;color:var(--txt2);margin-bottom:6px">Drop your Excel file here</div>
+      <div style="font-size:11px;color:var(--txt3)">Supports .xlsx with your existing format</div>
+      <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelFile(this.files[0])">
+    </div>
+    <div id="pre-status" style="margin-bottom:10px"></div>
+    <div id="pre-preview"></div>
+  </div>
+
+  <!-- SPREADS -->
+  <div id="page-spreads" style="display:none">
+    <div class="search-bar">
