@@ -78,7 +78,6 @@ table.data tr:hover td{background:var(--bg2);color:var(--txt1)}
   <button class="nav-btn" onclick="showPage('spreads',this)">GAME SPREADS</button>
   <button class="nav-btn" onclick="showPage('futures',this)">FUTURES</button>
   <button class="nav-btn" onclick="showPage('ncaa',this)">NCAA TOURNAMENT</button>
-  <button class="nav-btn" id="nav-confwins" onclick="showPage('confwins',this)"
   <button class="nav-btn" onclick="showPage('tools',this)">ODDS TOOLS</button>
 </div>
 
@@ -186,14 +185,7 @@ table.data tr:hover td{background:var(--bg2);color:var(--txt1)}
         <tbody id="ncaa-body-2"></tbody>
       </table></div>
     </div>
-  </div><!-- CONF WINS -->
-<div id="page-confwins" style="display:none">
-  <div class="search-bar">
-    <select class="field" id="confwins-filter" onchange="filterConfWins()" style="width:150px"><option value="">ALL CONFS</option></select>
-    <button class="btn primary" onclick="loadConfWins()">REFRESH</button>
   </div>
-  <div id="confwins-body"></div>
-</div>
 
   <!-- TOOLS -->
   <div id="page-tools" style="display:none">
@@ -257,7 +249,7 @@ function calcPRAdj({homeScore,awayScore,homePR,homeHC,awayPR}){
   const margin=homeScore-awayScore;
   const coverDiff=margin-rawSpread;
   const absDiff=Math.abs(coverDiff);
-  if(absDiff<=5)return{homeAdj:0,awayAdj:0,reason:'within 5 of spread - no change'};
+  if(absDiff<=5)return{homeAdj:0,awayAdj:0,reason:'within 5 of spread — no change'};
   const baseAdj=absDiff===6?0.5:1.0;
   let homeAdj=coverDiff>0?baseAdj:-baseAdj;
   let awayAdj=coverDiff>0?-baseAdj:baseAdj;
@@ -284,7 +276,6 @@ function showPage(page,btn){
   if(page==='spreads')loadSpreads('today');
   if(page==='futures')loadFutures('conf_winner');
   if(page==='ncaa')loadNCAA('champ');
-  if(page==='confwins')loadConfWins();
 }
 
 async function loadDashboard(){
@@ -500,8 +491,7 @@ function loadNCAA(market){
     });
   });
 }
-var confWinsData=[];
-function loadConfWins(){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">Loading...</div>';sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){var games=res.data;if(!games||!games.length){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">No games found</div>';return;}var teamWins={};var teamConf={};var SP={"-60":1,"-59.5":1,"-59":1,"-58.5":1,"-58":1,"-57.5":1,"-57":1,"-56.5":1,"-56":1,"-55.5":1,"-55":1,"-54.5":1,"-54":1,"-53.5":1,"-53":1,"-52.5":1,"-52":1,"-51.5":1,"-51":1,"-50.5":1,"-50":1,"-49.5":1,"-49":1,"-48.5":1,"-48":1,"-47.5":1,"-47":1,"-46.5":1,"-46":1,"-45.5":1,"-45":1,"-44.5":1,"-44":1,"-43.5":1,"-43":1,"-42.5":1,"-42":1,"-41.5":1,"-41":1,"-40.5":1,"-40":1,"-39.5":1,"-39":1,"-38.5":1,"-38":1,"-37.5":1,"-37":1,"-36.5":1,"-36":1,"-35.5":1,"-35":1,"-34.5":1,"-34":1,"-33.5":1,"-33":1,"-32.5":0.999,"-32":0.998,"-31.5":0.996,"-31":0.995,"-30.5":0.995,"-30":0.995,"-29.5":0.995,"-29":0.995,"-28.5":0.995,"-28":0.995,"-27.5":0.995,"-27":0.995,"-26.5":0.995,"-26":0.995,"-25.5":0.995,"-25":0.994,"-24.5":0.993,"-24":0.992,"-23.5":0.992,"-23":0.991,"-22.5":0.99,"-22":0.989,"-21.5":0.988,"-21":0.987,"-20.5":0.986,"-20":0.986,"-19.5":0.98,"-19":0.967,"-18.5":0.962,"-18":0.957,"-17.5":0.952,"-17":0.947,"-16.5":0.944,"-16":0.941,"-15.5":0.936,"-15":0.933,"-14.5":0.927,"-14":0.923,"-13.5":0.917,"-13":0.909,"-12.5":0.9,"-12":0.889,"-11.5":0.875,"-11":0.867,"-10.5":0.857,"-10":0.846,"-9.5":0.833,"-9":0.812,"-8.5":0.8,"-8":0.791,"-7.5":0.767,"-7":0.75,"-6.5":0.737,"-6":0.722,"-5.5":0.706,"-5":0.687,"-4.5":0.667,"-4":0.643,"-3.5":0.623,"-3":0.6,"-2.5":0.592,"-2":0.572,"-1.5":0.561,"-1":0.535,"-0.5":0.5175,"0":0.5};games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var
+
 function convertOdds(){const v=parseInt(document.getElementById('conv-in').value);if(isNaN(v)){document.getElementById('conv-out').textContent='Decimal: — Implied: —';return;}const dec=v>0?(v/100+1).toFixed(3):(100/Math.abs(v)+1).toFixed(3);const imp=(v>0?100/(v+100)*100:Math.abs(v)/(Math.abs(v)+100)*100).toFixed(1);document.getElementById('conv-out').textContent=`Decimal: ${dec}   Implied: ${imp}%`;}
 
 function calcVig(){const v1=parseInt(document.getElementById('vig1').value);const v2=parseInt(document.getElementById('vig2').value);if(isNaN(v1)||isNaN(v2)){document.getElementById('vig-out').textContent='Vig: —';return;}const vig=((impliedProb(v1)/100+impliedProb(v2)/100)-1)*100;document.getElementById('vig-out').textContent=`Vig: ${vig.toFixed(2)}%`;}
@@ -509,10 +499,7 @@ function calcVig(){const v1=parseInt(document.getElementById('vig1').value);cons
 function calcSpreadTool(){const pra=parseFloat(document.getElementById('pra').value);const hca=parseFloat(document.getElementById('hca').value)||3;const prb=parseFloat(document.getElementById('prb').value);if(isNaN(pra)||isNaN(prb)){document.getElementById('spread-out').textContent='Spread: —';return;}const sp=calcSpread(pra,hca,prb);const ml=spreadToML(sp);const favTeam=sp>=0?'Home':'Away';document.getElementById('spread-out').textContent=`${favTeam} ${formatSpread(-Math.abs(sp))} | ML: ${formatOdds(ml.fav)} / ${formatOdds(ml.dog)}`;}
 
 function simulate(){const hs=parseInt(document.getElementById('sim-hs').value);const as_=parseInt(document.getElementById('sim-as').value);const hpr=parseFloat(document.getElementById('sim-hpr').value);const hhc=parseFloat(document.getElementById('sim-hhc').value)||3;const apr=parseFloat(document.getElementById('sim-apr').value);if(isNaN(hs)||isNaN(as_)||isNaN(hpr)||isNaN(apr)){document.getElementById('sim-result').innerHTML='<span style="color:var(--red)">Fill in all fields</span>';return;}const r=calcPRAdj({homeScore:hs,awayScore:as_,homePR:hpr,homeHC:hhc,awayPR:apr});document.getElementById('sim-result').innerHTML=`<span style="color:var(--txt3)">Home adj:</span> <span class="${r.homeAdj>0?'up':'dn'}">${r.homeAdj>0?'+':''}${r.homeAdj}</span> &nbsp;&nbsp; <span style="color:var(--txt3)">Away adj:</span> <span class="${r.awayAdj>0?'up':'dn'}">${r.awayAdj>0?'+':''}${r.awayAdj}</span> &nbsp;&nbsp; <span style="color:var(--txt2)">${r.reason}</span>`;}
-var confWinsData=[];
-function loadConfWins(){sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){var games=res.data;if(!games||!games.length){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">No games found</div>';return;}var teamWins={};var teamConf={};var SP={"-60":1,"-59.5":1,"-59":1,"-58.5":1,"-58":1,"-57.5":1,"-57":1,"-56.5":1,"-56":1,"-55.5":1,"-55":1,"-54.5":1,"-54":1,"-53.5":1,"-53":1,"-52.5":1,"-52":1,"-51.5":1,"-51":1,"-50.5":1,"-50":1,"-49.5":1,"-49":1,"-48.5":1,"-48":1,"-47.5":1,"-47":1,"-46.5":1,"-46":1,"-45.5":1,"-45":1,"-44.5":1,"-44":1,"-43.5":1,"-43":1,"-42.5":1,"-42":1,"-41.5":1,"-41":1,"-40.5":1,"-40":1,"-39.5":1,"-39":1,"-38.5":1,"-38":1,"-37.5":1,"-37":1,"-36.5":1,"-36":1,"-35.5":1,"-35":1,"-34.5":1,"-34":1,"-33.5":1,"-33":1,"-32.5":0.999,"-32":0.998,"-31.5":0.996,"-31":0.995,"-30.5":0.995,"-30":0.995,"-29.5":0.995,"-29":0.995,"-28.5":0.995,"-28":0.995,"-27.5":0.995,"-27":0.995,"-26.5":0.995,"-26":0.995,"-25.5":0.995,"-25":0.994,"-24.5":0.993,"-24":0.992,"-23.5":0.992,"-23":0.991,"-22.5":0.99,"-22":0.989,"-21.5":0.988,"-21":0.987,"-20.5":0.986,"-20":0.986,"-19.5":0.98,"-19":0.967,"-18.5":0.962,"-18":0.957,"-17.5":0.952,"-17":0.947,"-16.5":0.944,"-16":0.941,"-15.5":0.936,"-15":0.933,"-14.5":0.927,"-14":0.923,"-13.5":0.917,"-13":0.909,"-12.5":0.9,"-12":0.889,"-11.5":0.875,"-11":0.867,"-10.5":0.857,"-10":0.846,"-9.5":0.833,"-9":0.812,"-8.5":0.8,"-8":0.791,"-7.5":0.767,"-7":0.75,"-6.5":0.737,"-6":0.722,"-5.5":0.706,"-5":0.687,"-4.5":0.667,"-4":0.643,"-3.5":0.623,"-3":0.6,"-2.5":0.592,"-2":0.572,"-1.5":0.561,"-1":0.535,"-0.5":0.5175,"0":0.5};games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var favProb=SP[String(-abs)];if(favProb===undefined)favProb=0.5;var homeProb=sp>=0?favProb:1-favProb;var awayProb=1-homeProb;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=homeProb;teamWins[g.away.id]+=awayProb;teamConf[g.home.id]={name:g.home.team,conf:g.home.conference};teamConf[g.away.id]={name:g.away.team,conf:g.away.conference};});confWinsData=Object.keys(teamWins).map(function(id){return{id:id,team:teamConf[id].name,conf:teamConf[id].conf,wins:teamWins[id]};});var sel=document.getElementById('confwins-filter');if(sel.options.length<=1){var confs=[...new Set(confWinsData.map(function(t){return t.conf;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}renderConfWins(confWinsData);});}
-function filterConfWins(){var conf=document.getElementById('confwins-filter').value;renderConfWins(conf?confWinsData.filter(function(t){return t.conf===conf;}):confWinsData);}
-function renderConfWins(data){var byConf={};data.forEach(function(t){if(!byConf[t.conf])byConf[t.conf]=[];byConf[t.conf].push(t);});var html='';Object.keys(byConf).sort().forEach(function(conf){var teams=byConf[conf].sort(function(a,b){return b.wins-a.wins;});var gamesPerTeam=Math.round(teams.reduce(function(s,t){return s+t.wins;},0)/teams.length*2);html+='<div class="panel" style="margin-bottom:12px"><div class="panel-hdr"><div class="panel-title">'+conf+'</div></div><table class="data"><thead><tr><th>#</th><th>TEAM</th><th>EXP W</th><th>EXP L</th><th>WIN%</th><th>ML</th></tr></thead><tbody>';teams.forEach(function(t,i){var l=gamesPerTeam-t.wins;var wp=t.wins/gamesPerTeam;var ml=wp>=0.995?-99999:(wp<=0.005?99999:(wp>0.5?-Math.round((wp/(1-wp))*100):Math.round(((1-wp)/wp)*100)));html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+t.team+'</td><td class="acc">'+t.wins.toFixed(1)+'</td><td class="muted">'+l.toFixed(1)+'</td><td class="muted">'+(wp*100).toFixed(1)+'%</td><td class="'+(ml<0?'odds-fav':'odds-dog')+'">'+(ml>0?'+':'')+ml+'</td></tr>';});html+='</tbody></table></div>';});document.getElementById('confwins-body').innerHTML=html;}
+
 async function manualSync(){
   document.getElementById('sync-msg').textContent='Syncing scores...';
   try{const r=await fetch(API+'/sync/scores',{method:'POST'});const d=await r.json();document.getElementById('sync-msg').textContent=`Sync complete — ${d.gamesFinal} games final, ${d.prsUpdated} PRs updated`;}
