@@ -432,7 +432,7 @@ async function loadSpreads(filter){
   const today=new Date().toISOString().split('T')[0];
   let q=sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']);
   if(filter==='today')q=q.eq('game_date',today);
-  const{data:games}=await q.limit(100);
+  const{data:games}=await q.limit(10000);
   let html='';
   if(games&&games.length){
     games.forEach(g=>{
@@ -459,7 +459,7 @@ function loadFutures(market){
   FUTURES_MARKETS.forEach(m=>tabHtml+=`<button class="sec-tab ${market===m.id?'active':''}" onclick="loadFutures('${m.id}')">${m.label}</button>`);
   document.getElementById('futures-tabs').innerHTML=tabHtml;
   document.getElementById('futures-title').textContent=FUTURES_MARKETS.find(m=>m.id===market)?.label||market;
-  sb.from('futures').select('*, team:team_id(team,conference,pr)').eq('market',market).order('odds',{ascending:true}).limit(50).then(({data})=>{
+  sb.from('futures').select('*, team:team_id(team,conference,pr)').eq('market',market).order('odds',{ascending:true}).limit(1000).then(({data})=>{
     let html='';
     if(data&&data.length){data.forEach((r,i)=>{const impl=impliedProb(r.odds);html+=`<tr><td class="muted">${i+1}</td><td class="bold">${r.team?.team}</td><td class="muted">${r.team?.conference}</td><td>${r.team?.pr?.toFixed(1)}</td><td class="${r.odds<0?'odds-fav':'odds-dog'}">${formatOdds(r.odds)}</td><td class="muted">${impl.toFixed(1)}%</td></tr>`;});}
     else{html='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:20px">Click RECALCULATE to generate futures from your PRs</td></tr>';}
@@ -481,7 +481,7 @@ function loadNCAA(market){
   let tabHtml='';
   NCAA_MARKETS.forEach(m=>tabHtml+=`<button class="sec-tab ${market===m.id?'active':''}" onclick="loadNCAA('${m.id}')">${m.label}</button>`);
   document.getElementById('ncaa-tabs').innerHTML=tabHtml;
-  sb.from('futures').select('*, team:team_id(team,conference,pr)').eq('market',market).order('odds',{ascending:true}).limit(64).then(({data})=>{
+  sb.from('futures').select('*, team:team_id(team,conference,pr)').eq('market',market).order('odds',{ascending:true}).limit(1000).then(({data})=>{
     if(!data||!data.length){document.getElementById('ncaa-body-1').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:20px">Run Recalculate on the Futures page first</td></tr>';return;}
     const half=Math.ceil(data.length/2);
     ['ncaa-body-1','ncaa-body-2'].forEach((id,h)=>{
