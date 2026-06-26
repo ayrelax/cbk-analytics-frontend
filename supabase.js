@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 export const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL,
-  process.env.REACT_APP_SUPABASE_ANON_KEY
+  'https://idygvqhdzjpjyqxbftxj.supabase.co',
+  'sb_publishable_9RG1FwiODqJ0MUPoDERpzQ_F552c8BN'
 );
 
-export const API = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+export const API = 'https://cbk-analytics-backend.onrender.com/api';
