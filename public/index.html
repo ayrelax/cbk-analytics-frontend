@@ -432,7 +432,7 @@ async function loadSpreads(filter){
   const today=new Date().toISOString().split('T')[0];
   let q=sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']);
   if(filter==='today')q=q.eq('game_date',today);
-  const{data:games}=await q.range(0,10000);
+  const{data:games}=await q.limit(10000);
   let html='';
   if(games&&games.length){
     games.forEach(g=>{
