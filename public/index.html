@@ -257,7 +257,7 @@ function calcPRAdj({homeScore,awayScore,homePR,homeHC,awayPR}){
   const margin=homeScore-awayScore;
   const coverDiff=margin-rawSpread;
   const absDiff=Math.abs(coverDiff);
-  if(absDiff<=5)return{homeAdj:0,awayAdj:0,reason:'within 5 of spread — no change'};
+  if(absDiff<=5)return{homeAdj:0,awayAdj:0,reason:'within 5 of spread - no change'};
   const baseAdj=absDiff===6?0.5:1.0;
   let homeAdj=coverDiff>0?baseAdj:-baseAdj;
   let awayAdj=coverDiff>0?-baseAdj:baseAdj;
