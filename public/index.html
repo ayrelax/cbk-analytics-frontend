@@ -187,7 +187,13 @@ table.data tr:hover td{background:var(--bg2);color:var(--txt1)}
       </table></div>
     </div>
   </div>
-
+<div id="page-confwins" style="display:none">
+  <div class="search-bar">
+    <select class="field" id="confwins-filter" onchange="filterConfWins()" style="width:150px"><option value="">ALL CONFS</option></select>
+    <button class="btn primary" onclick="loadConfWins()">REFRESH</button>
+  </div>
+  <div id="confwins-body"></div>
+</div>
   <!-- TOOLS -->
   <div id="page-tools" style="display:none">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
