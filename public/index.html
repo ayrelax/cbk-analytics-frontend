@@ -489,13 +489,12 @@ if(!currentTeam)return;
 var playerName=String(row[1]||'').trim();
 if(!playerName)return;
 var slot=col0;
-if(col0==='G'){
-var gCount=allRosters.filter(function(r){return r.team===currentTeam&&(r.slot==='G1'||r.slot==='G2');}).length;
-slot=gCount===0?'G1':'G2';
-}else if(col0==='F'){
-var fCount=allRosters.filter(function(r){return r.team===currentTeam&&(r.slot==='F1'||r.slot==='F2');}).length;
-slot=fCount===0?'G-F':(fCount===1?'F1':'F2');
-}else if(col0==='C'){slot='G-F';}
+if(col0==='G'||col0==='F'||col0==='C'){
+var sSlots=['G1','G2','G-F','F1','F2'];
+var usedStarter=allRosters.filter(function(r){return r.team===currentTeam&&sSlots.indexOf(r.slot)>=0;}).map(function(r){return r.slot;});
+var freeSlot=sSlots.find(function(s){return usedStarter.indexOf(s)<0;});
+if(freeSlot){slot=freeSlot;}else{var bNum=allRosters.filter(function(r){return r.team===currentTeam&&r.slot.startsWith('B');}).length+1;slot='B'+bNum;}
+}
 allRosters.push({team:currentTeam,slot:slot,player_name:playerName,height:String(row[2]||'').trim()||null,year:String(row[3]||'').trim()||null,mpg:parseFloat(row[4])||null,ppg:parseFloat(row[5])||null,rpg:parseFloat(row[6])||null,apg:parseFloat(row[7])||null,spg:parseFloat(row[8])||null,bpg:parseFloat(row[9])||null,fg_pct:String(row[10]||'').replace('%','')||null,ft_pct:String(row[11]||'').replace('%','')||null,three_pct:String(row[12]||'').replace('%','')||null,notes:String(row[13]||'').trim()||null});
 });
 });
