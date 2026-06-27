@@ -142,14 +142,15 @@ table.data tr:hover td{background:#f5ede0}
 .sim-results-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
 .sim-market{background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;overflow:hidden}
 .sim-market-hdr{background:var(--acc);color:#fff;padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:2px}
-.edit-region-panel{background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:12px;margin-bottom:12px}
 .edit-region-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .edit-region-col{border:1px solid var(--bdr);border-radius:4px;overflow:hidden}
 .edit-region-col-hdr{background:var(--acc);color:#fff;padding:5px 8px;font-size:9px;font-weight:700;letter-spacing:1px}
 .edit-seed-row{display:flex;align-items:center;gap:4px;padding:3px 6px;border-bottom:1px solid var(--bg2);font-size:9px}
 .edit-seed-row:last-child{border-bottom:none}
-.edit-seed-num{width:16px;color:var(--acc);font-weight:700;flex-shrink:0;font-size:8px}
-.edit-seed-sel{flex:1;background:var(--bg2);border:1px solid var(--bdr2);border-radius:2px;padding:2px 3px;font-size:8px;font-family:inherit;color:var(--txt1)}
+.edit-seed-row.playin-row{background:#fdf3e0}
+.edit-seed-num{width:22px;color:var(--acc);font-weight:700;flex-shrink:0;font-size:8px}
+.edit-seed-sel{flex:1;background:var(--bg1);border:1px solid var(--bdr2);border-radius:2px;padding:2px 3px;font-size:8px;font-family:inherit;color:var(--txt1)}
+.pi-badge{font-size:7px;color:#fff;background:var(--acc2);padding:1px 3px;border-radius:2px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -268,8 +269,11 @@ table.data tr:hover td{background:#f5ede0}
 </div>
 <div id="edit-seeding-panel" style="display:none;margin-bottom:12px">
   <div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:12px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--acc)">EDIT SEEDING — Assign teams to each seed slot</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--acc)">EDIT SEEDING — 76 teams total</div>
+        <div style="font-size:9px;color:var(--txt3);margin-top:3px">Seeds 11,12,15,16 have play-in slots (highlighted gold) — assign 2 teams per play-in seed</div>
+      </div>
       <button class="btn primary" onclick="applyManualSeeding()">APPLY + RUN SIM</button>
     </div>
     <div class="edit-region-grid" id="edit-region-grid"></div>
@@ -355,6 +359,18 @@ const BENCH_SLOTS=['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12
 const POSITION_CODES=new Set(['G','F','C','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','GONE']);
 const SEED_MATCHUPS=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
 const PLAYIN_SEEDS=new Set([11,12,15,16]);
+// Play-in structure: seed -> how many games total (across all 4 regions)
+// 11v11: 2 games (regions 0,1 only) — at large
+// 12v12: 4 games (all 4 regions) — mixed
+// 15v15: 2 games (regions 2,3 only) — auto qualifier
+// 16v16: 4 games (all 4 regions) — mixed
+// So per region: reg0 has 11,12,16 play-ins; reg1 has 11,12,16; reg2 has 12,15,16; reg3 has 12,15,16
+const PLAYIN_BY_REGION={
+  0:[11,12,16],
+  1:[11,12,16],
+  2:[12,15,16],
+  3:[12,15,16]
+};
 function calcSpread(h,hc,a,n){return(h+(n?0:hc))-a;}
 var SP={"-60":1,"-59.5":1,"-59":1,"-58.5":1,"-58":1,"-57.5":1,"-57":1,"-56.5":1,"-56":1,"-55.5":1,"-55":1,"-54.5":1,"-54":1,"-53.5":1,"-53":1,"-52.5":1,"-52":1,"-51.5":1,"-51":1,"-50.5":1,"-50":1,"-49.5":1,"-49":1,"-48.5":1,"-48":1,"-47.5":1,"-47":1,"-46.5":1,"-46":1,"-45.5":1,"-45":1,"-44.5":1,"-44":1,"-43.5":1,"-43":1,"-42.5":1,"-42":1,"-41.5":1,"-41":1,"-40.5":1,"-40":1,"-39.5":1,"-39":1,"-38.5":1,"-38":1,"-37.5":1,"-37":1,"-36.5":1,"-36":1,"-35.5":1,"-35":1,"-34.5":1,"-34":1,"-33.5":1,"-33":1,"-32.5":0.999,"-32":0.998,"-31.5":0.996,"-31":0.995,"-30.5":0.995,"-30":0.995,"-29.5":0.995,"-29":0.995,"-28.5":0.995,"-28":0.995,"-27.5":0.995,"-27":0.995,"-26.5":0.995,"-26":0.995,"-25.5":0.995,"-25":0.994,"-24.5":0.993,"-24":0.992,"-23.5":0.992,"-23":0.991,"-22.5":0.99,"-22":0.989,"-21.5":0.988,"-21":0.987,"-20.5":0.986,"-20":0.986,"-19.5":0.98,"-19":0.967,"-18.5":0.962,"-18":0.957,"-17.5":0.952,"-17":0.947,"-16.5":0.944,"-16":0.941,"-15.5":0.936,"-15":0.933,"-14.5":0.927,"-14":0.923,"-13.5":0.917,"-13":0.909,"-12.5":0.9,"-12":0.889,"-11.5":0.875,"-11":0.867,"-10.5":0.857,"-10":0.846,"-9.5":0.833,"-9":0.812,"-8.5":0.8,"-8":0.791,"-7.5":0.767,"-7":0.75,"-6.5":0.737,"-6":0.722,"-5.5":0.706,"-5":0.687,"-4.5":0.667,"-4":0.643,"-3.5":0.623,"-3":0.6,"-2.5":0.592,"-2":0.572,"-1.5":0.561,"-1":0.535,"-0.5":0.5175,"0":0.5};
 function wpFromPR(a,b){var sp=a-b;var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;return a>=b?fp:1-fp;}
@@ -418,6 +434,7 @@ function saveRoster(teamId){if(!isAdmin)return;var inputs=document.querySelector
 function addInjury(teamId){if(!isAdmin)return;var name=prompt('Player name:');if(!name)return;var impact=parseFloat(prompt('Point impact (e.g. 4):'));if(isNaN(impact))return;var notes=prompt('Notes (optional):');sb.from('injuries').insert({team_id:parseInt(teamId),player_name:name,impact:impact,notes:notes||'',active:true}).then(function(){loadTeamProfile();});}
 function clearInjury(injId,teamId){if(!isAdmin)return;sb.from('injuries').update({active:false}).eq('id',injId).then(function(){loadTeamProfile();});}
 function calcH2H(teamId,teamPR,teamHC){var sel=document.getElementById('h2h-opp');var opt=sel.options[sel.selectedIndex];var oppPR=parseFloat(opt.getAttribute('data-pr'));var oppHC=parseFloat(opt.getAttribute('data-hc'));var loc=document.getElementById('h2h-loc').value;var sp;if(loc==='home')sp=calcSpread(teamPR,teamHC,oppPR,false);else if(loc==='away')sp=calcSpread(oppPR,oppHC,teamPR,false);else sp=calcSpread(teamPR,0,oppPR,true);var displaySp=loc==='away'?-sp:sp;var ml=spreadToML(displaySp);var r=Math.round(displaySp*2)/2;var favTeam=r>=0?currentTeamData.team:opt.text.split(' (')[0];document.getElementById('h2h-result').innerHTML='<span style="color:var(--txt1)">'+favTeam+'</span> '+fmtSp(-Math.abs(r))+' &nbsp;|&nbsp; ML: <span class="odds-fav">'+fmtOdds(ml.fav)+'</span> / <span class="odds-dog">'+fmtOdds(ml.dog)+'</span>';}
+function getRegions(){return[document.getElementById('reg0').value||'EAST',document.getElementById('reg1').value||'SOUTH',document.getElementById('reg2').value||'WEST',document.getElementById('reg3').value||'MIDWEST'];}
 function autoSeedAndSim(){
 document.getElementById('ncaa-status').textContent='Loading teams...';
 sb.from('teams').select('id,team,conference,pr').order('pr',{ascending:false}).limit(76).then(function(res){
@@ -427,14 +444,22 @@ ncaaField=teams.slice(0,76);
 var regions=getRegions();
 ncaaSeeding=[];
 var idx=0;
-for(var seed=1;seed<=16;seed++){for(var ri=0;ri<4;ri++){if(idx<ncaaField.length){ncaaSeeding.push({team:ncaaField[idx],seed:seed,ri:ri,region:regions[ri]});idx++;}}}
+for(var seed=1;seed<=16;seed++){
+for(var ri=0;ri<4;ri++){
+if(idx>=ncaaField.length)break;
+var isPI=PLAYIN_SEEDS.has(seed)&&PLAYIN_BY_REGION[ri]&&PLAYIN_BY_REGION[ri].indexOf(seed)>=0;
+ncaaSeeding.push({team:ncaaField[idx],seed:seed,ri:ri,region:regions[ri],playin:isPI});idx++;
+if(isPI&&idx<ncaaField.length){
+ncaaSeeding.push({team:ncaaField[idx],seed:seed,ri:ri,region:regions[ri],playin:true});idx++;
+}
+}
+}
 buildPlayin(regions);
 runSim(regions);
 });
 }
-function getRegions(){return[document.getElementById('reg0').value||'EAST',document.getElementById('reg1').value||'SOUTH',document.getElementById('reg2').value||'WEST',document.getElementById('reg3').value||'MIDWEST'];}
 function toggleEditSeeding(){
-if(!ncaaSeeding.length){alert('Run AUTO SEED first to load teams, then edit seeding.');return;}
+if(!ncaaSeeding.length){alert('Run AUTO SEED first, then edit seeding.');return;}
 var panel=document.getElementById('edit-seeding-panel');
 if(panel.style.display==='none'||!panel.style.display){panel.style.display='block';buildEditPanel();}else{panel.style.display='none';}
 }
@@ -445,13 +470,27 @@ var html='';
 for(var ri=0;ri<4;ri++){
 html+='<div class="edit-region-col"><div class="edit-region-col-hdr">'+regions[ri]+'</div>';
 for(var seed=1;seed<=16;seed++){
-var current=ncaaSeeding.find(function(e){return e.ri===ri&&e.seed===seed;});
-var playinNote=PLAYIN_SEEDS.has(seed)?'<span style="font-size:7px;color:var(--acc2);margin-left:2px">PI</span>':'';
-html+='<div class="edit-seed-row"><span class="edit-seed-num">'+seed+''+playinNote+'</span>';
-html+='<select class="edit-seed-sel" data-ri="'+ri+'" data-seed="'+seed+'">';
+var piSeeds=PLAYIN_BY_REGION[ri]||[];
+var isPI=piSeeds.indexOf(seed)>=0;
+var existing=ncaaSeeding.filter(function(e){return e.ri===ri&&e.seed===seed;});
+if(isPI){
+// Two slots for play-in seeds
+for(var slot=0;slot<2;slot++){
+var cur=existing[slot]||null;
+html+='<div class="edit-seed-row playin-row"><span class="edit-seed-num">'+seed+'</span><span class="pi-badge">PI</span>';
+html+='<select class="edit-seed-sel" data-ri="'+ri+'" data-seed="'+seed+'" data-slot="'+slot+'">';
 html+='<option value="">--</option>';
-ncaaField.forEach(function(t){html+='<option value="'+t.id+'" '+(current&&current.team.id===t.id?'selected':'')+'>'+t.team+' ('+t.pr.toFixed(1)+')</option>';});
+ncaaField.forEach(function(t){html+='<option value="'+t.id+'" '+(cur&&cur.team.id===t.id?'selected':'')+'>'+t.team+' ('+t.pr.toFixed(1)+')</option>';});
 html+='</select></div>';
+}
+}else{
+var cur=existing[0]||null;
+html+='<div class="edit-seed-row"><span class="edit-seed-num">'+seed+'</span>';
+html+='<select class="edit-seed-sel" data-ri="'+ri+'" data-seed="'+seed+'" data-slot="0">';
+html+='<option value="">--</option>';
+ncaaField.forEach(function(t){html+='<option value="'+t.id+'" '+(cur&&cur.team.id===t.id?'selected':'')+'>'+t.team+' ('+t.pr.toFixed(1)+')</option>';});
+html+='</select></div>';
+}
 }
 html+='</div>';
 }
@@ -464,10 +503,13 @@ ncaaSeeding=[];
 sels.forEach(function(sel){
 var ri=parseInt(sel.getAttribute('data-ri'));
 var seed=parseInt(sel.getAttribute('data-seed'));
+var slot=parseInt(sel.getAttribute('data-slot'));
 var teamId=parseInt(sel.value);
 if(teamId){
 var team=ncaaField.find(function(t){return t.id===teamId;});
-if(team)ncaaSeeding.push({team:team,seed:seed,ri:ri,region:regions[ri]});
+var piSeeds=PLAYIN_BY_REGION[ri]||[];
+var isPI=piSeeds.indexOf(seed)>=0;
+if(team)ncaaSeeding.push({team:team,seed:seed,ri:ri,region:regions[ri],playin:isPI});
 }
 });
 document.getElementById('edit-seeding-panel').style.display='none';
@@ -476,20 +518,23 @@ runSim(regions);
 }
 function buildPlayin(regions){
 var groups={};
-ncaaSeeding.forEach(function(e){if(PLAYIN_SEEDS.has(e.seed)){var k=e.seed+'_'+e.ri;if(!groups[k])groups[k]=[];groups[k].push(e);}});
+ncaaSeeding.forEach(function(e){
+if(e.playin){var k=e.seed+'_'+e.ri;if(!groups[k])groups[k]=[];groups[k].push(e);}
+});
 var html='';
-var keys=Object.keys(groups).sort(function(a,b){var sa=parseInt(a.split('_')[0]);var sb=parseInt(b.split('_')[0]);return sa-sb;});
+var keys=Object.keys(groups).sort(function(a,b){var sa=parseInt(a.split('_')[0]);var sb2=parseInt(b.split('_')[0]);return sa-sb2;});
 keys.forEach(function(k){
 var pair=groups[k];if(pair.length<2)return;
 var e1=pair[0],e2=pair[1];
 var sp=e1.team.pr-e2.team.pr;var rsp=Math.round(sp*2)/2;
 var wp=(wpFromPR(e1.team.pr,e2.team.pr)*100).toFixed(0);
 html+='<div class="playin-card"><div class="playin-card-hdr">'+e1.region+' — SEED '+e1.seed+'</div>';
-html+='<div class="playin-team"><span style="font-size:8px;font-weight:700;color:var(--acc);margin-right:4px;width:12px">'+e1.seed+'</span><span style="flex:1">'+e1.team.team+'</span><span style="font-size:8px;color:var(--txt3)">'+e1.team.pr.toFixed(1)+'</span></div>';
-html+='<div class="playin-team"><span style="font-size:8px;font-weight:700;color:var(--acc);margin-right:4px;width:12px">'+e2.seed+'</span><span style="flex:1">'+e2.team.team+'</span><span style="font-size:8px;color:var(--txt3)">'+e2.team.pr.toFixed(1)+'</span></div>';
+html+='<div class="playin-team"><span style="font-size:8px;font-weight:700;color:var(--acc);margin-right:4px">'+e1.seed+'</span><span style="flex:1;font-size:10px">'+e1.team.team+'</span><span style="font-size:8px;color:var(--txt3)">'+e1.team.pr.toFixed(1)+'</span></div>';
+html+='<div class="playin-team"><span style="font-size:8px;font-weight:700;color:var(--acc);margin-right:4px">'+e2.seed+'</span><span style="flex:1;font-size:10px">'+e2.team.team+'</span><span style="font-size:8px;color:var(--txt3)">'+e2.team.pr.toFixed(1)+'</span></div>';
 html+='<div class="playin-info">'+fmtSp(rsp)+' | fav '+wp+'%</div></div>';
 });
-document.getElementById('playin-grid').innerHTML=html||'<div style="color:var(--txt3);font-size:11px">No play-in games found</div>';
+if(!html)html='<div style="color:var(--txt3);font-size:11px;padding:8px">No play-in games configured</div>';
+document.getElementById('playin-grid').innerHTML=html;
 document.getElementById('ncaa-playin').style.display='block';
 }
 function tCard(entry,winId){
@@ -516,15 +561,21 @@ var sf2aIdx=parseInt(document.getElementById('sf2a').value);
 var sf2bIdx=parseInt(document.getElementById('sf2b').value);
 var bk=document.getElementById('ncaa-bracket');bk.innerHTML='';
 function getEntry(ri,seed){
-var candidates=ncaaSeeding.filter(function(e){return e.ri===ri&&e.seed===seed;});
+var candidates=ncaaSeeding.filter(function(e){return e.ri===ri&&e.seed===seed&&!e.playin;});
 if(candidates.length===1)return candidates[0];
-if(candidates.length>1){var pw=mlw['pi_'+seed+'_'+ri];if(pw){var f=candidates.find(function(e){return e.team.id===pw;});return f||candidates[0];}return candidates[0];}
+var piCandidates=ncaaSeeding.filter(function(e){return e.ri===ri&&e.seed===seed;});
+if(piCandidates.length>=1){
+var pw=mlw['pi_'+seed+'_'+ri];
+if(pw){var f=piCandidates.find(function(e){return e.team.id===pw;});return f||piCandidates[0];}
+return piCandidates[0];
+}
 return null;
 }
 function col(title){var d=document.createElement('div');d.className='b-col';d.innerHTML='<div class="b-col-hdr">'+title+'</div>';return d;}
 function sp(h){var d=document.createElement('div');d.style.height=(h||8)+'px';return d;}
 function addG(c,e1,e2,wid,info){var d=document.createElement('div');d.innerHTML=gCard(e1,e2,wid,info);c.appendChild(d);}
 var cR64L=col('R64'),cR32L=col('R32'),cS16L=col('S16'),cE8L=col('E8'),cF4L=col('FINAL FOUR'),cCH=col('CHAMPIONSHIP'),cF4R=col('FINAL FOUR'),cE8R=col('E8'),cS16R=col('S16'),cR32R=col('R32'),cR64R=col('R64');
+var SEED_MATCHUPS=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
 [0,1].forEach(function(ri){SEED_MATCHUPS.forEach(function(pair,pi){addG(cR64L,getEntry(ri,pair[0]),getEntry(ri,pair[1]),mlw['r64_'+ri+'_'+pi]||null,true);});cR64L.appendChild(sp(10));});
 [2,3].forEach(function(ri){SEED_MATCHUPS.forEach(function(pair,pi){addG(cR64R,getEntry(ri,pair[0]),getEntry(ri,pair[1]),mlw['r64_'+ri+'_'+pi]||null,true);});cR64R.appendChild(sp(10));});
 [0,1].forEach(function(ri){for(var i=0;i<4;i++){cR32L.appendChild(sp(6));var id1=mlw['r64_'+ri+'_'+(i*2)]||null;var id2=mlw['r64_'+ri+'_'+(i*2+1)]||null;addG(cR32L,id1?makeEntry(id1,'?',ri,regions):null,id2?makeEntry(id2,'?',ri,regions):null,mlw['r32_'+ri+'_'+i]||null,true);cR32L.appendChild(sp(6));}cR32L.appendChild(sp(10));});
@@ -565,31 +616,33 @@ var SIMS=25000;
 var cChamp={};var cF4={};var cE8={};var cS16={};
 ncaaSeeding.forEach(function(e){var id=e.team.id;if(!cChamp[id])cChamp[id]=0;if(!cF4[id])cF4[id]=0;if(!cE8[id])cE8[id]=0;if(!cS16[id])cS16[id]=0;});
 var piGroups={};
-ncaaSeeding.forEach(function(e){if(PLAYIN_SEEDS.has(e.seed)){var k=e.seed+'_'+e.ri;if(!piGroups[k])piGroups[k]=[];piGroups[k].push(e);}});
+ncaaSeeding.forEach(function(e){if(e.playin){var k=e.seed+'_'+e.ri;if(!piGroups[k])piGroups[k]=[];piGroups[k].push(e);}});
 var mlwAcc={};
 function inc(key,id){if(!mlwAcc[key])mlwAcc[key]={};mlwAcc[key][id]=(mlwAcc[key][id]||0)+1;}
 function getSeedEntry(ri,seed,piWinners){
 var k=seed+'_'+ri;
 if(piWinners[k]){var t=ncaaField.find(function(x){return x.id===piWinners[k];});return t?{team:t,seed:seed,ri:ri}:null;}
-var c=ncaaSeeding.filter(function(e){return e.ri===ri&&e.seed===seed;});
-return c.length===1?c[0]:null;
+var c=ncaaSeeding.filter(function(e){return e.ri===ri&&e.seed===seed&&!e.playin;});
+if(c.length===1)return c[0];
+var allC=ncaaSeeding.filter(function(e){return e.ri===ri&&e.seed===seed;});
+return allC.length>0?allC[0]:null;
 }
+var SEED_MATCHUPS=[[1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]];
 for(var sim=0;sim<SIMS;sim++){
 var piW={};
 Object.keys(piGroups).forEach(function(k){
 var pair=piGroups[k];
-if(pair.length>=2){var w=simG(pair[0].team,pair[1].team);piW[k]=w.id;}
+if(pair.length>=2){var w=simG(pair[0].team,pair[1].team);piW[k]=w.id;inc('pi_'+k,w.id);}
 });
 var regionChamps=[];
 for(var ri=0;ri<4;ri++){
-var r64=[]; 
+var r64=[];
 SEED_MATCHUPS.forEach(function(pair,pi){
 var e1=getSeedEntry(ri,pair[0],piW);
 var e2=getSeedEntry(ri,pair[1],piW);
 if(e1&&e2){
 var w=simG(e1.team,e2.team);
 var we=w===e1.team?e1:e2;
-var lo=w===e1.team?e2:e1;
 inc('r64_'+ri+'_'+pi,w.id);
 r64.push(we);
 }
@@ -642,20 +695,16 @@ inc('champ',champ.id);
 }
 }
 var mlw={};
-Object.keys(mlwAcc).forEach(function(k){
-var obj=mlwAcc[k];var best=null;var bestN=0;
-Object.keys(obj).forEach(function(id){if(obj[id]>bestN){bestN=obj[id];best=parseInt(id);}});
-if(best)mlw[k]=best;
-});
+Object.keys(mlwAcc).forEach(function(k){var obj=mlwAcc[k];var best=null;var bestN=0;Object.keys(obj).forEach(function(id){if(obj[id]>bestN){bestN=obj[id];best=parseInt(id);}});if(best)mlw[k]=best;});
 buildBracket(regions,mlw);
 function renderMkt(elId,countObj){
 var seen={};var rows=[];
-ncaaSeeding.forEach(function(e){if(!seen[e.team.id]&&countObj[e.team.id]>0){seen[e.team.id]=true;rows.push(e);}});
-rows.sort(function(a,b){return countObj[b.team.id]-countObj[a.team.id];});
+ncaaSeeding.forEach(function(e){if(!seen[e.team.id]&&(countObj[e.team.id]||0)>0){seen[e.team.id]=true;rows.push(e);}});
+rows.sort(function(a,b){return(countObj[b.team.id]||0)-(countObj[a.team.id]||0);});
 var html='';var rank=0;
 rows.forEach(function(e){
 rank++;
-var freq=countObj[e.team.id];
+var freq=countObj[e.team.id]||0;
 var tp=freq/SIMS;
 var mp=Math.min(tp*overround,0.9999);
 var rawML=mp>=0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;
@@ -674,7 +723,7 @@ document.getElementById('ncaa-status').textContent='Done! Bracket shows most lik
 },50);
 }
 function loadSpreads(filter){var today=new Date().toISOString().split('T')[0];var q=sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']);if(filter==='today')q=q.eq('game_date',today);q.range(0,9999).then(function(res){var games=res.data;var html='';if(games&&games.length){games.forEach(function(g){var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var ml=spreadToML(sp);var hf=sp>=0;html+='<tr><td class="muted">'+g.game_date+'</td><td class="bold">'+g.away.team+'</td><td class="bold">'+g.home.team+'</td><td class="muted">'+(g.home.pr-g.away.pr).toFixed(1)+'</td><td style="color:var(--amb);font-weight:700">'+g.home.hc.toFixed(1)+'</td><td class="acc" style="font-weight:700">'+(hf?g.home.team:g.away.team)+' '+fmtSp(-Math.abs(Math.round(sp*2)/2))+'</td><td class="odds-fav">'+fmtOdds(ml.fav)+'</td><td class="odds-dog">'+fmtOdds(ml.dog)+'</td></tr>';});}else{html='<tr><td colspan="8" style="text-align:center;color:var(--txt3);padding:20px">No games found</td></tr>';}document.getElementById('spreads-body').innerHTML=html;});}
-function loadConfWins(){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">Loading...</div>';sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){var games=res.data;if(!games||!games.length){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">No games found</div>';return;}var teamWins={};var teamConf={};games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=hp;teamWins[g.away.id]+=(1-fp);teamConf[g.home.id]={name:g.home.team,conf:g.home.conference};teamConf[g.away.id]={name:g.away.team,conf:g.away.conference};});confWinsData=Object.keys(teamWins).map(function(id){return{id:id,team:teamConf[id].name,conf:teamConf[id].conf,wins:teamWins[id]};});var sel=document.getElementById('confwins-filter');if(sel.options.length<=1){var confs=[...new Set(confWinsData.map(function(t){return t.conf;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}renderConfWins(confWinsData);});}
+function loadConfWins(){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">Loading...</div>';sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){var games=res.data;if(!games||!games.length){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">No games found</div>';return;}var teamWins={};var teamConf={};games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=hp;teamWins[g.away.id]+=(1-hp);teamConf[g.home.id]={name:g.home.team,conf:g.home.conference};teamConf[g.away.id]={name:g.away.team,conf:g.away.conference};});confWinsData=Object.keys(teamWins).map(function(id){return{id:id,team:teamConf[id].name,conf:teamConf[id].conf,wins:teamWins[id]};});var sel=document.getElementById('confwins-filter');if(sel.options.length<=1){var confs=[...new Set(confWinsData.map(function(t){return t.conf;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}renderConfWins(confWinsData);});}
 function filterConfWins(){var conf=document.getElementById('confwins-filter').value;renderConfWins(conf?confWinsData.filter(function(t){return t.conf===conf;}):confWinsData);}
 function renderConfWins(data){var byConf={};data.forEach(function(t){if(!byConf[t.conf])byConf[t.conf]=[];byConf[t.conf].push(t);});var html='';Object.keys(byConf).sort().forEach(function(conf){var teams=byConf[conf].sort(function(a,b){return b.wins-a.wins;});var leader=teams[0].wins;var totalWins=teams.reduce(function(s,t){return s+t.wins;},0);var gpt=Math.round(totalWins/teams.length*2);var rawProbs=teams.map(function(t){return 1/(1+Math.exp(-0.4775*(-(leader-t.wins))));});var sum=rawProbs.reduce(function(s,p){return s+p;},0);var mktProbs=rawProbs.map(function(p){return(p/sum)*1.18;});html+='<div class="panel" style="margin-bottom:12px"><div class="panel-hdr"><div class="panel-title">'+conf+'</div></div><table class="data"><thead><tr><th>#</th><th>TEAM</th><th>EXP W</th><th>EXP L</th><th>IMPLIED%</th><th>ML</th></tr></thead><tbody>';teams.forEach(function(t,i){var l=Math.max(0,Math.round((gpt-t.wins)*10)/10);var mp=mktProbs[i];var rawML=mp>0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;var ml=roundML(rawML);html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+t.team+'</td><td class="acc" style="font-weight:700">'+t.wins.toFixed(1)+'</td><td class="muted">'+l.toFixed(1)+'</td><td class="muted">'+(mp*100).toFixed(1)+'%</td><td class="'+(ml<0?'odds-fav':'odds-dog')+'">'+(ml>0?'+':'')+ml+'</td></tr>';});html+='</tbody></table></div>';});document.getElementById('confwins-body').innerHTML=html;}
 function loadMarketOdds(){var market=document.getElementById('market-select').value;var status=document.getElementById('market-status');var body=document.getElementById('market-body');body.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--txt3);padding:20px">Loading live odds...</td></tr>';status.textContent='Fetching...';sb.from('teams').select('id,team,pr,conference').order('pr',{ascending:false}).then(function(tres){teamsForMarket=tres.data||[];fetch('https://api.the-odds-api.com/v4/sports/'+market+'/odds?apiKey='+ODDS_API_KEY+'&regions=us&markets=outrights&oddsFormat=american&bookmakers=caesars,draftkings,fanduel,betmgm').then(function(r){return r.json();}).then(function(data){if(!data||!data.length){body.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--txt3);padding:20px">No odds available yet for this market</td></tr>';status.textContent='No data';return;}var teamOdds={};data.forEach(function(event){if(!event.bookmakers)return;event.bookmakers.forEach(function(book){if(!book.markets||!book.markets[0])return;book.markets[0].outcomes.forEach(function(outcome){var name=outcome.name;if(!teamOdds[name])teamOdds[name]={czr:null,dk:null,fd:null,mgm:null};if(book.key==='caesars')teamOdds[name].czr=outcome.price;if(book.key==='draftkings')teamOdds[name].dk=outcome.price;if(book.key==='fanduel')teamOdds[name].fd=outcome.price;if(book.key==='betmgm')teamOdds[name].mgm=outcome.price;});});});var rows=Object.keys(teamOdds).map(function(name){var o=teamOdds[name];var vals=[o.czr,o.dk,o.fd,o.mgm].filter(function(v){return v!==null;});var best=vals.length?Math.max.apply(null,vals):null;var myPR=null;var nameLower=name.toLowerCase();teamsForMarket.forEach(function(t){var tl=t.team.toLowerCase();if(nameLower.includes(tl.split(' ')[0])||tl.includes(nameLower.split(' ')[0]))myPR=t.pr;});return{name:name,czr:o.czr,dk:o.dk,fd:o.fd,mgm:o.mgm,best:best,pr:myPR};}).sort(function(a,b){var av=a.czr||a.dk||a.fd||a.mgm||99999;var bv=b.czr||b.dk||b.fd||b.mgm||99999;return av-bv;});var html='';rows.forEach(function(r,i){function fmt(v){if(v===null)return'<span class="muted">--</span>';return'<span class="'+(v<0?'odds-fav':'odds-dog')+'">'+(v>0?'+':'')+v+'</span>';}var bestFmt=r.best!==null?'<span style="color:var(--amb);font-weight:700">'+(r.best>0?'+':'')+r.best+'</span>':'--';html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+r.name+'</td><td>'+fmt(r.czr)+'</td><td>'+fmt(r.dk)+'</td><td>'+fmt(r.fd)+'</td><td>'+fmt(r.mgm)+'</td><td>'+bestFmt+'</td><td class="acc" style="font-weight:700">'+(r.pr?r.pr.toFixed(1):'--')+'</td></tr>';});body.innerHTML=html;status.textContent='Updated '+new Date().toLocaleTimeString();}).catch(function(e){body.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--red2);padding:20px">Error: '+e.message+'</td></tr>';status.textContent='Error';});});}
