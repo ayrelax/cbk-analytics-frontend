@@ -416,7 +416,7 @@ var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
 var abs=Math.abs(Math.round(sp*2)/2);
 var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;
 var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);
-var teamSpRaw=isHome?sp:-sp;
+var teamSpRaw=isHome?-sp:-sp;
 var teamSp=Math.round(teamSpRaw*2)/2;
 var loc=g.neutral_site?'N':(isHome?'H':'A');
 var isConf=g.home&&g.away&&g.home.conference===g.away.conference;
