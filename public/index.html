@@ -474,7 +474,7 @@ reader.onload=function(e){
 var wb=XLSX.read(e.target.result,{type:'array'});
 var allRosters=[];
 wb.SheetNames.forEach(function(sheetName){
-var rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:''});
+var rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:false});
 var currentTeam=null;
 var skipNext=false;
 rows.forEach(function(row){
