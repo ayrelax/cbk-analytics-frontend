@@ -81,9 +81,6 @@ table.data tr:hover td{background:#f5ede0}
 .search-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
 .pr-bar{display:inline-block;height:3px;background:var(--bg4);border-radius:2px;vertical-align:middle;margin-left:6px;position:relative;width:50px}
 .pr-fill{position:absolute;top:0;left:0;height:3px;border-radius:2px;background:var(--acc)}
-.sec-tabs{display:flex;background:var(--bg2);border-radius:4px;padding:2px;margin-bottom:12px;flex-wrap:wrap;gap:2px}
-.sec-tab{padding:7px 10px;font-size:10px;letter-spacing:1.5px;text-align:center;cursor:pointer;border-radius:2px;color:var(--txt3);border:none;background:none;font-family:inherit;text-transform:uppercase}
-.sec-tab.active{background:var(--acc);color:#fff;font-weight:700}
 .update-banner{background:#fff8f0;border:1px solid var(--acc2);border-radius:4px;padding:9px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:11px;color:var(--amb)}
 .dropzone{border:2px dashed var(--bdr2);border-radius:6px;padding:40px;text-align:center;cursor:pointer;margin-bottom:16px}
 .dropzone:hover{border-color:var(--acc);background:#c8a96e10}
@@ -152,11 +149,8 @@ table.data tr:hover td{background:#f5ede0}
 .edit-seed-sel{flex:1;background:var(--bg1);border:1px solid var(--bdr2);border-radius:2px;padding:3px 4px;font-size:10px;font-family:inherit;color:var(--txt1)}
 .pi-badge{font-size:8px;color:#fff;background:var(--acc2);padding:1px 4px;border-radius:2px;flex-shrink:0}
 .pru-card{background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:14px;margin-bottom:10px;transition:all 0.2s}
-.pru-card.approved{border-left:4px solid var(--grn2);background:#f6fff6}
-.pru-card.skipped{border-left:4px solid var(--bdr4);opacity:0.5}
 .pru-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
 .pru-matchup{font-size:13px;font-weight:700;color:var(--txt1)}
-.pru-date{font-size:10px;color:var(--txt3);letter-spacing:1px}
 .pru-spread{font-size:11px;color:var(--acc);font-weight:700}
 .pru-teams{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:10px}
 .pru-team{background:var(--bg2);border-radius:4px;padding:8px 10px;text-align:center}
@@ -171,6 +165,8 @@ table.data tr:hover td{background:#f5ede0}
 .pru-adj-line:last-child{margin-bottom:0}
 .pru-actions{display:flex;gap:8px;align-items:center}
 .pru-status{font-size:10px;font-weight:700;letter-spacing:1px}
+.pru-section-hdr{font-size:10px;font-weight:700;letter-spacing:2px;margin-bottom:8px;margin-top:16px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
+.pru-done-row{display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;margin-bottom:4px;font-size:11px}
 </style>
 </head>
 <body>
@@ -246,8 +242,14 @@ table.data tr:hover td{background:#f5ede0}
 <div id="team-profile-content"><div style="text-align:center;color:var(--txt3);padding:40px;font-size:13px">Select a team above to view their profile</div></div>
 </div>
 <div id="page-spreads" style="display:none">
-<div class="search-bar"><button class="btn primary" onclick="loadSpreads('today')">TODAY</button><button class="btn" onclick="loadSpreads('all')">ALL OPEN</button></div>
-<div class="panel"><div class="panel-hdr"><div class="panel-title">Game Spreads</div></div><table class="data"><thead><tr><th>DATE</th><th>AWAY</th><th>HOME</th><th>SPREAD</th><th>ML FAV</th></tr></thead><tbody id="spreads-body"></tbody></table></div>
+<div class="search-bar">
+  <button class="btn primary" onclick="loadSpreads('today')">TODAY</button>
+  <button class="btn" onclick="loadSpreads('all')">ALL OPEN</button>
+  <button class="btn" onclick="loadSpreads('final')">RESULTS</button>
+</div>
+<div class="panel"><div class="panel-hdr"><div class="panel-title">Game Spreads</div><div id="spreads-mode-label" style="font-size:10px;color:var(--txt3);letter-spacing:1px">OPEN GAMES</div></div>
+<table class="data"><thead><tr><th>DATE</th><th>AWAY</th><th>HOME</th><th>SPREAD</th><th>ML FAV</th><th>RESULT</th></tr></thead>
+<tbody id="spreads-body"></tbody></table></div>
 </div>
 <div id="page-ncaa" style="display:none">
 <div class="ncaa-controls">
@@ -333,7 +335,7 @@ table.data tr:hover td{background:#f5ede0}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
   <div>
     <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--acc)">PR UPDATE DASHBOARD</div>
-    <div style="font-size:10px;color:var(--txt3);margin-top:3px">Enter final scores to calculate and approve PR adjustments</div>
+    <div style="font-size:10px;color:var(--txt3);margin-top:3px">Mark games final as they finish, enter scores, approve PR adjustments</div>
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <div style="display:flex;align-items:center;gap:6px">
@@ -346,13 +348,15 @@ table.data tr:hover td{background:#f5ede0}
 </div>
 <div id="pru-summary" style="display:none;background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:12px;margin-bottom:12px">
   <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:11px">
-    <div><span class="muted">Games loaded:</span> <span id="pru-count" style="font-weight:700;color:var(--acc)">0</span></div>
+    <div><span class="muted">Total:</span> <span id="pru-count" style="font-weight:700;color:var(--acc)">0</span></div>
+    <div><span class="muted">Needs Grading:</span> <span id="pru-needs" style="font-weight:700;color:var(--amb)">0</span></div>
     <div><span class="muted">Approved:</span> <span id="pru-approved" style="font-weight:700;color:var(--grn2)">0</span></div>
     <div><span class="muted">Skipped:</span> <span id="pru-skipped" style="font-weight:700;color:var(--txt3)">0</span></div>
-    <div><span class="muted">Pending:</span> <span id="pru-pending" style="font-weight:700;color:var(--amb)">0</span></div>
+    <div><span class="muted">Scheduled:</span> <span id="pru-pending" style="font-weight:700;color:var(--txt3)">0</span></div>
   </div>
 </div>
 <div id="pru-games-body"><div style="text-align:center;color:var(--txt3);padding:40px;font-size:12px">Select a date and click LOAD GAMES</div></div>
+</div>
 <div id="page-rosterload" style="display:none">
 <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">ADMIN ONLY — Drop your roster Excel file to bulk load all teams</div>
 <div class="dropzone" onclick="document.getElementById('roster-excel-input').click()">
@@ -363,7 +367,6 @@ table.data tr:hover td{background:#f5ede0}
 </div>
 <div id="roster-status" style="margin-bottom:10px"></div>
 <div id="roster-preview"></div>
-</div>
 </div>
 <div id="page-tools" style="display:none">
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
@@ -451,7 +454,7 @@ var strip=document.getElementById('conf-strip');strip.innerHTML='';
 p5confs.forEach(function(c){var box=document.createElement('div');box.className='cbox';var rows=confData[c]||[];var html='<div class="cbox-hdr">'+c+'<span class="cbox-hdr-sub">EXP W / ML</span></div><table><tbody>';rows.forEach(function(r,i){var mlClass=r.ml<0?'mln':'mlp';html+='<tr><td><span class="rnk">'+(i+1)+'</span></td><td class="tnm">'+r.team+'</td><td class="ew">'+r.wins.toFixed(1)+'</td><td class="'+mlClass+'">'+(r.ml>0?'+':'')+r.ml+'</td></tr>';});if(!rows.length)html+='<tr><td colspan="4" style="color:var(--txt3);text-align:center;padding:8px;font-size:11px">No data</td></tr>';html+='</tbody></table>';box.innerHTML=html;strip.appendChild(box);});
 var sortedGames=games.slice().sort(function(a,b){return(b.home.pr+b.away.pr)-(a.home.pr+a.away.pr);}).slice(0,10);
 var lhtml='';
-sortedGames.forEach(function(g,i){var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var ml=spreadToML(sp);var hf=sp>=0;var combPR=(g.home.pr+g.away.pr).toFixed(1);var favTeam=hf?g.home.team:g.away.team;var heatClass=getGameHeat(i,10);lhtml+='<tr class="'+heatClass+'"><td class="bold">'+g.away.team+' @ '+g.home.team+'</td><td><span class="comb-badge">'+combPR+'</span></td><td style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(Math.round(sp*2)/2))+'</td><td class="odds-fav">'+fmtOdds(ml.fav)+'</td><td class="odds-dog">'+fmtOdds(ml.dog)+'</td></tr>';});
+sortedGames.forEach(function(g,i){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var ml=spreadToML(sp);var hf=sp>=0;var combPR=(g.home.pr+g.away.pr).toFixed(1);var favTeam=hf?g.home.team:g.away.team;var heatClass=getGameHeat(i,10);lhtml+='<tr class="'+heatClass+'"><td class="bold">'+g.away.team+' @ '+g.home.team+'</td><td><span class="comb-badge">'+combPR+'</span></td><td style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(Math.round(sp*2)/2))+'</td><td class="odds-fav">'+fmtOdds(ml.fav)+'</td><td class="odds-dog">'+fmtOdds(ml.dog)+'</td></tr>';});
 if(!lhtml)lhtml='<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:20px">Load your schedule to see games</td></tr>';
 document.getElementById('dash-lines-body').innerHTML=lhtml;
 });
@@ -479,6 +482,33 @@ function saveRoster(teamId){if(!isAdmin)return;var inputs=document.querySelector
 function addInjury(teamId){if(!isAdmin)return;var name=prompt('Player name:');if(!name)return;var impact=parseFloat(prompt('Point impact (e.g. 4):'));if(isNaN(impact))return;var notes=prompt('Notes (optional):');sb.from('injuries').insert({team_id:parseInt(teamId),player_name:name,impact:impact,notes:notes||'',active:true}).then(function(){loadTeamProfile();});}
 function clearInjury(injId,teamId){if(!isAdmin)return;sb.from('injuries').update({active:false}).eq('id',injId).then(function(){loadTeamProfile();});}
 function calcH2H(teamId,teamPR,teamHC){var sel=document.getElementById('h2h-opp');var opt=sel.options[sel.selectedIndex];var oppPR=parseFloat(opt.getAttribute('data-pr'));var oppHC=parseFloat(opt.getAttribute('data-hc'));var loc=document.getElementById('h2h-loc').value;var sp;if(loc==='home')sp=calcSpread(teamPR,teamHC,oppPR,false);else if(loc==='away')sp=calcSpread(oppPR,oppHC,teamPR,false);else sp=calcSpread(teamPR,0,oppPR,true);var displaySp=loc==='away'?-sp:sp;var ml=spreadToML(displaySp);var r=Math.round(displaySp*2)/2;var favTeam=r>=0?currentTeamData.team:opt.text.split(' (')[0];document.getElementById('h2h-result').innerHTML='<span style="color:var(--txt1)">'+favTeam+'</span> '+fmtSp(-Math.abs(r))+' &nbsp;|&nbsp; ML: <span class="odds-fav">'+fmtOdds(ml.fav)+'</span> / <span class="odds-dog">'+fmtOdds(ml.dog)+'</span>';}
+function loadSpreads(filter){
+var today=new Date().toISOString().split('T')[0];
+var label=document.getElementById('spreads-mode-label');
+var q=sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)');
+if(filter==='today'){q=q.eq('game_date',today).in('status',['scheduled','live']);label.textContent='TODAY — OPEN GAMES';}
+else if(filter==='final'){q=q.eq('status','final').order('game_date',{ascending:false});label.textContent='RESULTS';}
+else{q=q.in('status',['scheduled','live']);label.textContent='ALL OPEN GAMES';}
+q.range(0,9999).then(function(res){
+var games=res.data||[];
+var html='';
+if(games.length){
+games.forEach(function(g){
+if(!g.home||!g.away)return;
+var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
+var ml=spreadToML(sp);
+var hf=sp>=0;
+var isFinal=g.status==='final';
+var resultCell='--';
+if(isFinal&&g.home_score!=null&&g.away_score!=null){
+var winner=g.home_score>g.away_score?g.home.team:g.away.team;
+resultCell='<span style="font-weight:700;color:var(--grn2)">'+g.away.team+' '+g.away_score+' — '+g.home.team+' '+g.home_score+'</span>';
+}
+html+='<tr><td class="muted">'+g.game_date+'</td><td class="bold">'+g.away.team+'</td><td class="bold">'+g.home.team+'</td><td class="acc" style="font-weight:700">'+(isFinal?'<span class="muted">FINAL</span>':(hf?g.home.team:g.away.team)+' '+fmtSp(-Math.abs(Math.round(sp*2)/2)))+'</td><td class="odds-fav">'+(isFinal?'--':fmtOdds(ml.fav))+'</td><td>'+resultCell+'</td></tr>';
+});
+}else{html='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:20px">No games found</td></tr>';}
+document.getElementById('spreads-body').innerHTML=html;
+});}
 function getRegions(){return[document.getElementById('reg0').value||'EAST',document.getElementById('reg1').value||'SOUTH',document.getElementById('reg2').value||'MIDWEST',document.getElementById('reg3').value||'WEST'];}
 function autoSeedAndSim(){document.getElementById('ncaa-status').textContent='Loading teams...';sb.from('teams').select('id,team,conference,pr').order('pr',{ascending:false}).limit(76).then(function(res){var teams=res.data||[];if(teams.length<64){document.getElementById('ncaa-status').textContent='Need at least 64 teams in database';return;}ncaaField=teams.slice(0,76);var regions=getRegions();ncaaSeeding=[];var idx=0;for(var seed=1;seed<=16;seed++){for(var ri=0;ri<4;ri++){if(idx>=ncaaField.length)break;var piList=PLAYIN_BY_REGION[ri]||[];var isPI=piList.indexOf(seed)>=0;ncaaSeeding.push({team:ncaaField[idx],seed:seed,ri:ri,region:regions[ri],playin:isPI});idx++;if(isPI&&idx<ncaaField.length){ncaaSeeding.push({team:ncaaField[idx],seed:seed,ri:ri,region:regions[ri],playin:true});idx++;}}}buildPlayin(regions);runSim(regions);});}
 function toggleEditSeeding(){if(!ncaaSeeding.length){alert('Run AUTO SEED first, then edit seeding.');return;}var panel=document.getElementById('edit-seeding-panel');if(panel.style.display==='none'||!panel.style.display){panel.style.display='block';buildEditPanel();}else{panel.style.display='none';}}
@@ -507,45 +537,96 @@ cF4R.appendChild(sp(80));addG(cF4R,sf1aId?makeEntry(sf1aId,'?',sf1aIdx,regions):
 cCH.appendChild(sp(110));var cw1=mlw['f4_0']||null;var cw2=mlw['f4_1']||null;addG(cCH,cw1?makeEntry(cw1,'?',0,regions):null,cw2?makeEntry(cw2,'?',1,regions):null,mlw['champ']||null,true);var champId=mlw['champ'];var champTeam=champId?getTeamById(champId):null;var cd=document.createElement('div');cd.innerHTML='<div style="text-align:center;padding:8px;font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1px">'+(champTeam?'★ '+champTeam.team:'CHAMPION TBD')+'</div>';cCH.appendChild(cd);
 [cR64L,cR32L,cS16L,cE8L,cF4L,cCH,cF4R,cE8R,cS16R,cR32R,cR64R].forEach(function(c){bk.appendChild(c);});
 document.getElementById('ncaa-bracket-wrap').style.display='block';}
-function initPRUpdate(){
-var today=new Date().toISOString().split('T')[0];
-document.getElementById('pru-date').value=today;
-}
+function initPRUpdate(){var today=new Date().toISOString().split('T')[0];document.getElementById('pru-date').value=today;}
 function loadPRUpdateGames(mode){
 var body=document.getElementById('pru-games-body');
 body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:20px">Loading...</div>';
 pruStats={approved:0,skipped:0};
-var q=sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').eq('pr_processed',false).neq('status','scheduled');
-if(mode!=='all'){var date=document.getElementById('pru-date').value;if(!date)return;q=q.eq('game_date',date);}
-q.order('game_date',{ascending:true}).range(0,200).then(function(res){
+var q=sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)');
+if(mode==='all'){q=q.eq('pr_processed',false).neq('status','scheduled');}
+else{var date=document.getElementById('pru-date').value;if(!date)return;q=q.eq('game_date',date);}
+q.order('game_date',{ascending:true}).range(0,300).then(function(res){
 pruGames=res.data||[];
-if(!pruGames.length){body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:30px;font-size:12px">No unprocessed games found for this date</div>';document.getElementById('pru-summary').style.display='none';return;}
-document.getElementById('pru-count').textContent=pruGames.length;
-document.getElementById('pru-approved').textContent='0';
-document.getElementById('pru-skipped').textContent='0';
-document.getElementById('pru-pending').textContent=pruGames.length;
+if(!pruGames.length){body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:30px;font-size:12px">No games found</div>';document.getElementById('pru-summary').style.display='none';return;}
 document.getElementById('pru-summary').style.display='block';
 renderPRUpdateCards();
-});
-}
+});}
 function renderPRUpdateCards(){
 var body=document.getElementById('pru-games-body');
+var scheduled=pruGames.filter(function(g){return g.status==='scheduled'&&!g.pr_processed;});
+var finals=pruGames.filter(function(g){return g.status==='final'&&!g.pr_processed&&!g._skipped;});
+var done=pruGames.filter(function(g){return g.pr_processed||g._skipped;});
 var html='';
-pruGames.forEach(function(g,idx){
+if(finals.length){
+html+='<div class="pru-section-hdr" style="color:var(--amb)">NEEDS GRADING ('+finals.length+')</div>';
+finals.forEach(function(g){html+=buildActiveCard(g);});
+}
+if(scheduled.length){
+html+='<div class="pru-section-hdr" style="color:var(--txt3);margin-top:'+(finals.length?'20px':'0')+'">SCHEDULED ('+scheduled.length+')</div>';
+scheduled.forEach(function(g){html+=buildScheduledCard(g);});
+html+='<div style="margin:14px 0;text-align:right"><button class="btn danger" onclick="markAllFinal()">MARK ALL REMAINING FINAL</button></div>';
+}
+if(done.length){
+html+='<div class="pru-section-hdr" style="color:var(--grn2);margin-top:20px">COMPLETED ('+done.length+')</div>';
+done.forEach(function(g){
 if(!g.home||!g.away)return;
+var adj=g._adjResult||{ha:0,aa:0};
+var haStr=(adj.ha>=0?'+':'')+adj.ha;
+var aaStr=(adj.aa>=0?'+':'')+adj.aa;
+var haColor=adj.ha>0?'var(--grn2)':adj.ha<0?'var(--red2)':'var(--txt3)';
+var aaColor=adj.aa>0?'var(--grn2)':adj.aa<0?'var(--red2)':'var(--txt3)';
+var skipped=g._skipped;
+html+='<div class="pru-done-row" style="border-left:4px solid '+(skipped?'var(--bdr)':'var(--grn2)')+';opacity:'+(skipped?'0.45':'0.85')+'">';
+html+='<span style="color:var(--txt3);font-size:10px;min-width:70px">'+g.game_date+'</span>';
+html+='<span style="flex:1;font-weight:700">'+g.away.team+' @ '+g.home.team+'</span>';
+if(!skipped&&g._hs!=null){
+html+='<span style="color:var(--txt2);font-weight:700;margin-right:12px">'+g._as+' — '+g._hs+'</span>';
+html+='<span style="color:'+aaColor+';font-size:10px;margin-right:6px">'+g.away.team.substring(0,8)+' '+aaStr+'</span>';
+html+='<span style="color:'+haColor+';font-size:10px">'+g.home.team.substring(0,8)+' '+haStr+'</span>';
+html+='<span style="color:var(--grn2);margin-left:10px;font-weight:700">✓</span>';
+}else{
+html+='<span style="color:var(--txt3);font-size:10px">SKIPPED</span>';
+}
+html+='</div>';
+});
+}
+if(!finals.length&&!scheduled.length&&!done.length){
+html='<div style="text-align:center;color:var(--txt3);padding:30px">No games to display</div>';
+}
+body.innerHTML=html;
+document.getElementById('pru-count').textContent=pruGames.length;
+document.getElementById('pru-needs').textContent=finals.length;
+document.getElementById('pru-approved').textContent=pruStats.approved;
+document.getElementById('pru-skipped').textContent=pruStats.skipped;
+document.getElementById('pru-pending').textContent=scheduled.length;
+}
+function buildScheduledCard(g){
+if(!g.home||!g.away)return'';
 var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
 var rsp=Math.round(sp*2)/2;
 var favTeam=rsp>=0?g.home.team:g.away.team;
 var isConf=g.home.conference===g.away.conference;
-html+='<div class="pru-card" id="pru-card-'+g.id+'">';
-html+='<div class="pru-header"><div><div class="pru-matchup">'+g.away.team+' @ '+g.home.team+'</div><div style="font-size:10px;color:var(--txt3);margin-top:3px">'+g.game_date+' &nbsp;|&nbsp; '+(isConf?'CONF':'NON-CONF')+'</div></div><div class="pru-spread">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</div></div>';
+var html='<div class="pru-card" id="pru-card-'+g.id+'" style="border-left:4px solid var(--bdr)">';
+html+='<div class="pru-header"><div><div class="pru-matchup">'+g.away.team+' @ '+g.home.team+'</div><div style="font-size:10px;color:var(--txt3);margin-top:3px">'+g.game_date+' &nbsp;|&nbsp; '+(isConf?'CONF':'NON-CONF')+'&nbsp;|&nbsp;<span style="color:var(--txt3)">SCHEDULED</span></div></div><div class="pru-spread">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</div></div>';
 html+='<div class="pru-teams"><div class="pru-team"><div class="pru-team-name">'+g.away.team+'</div><div class="pru-team-pr">PR: '+g.away.pr.toFixed(1)+'</div></div><div class="pru-vs">@</div><div class="pru-team"><div class="pru-team-name">'+g.home.team+'</div><div class="pru-team-pr">PR: '+g.home.pr.toFixed(1)+'</div></div></div>';
-html+='<div class="pru-score-row"><span style="font-size:11px;color:var(--txt3);min-width:80px">'+g.away.team.substring(0,12)+':</span><input class="pru-score-inp" type="number" id="away-score-'+g.id+'" placeholder="0" oninput="calcPRPreview('+g.id+')"><span style="font-size:11px;color:var(--txt3);margin:0 6px">—</span><span style="font-size:11px;color:var(--txt3);min-width:80px">'+g.home.team.substring(0,12)+':</span><input class="pru-score-inp" type="number" id="home-score-'+g.id+'" placeholder="0" oninput="calcPRPreview('+g.id+')"></div>';
+html+='<div class="pru-actions"><button class="btn primary" onclick="markGameFinal('+g.id+')">MARK FINAL</button></div>';
+html+='</div>';
+return html;
+}
+function buildActiveCard(g){
+if(!g.home||!g.away)return'';
+var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
+var rsp=Math.round(sp*2)/2;
+var favTeam=rsp>=0?g.home.team:g.away.team;
+var isConf=g.home.conference===g.away.conference;
+var html='<div class="pru-card" id="pru-card-'+g.id+'" style="border-left:4px solid var(--amb)">';
+html+='<div class="pru-header"><div><div class="pru-matchup">'+g.away.team+' @ '+g.home.team+'</div><div style="font-size:10px;color:var(--txt3);margin-top:3px">'+g.game_date+' &nbsp;|&nbsp; '+(isConf?'CONF':'NON-CONF')+'&nbsp;|&nbsp;<span style="color:var(--amb);font-weight:700">FINAL — ENTER SCORE</span></div></div><div class="pru-spread">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</div></div>';
+html+='<div class="pru-teams"><div class="pru-team"><div class="pru-team-name">'+g.away.team+'</div><div class="pru-team-pr">PR: '+g.away.pr.toFixed(1)+'</div></div><div class="pru-vs">@</div><div class="pru-team"><div class="pru-team-name">'+g.home.team+'</div><div class="pru-team-pr">PR: '+g.home.pr.toFixed(1)+'</div></div></div>';
+html+='<div class="pru-score-row"><span style="font-size:11px;color:var(--txt3);min-width:90px">'+g.away.team.substring(0,12)+':</span><input class="pru-score-inp" type="number" id="away-score-'+g.id+'" placeholder="0" oninput="calcPRPreview('+g.id+')"><span style="font-size:11px;color:var(--txt3);margin:0 8px">—</span><span style="font-size:11px;color:var(--txt3);min-width:90px">'+g.home.team.substring(0,12)+':</span><input class="pru-score-inp" type="number" id="home-score-'+g.id+'" placeholder="0" oninput="calcPRPreview('+g.id+')"></div>';
 html+='<div class="pru-adj" id="pru-adj-'+g.id+'"></div>';
 html+='<div class="pru-actions"><button class="btn success" onclick="approvePR('+g.id+')">✓ APPROVE</button><button class="btn" onclick="skipPR('+g.id+')">SKIP</button><span class="pru-status" id="pru-status-'+g.id+'"></span></div>';
 html+='</div>';
-});
-body.innerHTML=html||'<div style="text-align:center;color:var(--txt3);padding:30px">No games to display</div>';
+return html;
 }
 function calcPRPreview(gameId){
 var as_=parseInt(document.getElementById('away-score-'+gameId).value);
@@ -559,7 +640,7 @@ var newHomePR=(g.home.pr+adj.ha).toFixed(1);
 var newAwayPR=(g.away.pr+adj.aa).toFixed(1);
 var haColor=adj.ha>0?'color:var(--grn2)':adj.ha<0?'color:var(--red2)':'color:var(--txt3)';
 var aaColor=adj.aa>0?'color:var(--grn2)':adj.aa<0?'color:var(--red2)':'color:var(--txt3)';
-adjDiv.innerHTML='<div class="pru-adj-line"><span style="color:var(--txt3)">'+g.home.team+':</span><span style="'+haColor+';font-weight:700">'+(adj.ha>=0?'+':'')+adj.ha+' → '+newHomePR+'</span></div><div class="pru-adj-line"><span style="color:var(--txt3)">'+g.away.team+':</span><span style="'+aaColor+';font-weight:700">'+(adj.aa>=0?'+':'')+adj.aa+' → '+newAwayPR+'</span></div><div style="font-size:10px;color:var(--txt3);margin-top:4px">'+adj.r+'</div>';
+adjDiv.innerHTML='<div class="pru-adj-line"><span style="color:var(--txt3)">'+g.away.team+':</span><span style="'+aaColor+';font-weight:700">'+(adj.aa>=0?'+':'')+adj.aa+' → '+newAwayPR+'</span></div><div class="pru-adj-line"><span style="color:var(--txt3)">'+g.home.team+':</span><span style="'+haColor+';font-weight:700">'+(adj.ha>=0?'+':'')+adj.ha+' → '+newHomePR+'</span></div><div style="font-size:10px;color:var(--txt3);margin-top:4px">'+adj.r+'</div>';
 adjDiv.style.display='block';
 }
 async function approvePR(gameId){
@@ -573,33 +654,38 @@ var newHomePR=Math.round((g.home.pr+adj.ha)*10)/10;
 var newAwayPR=Math.round((g.away.pr+adj.aa)*10)/10;
 var today=new Date().toISOString().split('T')[0];
 var statusEl=document.getElementById('pru-status-'+gameId);
-statusEl.textContent='Saving...';statusEl.style.color='var(--txt3)';
+if(statusEl){statusEl.textContent='Saving...';statusEl.style.color='var(--txt3)';}
 var r1=await sb.from('teams').update({pr:newHomePR,updated_at:new Date().toISOString()}).eq('id',g.home_team_id);
 var r2=await sb.from('teams').update({pr:newAwayPR,updated_at:new Date().toISOString()}).eq('id',g.away_team_id);
 var r3=await sb.from('games').update({pr_processed:true,pr_processed_at:new Date().toISOString(),home_score:hs,away_score:as_,status:'final'}).eq('id',gameId);
 await sb.from('pr_history').upsert([{team_id:g.home_team_id,pr:newHomePR,recorded_at:today,game_id:gameId,notes:adj.r},{team_id:g.away_team_id,pr:newAwayPR,recorded_at:today,game_id:gameId,notes:adj.r}],{onConflict:'team_id,game_id'});
-if(r1.error||r2.error||r3.error){statusEl.textContent='ERROR';statusEl.style.color='var(--red2)';return;}
+if(r1.error||r2.error||r3.error){if(statusEl){statusEl.textContent='ERROR';statusEl.style.color='var(--red2)';}return;}
 g.home.pr=newHomePR;g.away.pr=newAwayPR;
-var card=document.getElementById('pru-card-'+gameId);
-if(card){card.classList.add('approved');}
-statusEl.textContent='✓ APPROVED';statusEl.style.color='var(--grn2)';
+g.pr_processed=true;g._hs=hs;g._as=as_;g._adjResult=adj;
 pruStats.approved++;
-updatePRSummary();
+renderPRUpdateCards();
 }
 function skipPR(gameId){
-var card=document.getElementById('pru-card-'+gameId);
-if(card)card.classList.add('skipped');
-var statusEl=document.getElementById('pru-status-'+gameId);
-statusEl.textContent='SKIPPED';statusEl.style.color='var(--txt3)';
+var g=pruGames.find(function(x){return x.id===gameId;});
+if(g){g._skipped=true;}
 pruStats.skipped++;
-updatePRSummary();
+renderPRUpdateCards();
 }
-function updatePRSummary(){
-var total=pruGames.length;
-var done=pruStats.approved+pruStats.skipped;
-document.getElementById('pru-approved').textContent=pruStats.approved;
-document.getElementById('pru-skipped').textContent=pruStats.skipped;
-document.getElementById('pru-pending').textContent=Math.max(0,total-done);
+async function markGameFinal(gameId){
+var res=await sb.from('games').update({status:'final'}).eq('id',gameId);
+if(res.error){alert('Error: '+res.error.message);return;}
+var g=pruGames.find(function(x){return x.id===gameId;});
+if(g)g.status='final';
+renderPRUpdateCards();
+}
+async function markAllFinal(){
+var date=document.getElementById('pru-date').value;
+if(!date){alert('Select a date first');return;}
+if(!confirm('Mark ALL remaining scheduled games on '+date+' as final?'))return;
+var res=await sb.from('games').update({status:'final'}).eq('game_date',date).eq('status','scheduled');
+if(res.error){alert('Error: '+res.error.message);return;}
+pruGames.forEach(function(g){if(g.status==='scheduled')g.status='final';});
+renderPRUpdateCards();
 }
 function runSim(regions){
 var overround=parseFloat(document.getElementById('ncaa-overround').value)||1.18;
@@ -650,7 +736,6 @@ document.getElementById('ncaa-results').style.display='block';
 document.getElementById('ncaa-sim-info').textContent='SIMULATION ODDS — 25,000 runs | Overround: '+overround+'x | '+ncaaField.length+' teams';
 document.getElementById('ncaa-status').textContent='Done! Bracket shows most likely winners per game.';
 },50);}
-function loadSpreads(filter){var today=new Date().toISOString().split('T')[0];var q=sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']);if(filter==='today')q=q.eq('game_date',today);q.range(0,9999).then(function(res){var games=res.data;var html='';if(games&&games.length){games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var ml=spreadToML(sp);var hf=sp>=0;html+='<tr><td class="muted">'+g.game_date+'</td><td class="bold">'+g.away.team+'</td><td class="bold">'+g.home.team+'</td><td class="acc" style="font-weight:700">'+(hf?g.home.team:g.away.team)+' '+fmtSp(-Math.abs(Math.round(sp*2)/2))+'</td><td class="odds-fav">'+fmtOdds(ml.fav)+'</td></tr>';});}else{html='<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:20px">No games found</td></tr>';}document.getElementById('spreads-body').innerHTML=html;});}
 function loadConfWins(){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">Loading...</div>';sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){var games=res.data;if(!games||!games.length){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">No games found</div>';return;}var teamWins={};var teamConf={};games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=hp;teamWins[g.away.id]+=(1-hp);teamConf[g.home.id]={name:g.home.team,conf:g.home.conference};teamConf[g.away.id]={name:g.away.team,conf:g.away.conference};});confWinsData=Object.keys(teamWins).map(function(id){return{id:id,team:teamConf[id].name,conf:teamConf[id].conf,wins:teamWins[id]};});var sel=document.getElementById('confwins-filter');if(sel.options.length<=1){var confs=[...new Set(confWinsData.map(function(t){return t.conf;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}renderConfWins(confWinsData);});}
 function filterConfWins(){var conf=document.getElementById('confwins-filter').value;renderConfWins(conf?confWinsData.filter(function(t){return t.conf===conf;}):confWinsData);}
 function renderConfWins(data){var byConf={};data.forEach(function(t){if(!byConf[t.conf])byConf[t.conf]=[];byConf[t.conf].push(t);});var html='';Object.keys(byConf).sort().forEach(function(conf){var teams=byConf[conf].sort(function(a,b){return b.wins-a.wins;});var leader=teams[0].wins;var totalWins=teams.reduce(function(s,t){return s+t.wins;},0);var gpt=Math.round(totalWins/teams.length*2);var rawProbs=teams.map(function(t){return 1/(1+Math.exp(-0.4775*(-(leader-t.wins))));});var sum=rawProbs.reduce(function(s,p){return s+p;},0);var mktProbs=rawProbs.map(function(p){return(p/sum)*1.18;});html+='<div class="panel" style="margin-bottom:12px"><div class="panel-hdr"><div class="panel-title">'+conf+'</div></div><table class="data"><thead><tr><th>#</th><th>TEAM</th><th>EXP W</th><th>EXP L</th><th>IMPLIED%</th><th>ML</th></tr></thead><tbody>';teams.forEach(function(t,i){var l=Math.max(0,Math.round((gpt-t.wins)*10)/10);var mp=mktProbs[i];var rawML=mp>0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;var ml=roundML(rawML);html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+t.team+'</td><td class="acc" style="font-weight:700">'+t.wins.toFixed(1)+'</td><td class="muted">'+l.toFixed(1)+'</td><td class="muted">'+(mp*100).toFixed(1)+'%</td><td class="'+(ml<0?'odds-fav':'odds-dog')+'">'+(ml>0?'+':'')+ml+'</td></tr>';});html+='</tbody></table></div>';});document.getElementById('confwins-body').innerHTML=html;}
@@ -661,7 +746,7 @@ function convertOdds(){var v=parseInt(document.getElementById('conv-in').value);
 function calcVig(){var v1=parseInt(document.getElementById('vig1').value);var v2=parseInt(document.getElementById('vig2').value);if(isNaN(v1)||isNaN(v2)){document.getElementById('vig-out').textContent='Vig: --';return;}var vig=((impliedProb(v1)/100+impliedProb(v2)/100)-1)*100;document.getElementById('vig-out').textContent='Vig: '+vig.toFixed(2)+'%';}
 function calcSpreadTool(){var pra=parseFloat(document.getElementById('pra').value);var hca=parseFloat(document.getElementById('hca').value)||3;var prb=parseFloat(document.getElementById('prb').value);if(isNaN(pra)||isNaN(prb)){document.getElementById('spread-out').textContent='Spread: --';return;}var sp=calcSpread(pra,hca,prb);var ml=spreadToML(sp);document.getElementById('spread-out').textContent=(sp>=0?'Home':'Away')+' '+fmtSp(-Math.abs(sp))+' | ML: '+fmtOdds(ml.fav)+' / '+fmtOdds(ml.dog);}
 function simulate(){var hs=parseInt(document.getElementById('sim-hs').value);var as_=parseInt(document.getElementById('sim-as').value);var hpr=parseFloat(document.getElementById('sim-hpr').value);var hhc=parseFloat(document.getElementById('sim-hhc').value)||3;var apr=parseFloat(document.getElementById('sim-apr').value);if(isNaN(hs)||isNaN(as_)||isNaN(hpr)||isNaN(apr)){document.getElementById('sim-result').innerHTML='<span style="color:var(--red2)">Fill in all fields</span>';return;}var r=calcPRAdj(hs,as_,hpr,hhc,apr);document.getElementById('sim-result').innerHTML='<span style="color:var(--txt3)">Home adj:</span> <span class="'+(r.ha>0?'up':'dn')+'">'+(r.ha>0?'+':'')+r.ha+'</span>   <span style="color:var(--txt3)">Away adj:</span> <span class="'+(r.aa>0?'up':'dn')+'">'+(r.aa>0?'+':'')+r.aa+'</span>   <span style="color:var(--txt2)">'+r.r+'</span>';}
-function manualSync(){fetch(API+'/sync/scores',{method:'POST'}).then(function(r){return r.json();}).then(function(d){console.log('Sync complete',d);}).catch(function(e){console.log('Sync error',e);});}
+function manualSync(){fetch(API+'/sync/scores',{method:'POST'}).then(function(r){return r.json();}).then(function(d){console.log('sync',d);}).catch(function(){});}
 function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';loadDashboard();}else if(p==='CollegeHoops'){isAdmin=false;document.getElementById('login-screen').style.display='none';loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
 document.addEventListener('DOMContentLoaded',function(){document.getElementById('login-user').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});document.getElementById('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});});
 </script>
