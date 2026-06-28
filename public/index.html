@@ -959,26 +959,318 @@ var mteEvent='pe16';
 var mteSlots={};
 var mteLocks={};
 var mteTeams=[];
-var mteInited=false;
 var mteLoading=false;
+var mteSimResults={champ:{},fin:{}};
+var mteActiveGame=null;
+
 function mteStruct(){return MTE_EVENTS[mteEvent];}
 function mteGameMap(){var m={};mteStruct().rounds.forEach(function(r){r.games.forEach(function(g){g._round=r.key;m[g.id]=g;});});return m;}
 function mteLayout(){var st=mteStruct(),GM=mteGameMap(),idx={n:0};function walk(src){if(src.slot!=null)return idx.n++;var g=GM[src.win];if(!g)return idx.n++;var ya=walk(g.a),yb=walk(g.b);g._y=(ya+yb)/2;return g._y;}walk({win:st.champGame});st.rounds.forEach(function(r,ri){r.games.forEach(function(g){g._x=ri;});});return GM;}
 function mtePart(src){if(src.slot!=null)return mteSlots[src.slot]||null;var w=mteLocks[src.win];if(!w)return null;return mteTeams.find(function(t){return String(t.id)===String(w);})||null;}
 function mteValidateLocks(){var changed=true;while(changed){changed=false;mteStruct().rounds.forEach(function(r){r.games.forEach(function(g){if(mteLocks[g.id]){var a=mtePart(g.a),b=mtePart(g.b);var ok=(a&&String(a.id)===String(mteLocks[g.id]))||(b&&String(b.id)===String(mteLocks[g.id]));if(!ok){delete mteLocks[g.id];changed=true;}}});});}}
-function initMTE(){if(mteInited)return;mteInited=true;sb.from('teams').select('id,team,pr').order('team',{ascending:true}).then(function(res){mteTeams=res.data||[];mteShowEvent('pe16',document.getElementById('mte-tab-pe16'));});}
-function mteShowEvent(key,btn){mteEvent=key;mteSlots={};mteLocks={};document.querySelectorAll('.mte-sub-btn').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');var st=mteStruct();document.getElementById('mte-event-title').textContent=st.name+' — '+st.subtitle;document.getElementById('mte-odds').style.display='none';document.getElementById('mte-status').textContent='Loading...';mteLoadFromDB();}
-function mteLoadFromDB(){var key=mteEvent;Promise.all([sb.from('mte_slots').select('slot,team_id,teams(id,team,pr)').eq('event_key',key),sb.from('mte_locks').select('game_id,winning_team_id').eq('event_key',key)]).then(function(results){var slotsRes=results[0].data||[];var locksRes=results[1].data||[];mteSlots={};slotsRes.forEach(function(row){if(row.teams)mteSlots[row.slot]={id:row.teams.id,team:row.teams.team,pr:row.teams.pr};});mteLocks={};locksRes.forEach(function(row){if(row.winning_team_id)mteLocks[row.game_id]=String(row.winning_team_id);});mteValidateLocks();mteLayout();mteBuildSlotPanel();mteRenderBracket();var filled=Object.keys(mteSlots).length;var st=mteStruct();if(filled===st.count)mteRunSim();else document.getElementById('mte-status').textContent='Fill all '+st.count+' slots to generate odds ('+filled+'/'+st.count+').';}); }
-function mteBuildSlotPanel(){var st=mteStruct();if(!isAdmin){var html='<div class="ct-seedgroup"><div class="ct-seedgroup-hdr">TEAMS<span class="ct-seedgroup-sub">SLOT ORDER</span></div>';for(var i=0;i<st.count;i++){var t=mteSlots[i];html+='<div class="ct-seedrow"><span class="ct-seednum">'+(i+1)+'</span><span style="font-size:11px;color:var(--txt1);padding:4px 6px;flex:1">'+(t?t.team:'<span class="muted">—</span>')+'</span></div>';}document.getElementById('mte-slot-panel').innerHTML=html+'</div>';return;}var html='<div class="ct-seedgroup"><div class="ct-seedgroup-hdr">TEAMS<span class="ct-seedgroup-sub">SLOT ORDER</span></div><div style="padding:6px 8px;border-bottom:1px solid var(--bdr2)"><button class="btn danger" style="width:100%;font-size:9px" onclick="mteReset()">RESET EVENT</button></div>';for(var i=0;i<st.count;i++){var t=mteSlots[i];html+='<div class="ct-seedrow"><span class="ct-seednum">'+(i+1)+'</span><select class="ct-seedsel" data-slot="'+i+'" onchange="mteApplySlot(this)"><option value="">— pick team —</option>';mteTeams.forEach(function(tm){var sel=(t&&String(tm.id)===String(t.id))?'selected':'';html+='<option value="'+tm.id+'" '+sel+'>'+tm.team+' ('+tm.pr.toFixed(1)+')</option>';});html+='</select></div>';}document.getElementById('mte-slot-panel').innerHTML=html+'</div>';}
-async function mteApplySlot(sel){if(!isAdmin)return;var slot=parseInt(sel.getAttribute('data-slot'));var id=sel.value;if(id){var t=mteTeams.find(function(x){return String(x.id)===String(id);});if(t){mteSlots[slot]={id:t.id,team:t.team,pr:t.pr};await sb.from('mte_slots').upsert({event_key:mteEvent,slot:slot,team_id:t.id,updated_at:new Date().toISOString()},{onConflict:'event_key,slot'});}}else{delete mteSlots[slot];await sb.from('mte_slots').delete().eq('event_key',mteEvent).eq('slot',slot);}mteValidateLocks();mteLayout();mteRenderBracket();var st=mteStruct();if(Object.keys(mteSlots).length===st.count)mteRunSim();else document.getElementById('mte-odds').style.display='none';}
-async function mtePickWinner(gid,tid){if(String(mteLocks[gid])===String(tid)){delete mteLocks[gid];await sb.from('mte_locks').delete().eq('event_key',mteEvent).eq('game_id',gid);}else{mteLocks[gid]=tid;var teamId=parseInt(tid);if(isNaN(teamId)){var tf=mteTeams.find(function(t){return String(t.id)===String(tid);});if(tf)teamId=tf.id;}await sb.from('mte_locks').upsert({event_key:mteEvent,game_id:gid,winning_team_id:teamId,updated_at:new Date().toISOString()},{onConflict:'event_key,game_id'});}mteValidateLocks();mteLayout();mteRenderBracket();var st=mteStruct();if(Object.keys(mteSlots).length===st.count)mteRunSim();}
-async function mteReset(){if(!isAdmin)return;if(!confirm('Reset ALL teams and results for this event?'))return;await sb.from('mte_slots').delete().eq('event_key',mteEvent);await sb.from('mte_locks').delete().eq('event_key',mteEvent);mteSlots={};mteLocks={};mteLayout();mteBuildSlotPanel();mteRenderBracket();document.getElementById('mte-odds').style.display='none';document.getElementById('mte-status').textContent='Fill all '+mteStruct().count+' slots to generate odds.';}
+
+function initMTE(){
+  sb.from('teams').select('id,team,pr').order('team',{ascending:true}).then(function(res){
+    mteTeams=res.data||[];
+    mteShowEvent(mteEvent,document.getElementById('mte-tab-'+mteEvent));
+  });
+}
+function mteRefresh(){
+  document.getElementById('mte-status').textContent='Refreshing...';
+  sb.from('teams').select('id,team,pr').order('team',{ascending:true}).then(function(res){
+    mteTeams=res.data||[];
+    // update slots with fresh PRs
+    Object.keys(mteSlots).forEach(function(s){
+      var fresh=mteTeams.find(function(t){return String(t.id)===String(mteSlots[s].id);});
+      if(fresh)mteSlots[s].pr=fresh.pr;
+    });
+    mteLayout();mteBuildSlotPanel();mteRenderBracket();
+    var st=mteStruct();
+    if(Object.keys(mteSlots).length===st.count)mteRunSim();
+    document.getElementById('mte-status').textContent='PRs updated — '+new Date().toLocaleTimeString();
+  });
+}
+function mteShowEvent(key,btn){
+  mteEvent=key;mteSlots={};mteLocks={};mteSimResults={champ:{},fin:{}};mteActiveGame=null;
+  document.querySelectorAll('.mte-sub-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  var st=mteStruct();
+  document.getElementById('mte-event-title').textContent=st.name+' — '+st.subtitle;
+  document.getElementById('mte-odds').style.display='none';
+  document.getElementById('mte-h2h-panel').style.display='none';
+  document.getElementById('mte-path-panel').style.display='none';
+  document.getElementById('mte-status').textContent='Loading...';
+  mteShowSubTab('bracket',document.querySelector('.mte-view-btn'));
+  mteLoadFromDB();
+}
+function mteShowSubTab(tab,btn){
+  document.querySelectorAll('.mte-view-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  document.getElementById('mte-view-bracket').style.display=tab==='bracket'?'block':'none';
+  document.getElementById('mte-view-schedule').style.display=tab==='schedule'?'block':'none';
+  if(tab==='schedule')mteBuildSchedule();
+}
+function mteLoadFromDB(){
+  var key=mteEvent;
+  Promise.all([
+    sb.from('mte_slots').select('slot,team_id,teams(id,team,pr)').eq('event_key',key),
+    sb.from('mte_locks').select('game_id,winning_team_id').eq('event_key',key)
+  ]).then(function(results){
+    var slotsRes=results[0].data||[];
+    var locksRes=results[1].data||[];
+    mteSlots={};
+    slotsRes.forEach(function(row){if(row.teams)mteSlots[row.slot]={id:row.teams.id,team:row.teams.team,pr:row.teams.pr};});
+    mteLocks={};
+    locksRes.forEach(function(row){if(row.winning_team_id)mteLocks[row.game_id]=String(row.winning_team_id);});
+    mteValidateLocks();mteLayout();mteBuildSlotPanel();mteRenderBracket();
+    var filled=Object.keys(mteSlots).length;
+    var st=mteStruct();
+    if(filled===st.count)mteRunSim();
+    else document.getElementById('mte-status').textContent='Fill all '+st.count+' slots to generate odds ('+filled+'/'+st.count+').';
+  });
+}
+function mteBuildSlotPanel(){
+  var st=mteStruct();
+  if(!isAdmin){
+    var html='<div class="ct-seedgroup"><div class="ct-seedgroup-hdr">TEAMS<span class="ct-seedgroup-sub">SLOT ORDER</span></div>';
+    for(var i=0;i<st.count;i++){var t=mteSlots[i];html+='<div class="ct-seedrow"><span class="ct-seednum">'+(i+1)+'</span><span style="font-size:11px;color:var(--txt1);padding:4px 6px;flex:1">'+(t?t.team+'<span style="color:var(--txt3);font-size:9px;margin-left:4px">'+t.pr.toFixed(1)+'</span>':'<span style="color:var(--txt3)">—</span>')+'</span></div>';}
+    // path to title button per team
+    html+='<div style="padding:6px 8px;border-top:1px solid var(--bdr2)"><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px">PATH TO TITLE</div>';
+    for(var i=0;i<st.count;i++){var t=mteSlots[i];if(t)html+='<button class="btn" style="width:100%;margin-bottom:3px;font-size:9px;text-align:left" onclick="mteShowPath(\''+t.id+'\')">'+t.team+'</button>';}
+    html+='</div>';
+    document.getElementById('mte-slot-panel').innerHTML=html+'</div>';return;
+  }
+  var html='<div class="ct-seedgroup"><div class="ct-seedgroup-hdr">TEAMS<span class="ct-seedgroup-sub">ADMIN</span></div><div style="padding:6px 8px;border-bottom:1px solid var(--bdr2);display:flex;gap:4px"><button class="btn danger" style="flex:1;font-size:9px" onclick="mteReset()">RESET</button><button class="btn" style="flex:1;font-size:9px" onclick="mteShowPathPanel()">PATHS</button></div>';
+  for(var i=0;i<st.count;i++){var t=mteSlots[i];html+='<div class="ct-seedrow"><span class="ct-seednum">'+(i+1)+'</span><select class="ct-seedsel" data-slot="'+i+'" onchange="mteApplySlot(this)"><option value="">— pick team —</option>';mteTeams.forEach(function(tm){var sel=(t&&String(tm.id)===String(t.id))?'selected':'';html+='<option value="'+tm.id+'" '+sel+'>'+tm.team+' ('+tm.pr.toFixed(1)+')</option>';});html+='</select></div>';}
+  document.getElementById('mte-slot-panel').innerHTML=html+'</div>';
+}
+async function mteApplySlot(sel){
+  if(!isAdmin)return;
+  var slot=parseInt(sel.getAttribute('data-slot'));var id=sel.value;
+  if(id){var t=mteTeams.find(function(x){return String(x.id)===String(id);});if(t){mteSlots[slot]={id:t.id,team:t.team,pr:t.pr};await sb.from('mte_slots').upsert({event_key:mteEvent,slot:slot,team_id:t.id,updated_at:new Date().toISOString()},{onConflict:'event_key,slot'});}}
+  else{delete mteSlots[slot];await sb.from('mte_slots').delete().eq('event_key',mteEvent).eq('slot',slot);}
+  mteValidateLocks();mteLayout();mteRenderBracket();
+  var st=mteStruct();if(Object.keys(mteSlots).length===st.count)mteRunSim();else document.getElementById('mte-odds').style.display='none';
+}
+async function mtePickWinner(gid,tid){
+  if(String(mteLocks[gid])===String(tid)){delete mteLocks[gid];await sb.from('mte_locks').delete().eq('event_key',mteEvent).eq('game_id',gid);}
+  else{mteLocks[gid]=tid;var teamId=parseInt(tid);if(isNaN(teamId)){var tf=mteTeams.find(function(t){return String(t.id)===String(tid);});if(tf)teamId=tf.id;}await sb.from('mte_locks').upsert({event_key:mteEvent,game_id:gid,winning_team_id:teamId,updated_at:new Date().toISOString()},{onConflict:'event_key,game_id'});}
+  mteValidateLocks();mteLayout();mteRenderBracket();
+  document.getElementById('mte-h2h-panel').style.display='none';
+  var st=mteStruct();if(Object.keys(mteSlots).length===st.count)mteRunSim();
+}
+async function mteReset(){
+  if(!isAdmin)return;if(!confirm('Reset ALL teams and results for this event?'))return;
+  await sb.from('mte_slots').delete().eq('event_key',mteEvent);
+  await sb.from('mte_locks').delete().eq('event_key',mteEvent);
+  mteSlots={};mteLocks={};mteSimResults={champ:{},fin:{}};
+  mteLayout();mteBuildSlotPanel();mteRenderBracket();
+  document.getElementById('mte-odds').style.display='none';
+  document.getElementById('mte-h2h-panel').style.display='none';
+  document.getElementById('mte-path-panel').style.display='none';
+  document.getElementById('mte-status').textContent='Fill all '+mteStruct().count+' slots to generate odds.';
+}
+
+/* H2H MATCHUP PANEL */
+function mteShowH2H(gid){
+  var GM=mteGameMap();var g=GM[gid];if(!g)return;
+  var a=mtePart(g.a),b=mtePart(g.b);if(!a||!b)return;
+  if(mteActiveGame===gid){document.getElementById('mte-h2h-panel').style.display='none';mteActiveGame=null;return;}
+  mteActiveGame=gid;
+  var sp=calcSpread(a.pr,0,b.pr,true); // neutral site for MTEs
+  var rsp=Math.round(sp*2)/2;
+  var ml=spreadToML(sp);
+  var favT=sp>=0?a:b;var dogT=sp>=0?b:a;
+  var wp=Math.round(wpFromPR(a.pr,b.pr)*100);
+  var awp=100-wp;
+  var panel=document.getElementById('mte-h2h-panel');
+  panel.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--acc)">MATCHUP ODDS — '+g._round+'</div><button class="btn" style="font-size:9px" onclick="document.getElementById(\'mte-h2h-panel\').style.display=\'none\';mteActiveGame=null">✕ CLOSE</button></div>'
+  +'<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:12px">'
+  +'<div style="background:var(--bg2);border-radius:4px;padding:10px;text-align:center"><div style="font-size:13px;font-weight:700;color:var(--txt1)">'+a.team+'</div><div style="font-size:11px;color:var(--txt3);margin-top:2px">PR: '+a.pr.toFixed(1)+'</div><div style="font-size:18px;font-weight:700;color:'+(sp>=0?'var(--red2)':'var(--grn2)')+';margin-top:6px">'+(sp>=0?fmtSp(-Math.abs(rsp)):'dog')+'</div><div style="font-size:12px;font-weight:700;margin-top:2px;color:'+(sp>=0?'var(--red2)':'var(--grn2)')+'">'+(sp>=0?fmtOdds(ml.fav):fmtOdds(ml.dog))+'</div><div style="font-size:11px;color:var(--txt3);margin-top:4px">'+(sp>=0?wp:100-wp)+'% WIN</div></div>'
+  +'<div style="text-align:center;font-size:11px;font-weight:700;color:var(--txt3)">vs<br><span style="font-size:9px;color:var(--txt3)">NEUTRAL</span></div>'
+  +'<div style="background:var(--bg2);border-radius:4px;padding:10px;text-align:center"><div style="font-size:13px;font-weight:700;color:var(--txt1)">'+b.team+'</div><div style="font-size:11px;color:var(--txt3);margin-top:2px">PR: '+b.pr.toFixed(1)+'</div><div style="font-size:18px;font-weight:700;color:'+(sp<0?'var(--red2)':'var(--grn2)')+';margin-top:6px">'+(sp<0?fmtSp(-Math.abs(rsp)):'dog')+'</div><div style="font-size:12px;font-weight:700;margin-top:2px;color:'+(sp<0?'var(--red2)':'var(--grn2)')+'">'+(sp<0?fmtOdds(ml.fav):fmtOdds(ml.dog))+'</div><div style="font-size:11px;color:var(--txt3);margin-top:4px">'+(sp<0?wp:100-wp)+'% WIN</div></div>'
+  +'</div>'
+  +'<div style="text-align:center;font-size:11px;color:var(--txt3)">Spread: <strong>'+favT.team+' '+fmtSp(-Math.abs(rsp))+'</strong> &nbsp;|&nbsp; ML: <span class="odds-fav">'+fmtOdds(ml.fav)+'</span> / <span class="odds-dog">'+fmtOdds(ml.dog)+'</span></div>';
+  panel.style.display='block';
+}
+
+/* PATH TO CHAMPIONSHIP */
+function mteShowPathPanel(){
+  var panel=document.getElementById('mte-path-panel');
+  if(panel.style.display==='block'){panel.style.display='none';return;}
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--acc)">PATH TO CHAMPIONSHIP</div><button class="btn" style="font-size:9px" onclick="document.getElementById(\'mte-path-panel\').style.display=\'none\'">✕ CLOSE</button></div>';
+  html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
+  Object.keys(mteSlots).forEach(function(s){var t=mteSlots[s];html+='<button class="btn" style="font-size:9px" onclick="mteShowPath(\''+t.id+'\')">'+t.team+'</button>';});
+  html+='</div><div id="mte-path-content"><div style="color:var(--txt3);font-size:11px">Select a team above</div></div>';
+  panel.innerHTML=html;panel.style.display='block';
+}
+function mteShowPath(teamId){
+  var st=mteStruct();
+  var team=mteTeams.find(function(t){return String(t.id)===String(teamId);});
+  if(!team){document.getElementById('mte-path-content').innerHTML='<div style="color:var(--txt3);font-size:11px">Team not found</div>';return;}
+  var N=10000,wins=0,roundWins={};
+  st.rounds.forEach(function(r){roundWins[r.key]=0;});
+  function srcTeam(src,winners){
+    if(src.slot!=null)return mteSlots[src.slot]?{id:mteSlots[src.slot].id,team:mteSlots[src.slot].team,pr:mteSlots[src.slot].pr}:null;
+    return winners[src.win]||null;
+  }
+  for(var i=0;i<N;i++){
+    var winners={};var alive=true;
+    st.rounds.forEach(function(r){r.games.forEach(function(g){
+      var ta=srcTeam(g.a,winners),tb=srcTeam(g.b,winners),w;
+      if(mteLocks[g.id]){w=(ta&&String(ta.id)===String(mteLocks[g.id]))?ta:(tb&&String(tb.id)===String(mteLocks[g.id]))?tb:(ta&&tb?simG(ta,tb):(ta||tb));}
+      else{w=ta&&tb?simG(ta,tb):(ta||tb);}
+      winners[g.id]=w;
+      var teamInGame=(ta&&String(ta.id)===String(teamId))||(tb&&String(tb.id)===String(teamId));
+      if(teamInGame&&w&&String(w.id)===String(teamId))roundWins[r.key]=(roundWins[r.key]||0)+1;
+    });});
+    var cw=winners[st.champGame];if(cw&&String(cw.id)===String(teamId))wins++;
+  }
+  var html='<div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:8px">'+team.team+' <span style="color:var(--txt3);font-weight:400">PR: '+team.pr.toFixed(1)+'</span></div>';
+  html+='<table class="data" style="font-size:11px"><thead><tr><th>ROUND</th><th>WIN %</th><th>ML</th></tr></thead><tbody>';
+  st.rounds.forEach(function(r){
+    var rw=roundWins[r.key]||0;var tp=rw/N;
+    var mp=Math.min(tp*1.18,0.9999);
+    var rawML=mp>=0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;
+    var ml=tp>0?roundML(rawML):null;
+    html+='<tr><td class="muted">'+r.name+'</td><td class="acc" style="font-weight:700">'+(tp*100).toFixed(1)+'%</td><td class="'+(ml&&ml<0?'odds-fav':'odds-dog')+'">'+(ml?fmtOdds(ml):'--')+'</td></tr>';
+  });
+  var cp=wins/N;var cmp=Math.min(cp*1.18,0.9999);var cml=cp>0?roundML(cmp>=0.5?-(cmp/(1-cmp))*100:((1-cmp)/cmp)*100):null;
+  html+='<tr style="background:var(--bg2);font-weight:700"><td style="color:var(--acc)">CHAMPION</td><td class="acc">'+(cp*100).toFixed(1)+'%</td><td class="'+(cml&&cml<0?'odds-fav':'odds-dog')+'">'+(cml?fmtOdds(cml):'--')+'</td></tr>';
+  html+='</tbody></table>';
+  var el=document.getElementById('mte-path-content');
+  if(el)el.innerHTML=html;
+  else{var panel=document.getElementById('mte-path-panel');if(panel.style.display!=='block')mteShowPathPanel();setTimeout(function(){document.getElementById('mte-path-content').innerHTML=html;},50);}
+}
+
+/* SCHEDULE VIEW */
+function mteBuildSchedule(){
+  var st=mteStruct();var GM=mteGameMap();var html='';
+  var rnd=0;
+  st.rounds.forEach(function(r){
+    html+='<div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--acc);margin:'+(rnd>0?'16px':'0')+'px 0 6px">'+r.name+'</div>';
+    r.games.forEach(function(g,gi){
+      var a=mtePart(g.a),b=mtePart(g.b);
+      var sp=a&&b?calcSpread(a.pr,0,b.pr,true):null;
+      var rsp=sp!=null?Math.round(sp*2)/2:null;
+      var ml=sp!=null?spreadToML(sp):null;
+      var favT=sp!=null?(sp>=0?a:b):null;
+      var dec=mteLocks[g.id];
+      var winT=dec?(mteTeams.find(function(t){return String(t.id)===String(dec);})||null):null;
+      var lossT=dec&&winT?(String(a&&a.id)===String(winT.id)?b:a):null;
+      html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-left:3px solid '+(dec?'var(--grn2)':'var(--bdr2)')+';border-radius:4px;padding:8px 12px;margin-bottom:4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+      html+='<div style="font-size:10px;color:var(--txt3);min-width:24px">'+(gi+1)+'</div>';
+      html+='<div style="flex:1;min-width:120px"><span style="font-weight:700;color:var(--txt1)">'+(a?a.team:'TBD')+'</span><span style="color:var(--txt3);margin:0 6px">vs</span><span style="font-weight:700;color:var(--txt1)">'+(b?b.team:'TBD')+'</span></div>';
+      if(sp!=null){html+='<div style="font-size:11px;color:var(--red2);font-weight:700">'+favT.team+' '+fmtSp(-Math.abs(rsp))+'</div>';html+='<div style="font-size:11px"><span class="odds-fav">'+fmtOdds(ml.fav)+'</span><span style="color:var(--txt3);margin:0 4px">/</span><span class="odds-dog">'+fmtOdds(ml.dog)+'</span></div>';}
+      else{html+='<div style="font-size:11px;color:var(--txt3)">-- / --</div>';}
+      if(dec&&winT){html+='<div style="font-size:10px;font-weight:700;color:var(--grn2)">✓ '+winT.team+'</div>';}
+      else if(a&&b){html+='<div style="font-size:10px;color:var(--txt3)">pending</div>';}
+      html+='</div>';
+    });rnd++;
+  });
+  if(!html)html='<div style="color:var(--txt3);padding:20px;font-size:12px">Fill team slots to see schedule</div>';
+  document.getElementById('mte-schedule-body').innerHTML=html;
+}
+
+/* EXPORT BRACKET */
+function mteExportBracket(){
+  var el=document.getElementById('mte-bracket');
+  if(!el||!el.children.length){alert('No bracket to export');return;}
+  // Use html2canvas if available
+  if(typeof html2canvas==='undefined'){
+    var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload=function(){mteDoExport(el);};document.head.appendChild(s);
+  } else {mteDoExport(el);}
+}
+function mteDoExport(el){
+  var st=mteStruct();
+  html2canvas(el,{backgroundColor:'#ffffff',scale:2,useCORS:true}).then(function(canvas){
+    var a=document.createElement('a');a.download=st.name.replace(/ /g,'_')+'_'+st.subtitle+'.png';a.href=canvas.toDataURL('image/png');a.click();
+  }).catch(function(){alert('Export failed — try a screenshot instead');});
+}
+
 var MTE_ROWH=44,MTE_COLW=188,MTE_CARDW=166,MTE_CARDH=46,MTE_TOP=26,MTE_LEFT=6;
-function mteRenderBracket(){var st=mteStruct(),GM=mteGameMap();var numRounds=st.rounds.length;var W=MTE_LEFT+numRounds*MTE_COLW+150,H=MTE_TOP+st.count*MTE_ROWH+12;var html='<div style="position:relative;width:'+W+'px;height:'+H+'px">';st.rounds.forEach(function(r,ri){html+='<div class="ct-rndhdr" style="left:'+(MTE_LEFT+ri*MTE_COLW)+'px;width:'+MTE_CARDW+'px">'+r.name+'</div>';});html+='<div class="ct-rndhdr" style="left:'+(MTE_LEFT+numRounds*MTE_COLW)+'px;width:140px">Champion</div>';var feed={};st.rounds.forEach(function(r){r.games.forEach(function(g){[g.a,g.b].forEach(function(s){if(s.win)feed[s.win]=g.id;});});});function cy(g){return MTE_TOP+(g._y+0.5)*MTE_ROWH;}var lines='';Object.keys(GM).forEach(function(gid){var g=GM[gid];if(!feed[gid])return;var h=GM[feed[gid]];var x1=MTE_LEFT+g._x*MTE_COLW+MTE_CARDW,y1=cy(g),x2=MTE_LEFT+h._x*MTE_COLW,y2=cy(h),mx=(x1+x2)/2;var dec=mteLocks[gid];lines+='<path d="M'+x1+' '+y1+' H'+mx+' V'+y2+' H'+x2+'" fill="none" stroke="'+(dec?'var(--acc)':'var(--bdr2)')+'" stroke-width="'+(dec?'2':'1')+'"/>';});html+='<svg width="'+W+'" height="'+H+'" style="position:absolute;top:0;left:0;pointer-events:none">'+lines+'</svg>';Object.keys(GM).forEach(function(gid){var g=GM[gid],a=mtePart(g.a),b=mtePart(g.b),top=cy(g)-MTE_CARDH/2,left=MTE_LEFT+g._x*MTE_COLW,dec=mteLocks[gid];html+='<div class="ct-game" style="top:'+top+'px;left:'+left+'px;width:'+MTE_CARDW+'px">'+mteTeamRow(gid,a,dec,!!(a&&b))+mteTeamRow(gid,b,dec,!!(a&&b));if(a&&b&&!dec){var fav=a.pr>=b.pr?a:b,wp=Math.round(Math.max(wpFromPR(a.pr,b.pr),wpFromPR(b.pr,a.pr))*100);html+='<div class="ct-info"><span>'+fav.team.substring(0,13)+'</span><span class="ct-wp">'+wp+'%</span></div>';}else if(dec){var wt=(a&&String(a.id)===String(dec))?a:b;html+='<div class="ct-info ct-info-done"><span>✓ '+(wt?wt.team.substring(0,14):'')+'</span><span>advances</span></div>';}html+='</div>';});var chg=GM[st.champGame];var ct2=mteLocks[st.champGame]?((mtePart(chg.a)&&String(mtePart(chg.a).id)===String(mteLocks[st.champGame]))?mtePart(chg.a):mtePart(chg.b)):null;html+='<div class="ct-champ" style="top:'+(cy(chg)-8)+'px;left:'+(MTE_LEFT+numRounds*MTE_COLW)+'px">'+(ct2?'★ '+ct2.team:'CHAMPION')+'</div></div>';document.getElementById('mte-bracket').innerHTML=html;var filled=Object.keys(mteSlots).length;document.getElementById('mte-status').textContent=filled<st.count?'Fill all '+st.count+' slots for odds ('+filled+'/'+st.count+')':'Click a team to advance — saves automatically.';}
-function mteTeamRow(gid,t,dec,clickable){if(!t)return'<div class="ct-team ct-blank"><span class="ct-seed" style="background:var(--bg2)"></span><span class="ct-nm">—</span></div>';var cls='ct-team';if(dec)cls+=(String(t.id)===String(dec))?' ct-win':' ct-elim';if(clickable)cls+=' ct-click';var onclick=clickable?' onclick="mtePickWinner(\''+gid+'\',\''+t.id+'\')"':'';return'<div class="'+cls+'"'+onclick+'><span class="ct-seed" style="background:var(--bg2);color:var(--txt3)"></span><span class="ct-nm">'+t.team+'</span><span class="ct-pr">'+t.pr.toFixed(1)+'</span></div>';}
-function mteRunSim(){var st=mteStruct();if(Object.keys(mteSlots).length<st.count){document.getElementById('mte-odds').style.display='none';return;}var overround=parseFloat(document.getElementById('mte-overround').value)||1.18;var teams=[];for(var i=0;i<st.count;i++){if(mteSlots[i])teams.push({id:mteSlots[i].id,team:mteSlots[i].team,pr:mteSlots[i].pr,slot:i});}var N=25000,champ={},fin={};function srcTeam(src,winners){if(src.slot!=null)return mteSlots[src.slot]?{id:mteSlots[src.slot].id,team:mteSlots[src.slot].team,pr:mteSlots[src.slot].pr}:null;return winners[src.win]||null;}for(var i=0;i<N;i++){var winners={},finalists=[];st.rounds.forEach(function(r){r.games.forEach(function(g){var ta=srcTeam(g.a,winners),tb=srcTeam(g.b,winners),w;if(mteLocks[g.id]){w=(ta&&String(ta.id)===String(mteLocks[g.id]))?ta:(tb&&String(tb.id)===String(mteLocks[g.id]))?tb:(ta&&tb?simG(ta,tb):(ta||tb));}else{w=ta&&tb?simG(ta,tb):(ta||tb);}winners[g.id]=w;if(g.id===st.champGame)finalists=[ta,tb];});});var cw=winners[st.champGame];if(cw)champ[cw.id]=(champ[cw.id]||0)+1;finalists.forEach(function(t){if(t)fin[t.id]=(fin[t.id]||0)+1;});}function renderOdds(elId,countObj){var rows=teams.map(function(t){var c=countObj[t.id]||0,tp=c/N,mp=Math.min(tp*overround,0.9999),rawML=mp>=0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;return{team:t.team,pr:t.pr,freq:c,tp:tp*100,ml:c?roundML(rawML):null};});rows.sort(function(a,b){return b.freq-a.freq;});var html='';rows.forEach(function(r,i){if(!r.freq)return;html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+r.team+'</td><td class="acc" style="font-weight:700">'+r.pr.toFixed(1)+'</td><td class="muted">'+r.tp.toFixed(1)+'%</td><td class="'+(r.ml<0?'odds-fav':'odds-dog')+'">'+(r.ml>0?'+':'')+r.ml+'</td></tr>';});document.getElementById(elId).innerHTML=html;}
-renderOdds('mte-champ-body',champ);renderOdds('mte-fin-body',fin);document.getElementById('mte-odds').style.display='block';document.getElementById('mte-odds-info').textContent=st.name+' '+st.subtitle+' — 25,000 sims | Overround '+overround+'x'+(Object.keys(mteLocks).length?' | '+Object.keys(mteLocks).length+' result(s) locked':'');}
+function mteRenderBracket(){
+  var st=mteStruct(),GM=mteGameMap();
+  var numRounds=st.rounds.length;
+  var W=MTE_LEFT+numRounds*MTE_COLW+150,H=MTE_TOP+st.count*MTE_ROWH+12;
+  var html='<div style="position:relative;width:'+W+'px;height:'+H+'px">';
+  st.rounds.forEach(function(r,ri){html+='<div class="ct-rndhdr" style="left:'+(MTE_LEFT+ri*MTE_COLW)+'px;width:'+MTE_CARDW+'px">'+r.name+'</div>';});
+  html+='<div class="ct-rndhdr" style="left:'+(MTE_LEFT+numRounds*MTE_COLW)+'px;width:140px">Champion</div>';
+  var feed={};st.rounds.forEach(function(r){r.games.forEach(function(g){[g.a,g.b].forEach(function(s){if(s.win)feed[s.win]=g.id;});});});
+  function cy(g){return MTE_TOP+(g._y+0.5)*MTE_ROWH;}
+  var lines='';
+  Object.keys(GM).forEach(function(gid){
+    var g=GM[gid];if(!feed[gid])return;var h=GM[feed[gid]];
+    var x1=MTE_LEFT+g._x*MTE_COLW+MTE_CARDW,y1=cy(g),x2=MTE_LEFT+h._x*MTE_COLW,y2=cy(h),mx=(x1+x2)/2;
+    var dec=mteLocks[gid];
+    lines+='<path d="M'+x1+' '+y1+' H'+mx+' V'+y2+' H'+x2+'" fill="none" stroke="'+(dec?'var(--acc)':'var(--bdr2)')+'" stroke-width="'+(dec?'2':'1')+'"/>';
+  });
+  html+='<svg width="'+W+'" height="'+H+'" style="position:absolute;top:0;left:0;pointer-events:none">'+lines+'</svg>';
+  Object.keys(GM).forEach(function(gid){
+    var g=GM[gid],a=mtePart(g.a),b=mtePart(g.b),top=cy(g)-MTE_CARDH/2,left=MTE_LEFT+g._x*MTE_COLW,dec=mteLocks[gid];
+    var clickable=!!(a&&b);
+    // game card — click header area for H2H, click team for advance
+    html+='<div class="ct-game" style="top:'+top+'px;left:'+left+'px;width:'+MTE_CARDW+'px">';
+    html+=mteTeamRow(gid,a,dec,clickable)+mteTeamRow(gid,b,dec,clickable);
+    if(a&&b&&!dec){
+      var fav=a.pr>=b.pr?a:b,wp=Math.round(Math.max(wpFromPR(a.pr,b.pr),wpFromPR(b.pr,a.pr))*100);
+      html+='<div class="ct-info ct-click" style="cursor:pointer" onclick="mteShowH2H(\''+gid+'\')" title="Click for matchup odds"><span>'+fav.team.substring(0,11)+' '+fmtSp(-Math.abs(Math.round((a.pr-b.pr)*2)/2))+'</span><span class="ct-wp">'+wp+'% ℹ</span></div>';
+    } else if(dec){
+      var wt=(a&&String(a.id)===String(dec))?a:b;
+      html+='<div class="ct-info ct-info-done"><span>✓ '+(wt?wt.team.substring(0,14):'')+'</span><span>advances</span></div>';
+    }
+    html+='</div>';
+  });
+  var chg=GM[st.champGame];
+  var ct2=mteLocks[st.champGame]?((mtePart(chg.a)&&String(mtePart(chg.a).id)===String(mteLocks[st.champGame]))?mtePart(chg.a):mtePart(chg.b)):null;
+  html+='<div class="ct-champ" style="top:'+(cy(chg)-8)+'px;left:'+(MTE_LEFT+numRounds*MTE_COLW)+'px">'+(ct2?'★ '+ct2.team:'CHAMPION')+'</div></div>';
+  document.getElementById('mte-bracket').innerHTML=html;
+  var filled=Object.keys(mteSlots).length;
+  document.getElementById('mte-status').textContent=filled<st.count?'Fill all '+st.count+' slots for odds ('+filled+'/'+st.count+')':'Click info bar for matchup odds · Click team to advance · saves automatically.';
+}
+function mteTeamRow(gid,t,dec,clickable){
+  if(!t)return'<div class="ct-team ct-blank"><span class="ct-seed" style="background:var(--bg2)"></span><span class="ct-nm">—</span></div>';
+  var cls='ct-team';
+  if(dec)cls+=(String(t.id)===String(dec))?' ct-win':' ct-elim';
+  if(clickable)cls+=' ct-click';
+  var onclick=clickable?' onclick="mtePickWinner(\''+gid+'\',\''+t.id+'\')"':'';
+  return'<div class="'+cls+'"'+onclick+'><span class="ct-seed" style="background:var(--bg2);color:var(--txt3)"></span><span class="ct-nm">'+t.team+'</span><span class="ct-pr">'+t.pr.toFixed(1)+'</span></div>';
+}
+function mteRunSim(){
+  var st=mteStruct();
+  if(Object.keys(mteSlots).length<st.count){document.getElementById('mte-odds').style.display='none';return;}
+  var overround=parseFloat(document.getElementById('mte-overround').value)||1.18;
+  var teams=[];for(var i=0;i<st.count;i++){if(mteSlots[i])teams.push({id:mteSlots[i].id,team:mteSlots[i].team,pr:mteSlots[i].pr,slot:i});}
+  var N=25000,champ={},fin={};
+  function srcTeam(src,winners){
+    if(src.slot!=null)return mteSlots[src.slot]?{id:mteSlots[src.slot].id,team:mteSlots[src.slot].team,pr:mteSlots[src.slot].pr}:null;
+    return winners[src.win]||null;
+  }
+  for(var i=0;i<N;i++){
+    var winners={},finalists=[];
+    st.rounds.forEach(function(r){r.games.forEach(function(g){
+      var ta=srcTeam(g.a,winners),tb=srcTeam(g.b,winners),w;
+      if(mteLocks[g.id]){w=(ta&&String(ta.id)===String(mteLocks[g.id]))?ta:(tb&&String(tb.id)===String(mteLocks[g.id]))?tb:(ta&&tb?simG(ta,tb):(ta||tb));}
+      else{w=ta&&tb?simG(ta,tb):(ta||tb);}
+      winners[g.id]=w;if(g.id===st.champGame)finalists=[ta,tb];
+    });});
+    var cw=winners[st.champGame];if(cw)champ[cw.id]=(champ[cw.id]||0)+1;
+    finalists.forEach(function(t){if(t)fin[t.id]=(fin[t.id]||0)+1;});
+  }
+  mteSimResults={champ:champ,fin:fin};
+  function renderOdds(elId,countObj){
+    var rows=teams.map(function(t){var c=countObj[t.id]||0,tp=c/N,mp=Math.min(tp*overround,0.9999),rawML=mp>=0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;return{team:t.team,pr:t.pr,freq:c,tp:tp*100,ml:c?roundML(rawML):null};});
+    rows.sort(function(a,b){return b.freq-a.freq;});
+    var html='';rows.forEach(function(r,i){if(!r.freq)return;html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+r.team+'</td><td class="acc" style="font-weight:700">'+r.pr.toFixed(1)+'</td><td class="muted">'+r.tp.toFixed(1)+'%</td><td class="'+(r.ml<0?'odds-fav':'odds-dog')+'">'+(r.ml>0?'+':'')+r.ml+'</td></tr>';});
+    document.getElementById(elId).innerHTML=html;
+  }
+  renderOdds('mte-champ-body',champ);renderOdds('mte-fin-body',fin);
+  document.getElementById('mte-odds').style.display='block';
+  document.getElementById('mte-odds-info').textContent=st.name+' '+st.subtitle+' — 25,000 sims | Overround '+overround+'x'+(Object.keys(mteLocks).length?' | '+Object.keys(mteLocks).length+' result(s) locked':'');
+}
 /* =================== END MTE EVENTS =================== */
+
 function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';loadDashboard();}else if(p==='CollegeHoops'){isAdmin=false;document.getElementById('login-screen').style.display='none';loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
 document.addEventListener('DOMContentLoaded',function(){document.getElementById('login-user').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});document.getElementById('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});});
 </script>
