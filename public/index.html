@@ -1000,7 +1000,9 @@ function mteShowEvent(key,btn){
   document.getElementById('mte-h2h-panel').style.display='none';
   document.getElementById('mte-path-panel').style.display='none';
   document.getElementById('mte-status').textContent='Loading...';
-  mteShowSubTab('bracket',document.querySelector('.mte-view-btn'));
+  document.getElementById('mte-view-bracket').style.display='block';
+  document.getElementById('mte-view-schedule').style.display='none';
+  document.querySelectorAll('.mte-view-btn').forEach(function(b,i){b.classList.toggle('active',i===0);});
   mteLoadFromDB();
 }
 function mteShowSubTab(tab,btn){
