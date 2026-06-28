@@ -607,8 +607,49 @@ function filterPR(){loadTeams();}
 function editTeam(id,pr,hc){if(!isAdmin)return;var newPR=prompt('New power rating:',pr);if(newPR===null)return;var newHC=prompt('New home court:',hc);if(newHC===null)return;sb.from('teams').update({pr:parseFloat(newPR),hc:parseFloat(newHC),updated_at:new Date().toISOString()}).eq('id',id).then(function(){loadTeams();});}
 function exportCSV(){var csv='Rank,Team,Conference,W,L,PR,PR_Pre,HC\n';allTeams.forEach(function(t,i){csv+=(i+1)+','+t.team+','+t.conference+','+(t.wins||0)+','+(t.losses||0)+','+t.pr+','+(t.pr_preseason||'')+','+t.hc+'\n';});var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='cbk_ratings.csv';a.click();}
 function initTeamProfileDropdown(){var sel=document.getElementById('team-select');if(sel.options.length>1)return;sb.from('teams').select('id,team,conference,pr,hc').order('team',{ascending:true}).then(function(res){var teams=res.data||[];teams.forEach(function(t){var o=document.createElement('option');o.value=t.id;o.textContent=t.team+' ('+t.conference+')';sel.appendChild(o);});});}
-function loadTeamProfile(){var sel=document.getElementById('team-select');var teamId=sel.value;if(!teamId)return;currentTeamId=teamId;var content=document.getElementById('team-profile-content');content.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px">Loading...</div>';sb.from('teams').select('*').eq('id',teamId).single().then(function(res){var team=res.data;if(!team)return;currentTeamData=team;Promise.all([sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).order('game_date',{ascending:true}).range(0,39),sb.from('rosters').select('*').eq('team_id',teamId),sb.from('injuries').select('*').eq('team_id',teamId).eq('active',true),sb.from('teams').select('id,team,pr,hc').order('team',{ascending:true})]).then(function(results){var games=results[0].data||[];var roster=results[1].data||[];var injuries=results[2].data||[];var allTeamsList=results[3].data||[];var totalInjAdj=injuries.reduce(function(s,i){return s+i.impact;},0);var effPR=team.pr-totalInjAdj;var confGames=games.filter(function(g){return g.home&&g.away&&g.home.conference===g.away.conference;});var totalExpW=0;var confExpW=0;games.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);totalExpW+=wp;});confGames.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);confExpW+=wp;});
-var html='';html+='<div class="team-header"><div><div class="team-header-name">'+team.team+'</div><div class="team-header-sub">'+team.conference+'&nbsp;|&nbsp;Coach: '+(team.coach||'--')+'</div></div><div style="text-align:right"><div style="font-size:28px;font-weight:700;color:#fff">'+team.pr.toFixed(1)+'</div><div style="font-size:11px;opacity:0.8">POWER RATING'+(totalInjAdj>0?' (EFF: '+effPR.toFixed(1)+')':'')+'</div></div></div>';
+function buildPRSparkline(prHistory,currentPR,preseasonPR){
+var pts=[];
+if(preseasonPR!=null)pts.push({pr:parseFloat(preseasonPR),label:'Pre'});
+(prHistory||[]).forEach(function(h){pts.push({pr:parseFloat(h.pr),label:h.recorded_at});});
+if(!pts.length||pts[pts.length-1].pr!==currentPR)pts.push({pr:parseFloat(currentPR),label:'Now'});
+if(pts.length<2)return'<div style="font-size:10px;opacity:0.7;color:#fff">No trend data yet</div>';
+var W=180,H=44,PAD=6;
+var prs=pts.map(function(p){return p.pr;});
+var mn=Math.min.apply(null,prs),mx=Math.max.apply(null,prs);
+var range=mx-mn||1;
+function x(i){return PAD+(i/(pts.length-1))*(W-PAD*2);}
+function y(pr){return H-PAD-((pr-mn)/range)*(H-PAD*2);}
+var path='M';
+pts.forEach(function(p,i){path+=(i?'L':'')+x(i).toFixed(1)+' '+y(p.pr).toFixed(1)+' ';});
+var area=path+'L'+x(pts.length-1).toFixed(1)+' '+H+' L'+PAD+' '+H+' Z';
+var dots='';
+pts.forEach(function(p,i){
+var cx=x(i),cy=y(p.pr);
+var isUp=i>0&&p.pr>pts[i-1].pr,isDn=i>0&&p.pr<pts[i-1].pr;
+var col=isUp?'#4caf50':isDn?'#ef5350':'#fff';
+dots+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="3" fill="'+col+'" stroke="#fff" stroke-width="1"/>';
+});
+var trend=pts[pts.length-1].pr-pts[0].pr;
+var trendStr=(trend>0?'+':'')+trend.toFixed(1);
+var trendCol=trend>0?'#4caf50':trend<0?'#ef5350':'#fff';
+return'<div style="display:flex;align-items:center;gap:12px">'
++'<svg width="'+W+'" height="'+H+'" style="overflow:visible">'
++'<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff" stop-opacity="0.25"/><stop offset="100%" stop-color="#fff" stop-opacity="0.02"/></linearGradient></defs>'
++'<path d="'+area+'" fill="url(#sg)"/>'
++'<path d="'+path+'" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>'
++dots
++'</svg>'
++'<div style="text-align:center">'
++'<div style="font-size:9px;opacity:0.7;letter-spacing:1px;color:#fff">TREND</div>'
++'<div style="font-size:16px;font-weight:700;color:'+trendCol+'">'+trendStr+'</div>'
++'<div style="font-size:9px;opacity:0.6;color:#fff">'+(pts.length-1)+' games</div>'
++'</div></div>';
+}
+function loadTeamProfile(){var sel=document.getElementById('team-select');var teamId=sel.value;if(!teamId)return;currentTeamId=teamId;var content=document.getElementById('team-profile-content');content.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px">Loading...</div>';sb.from('teams').select('*').eq('id',teamId).single().then(function(res){var team=res.data;if(!team)return;currentTeamData=team;Promise.all([sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).order('game_date',{ascending:true}).range(0,39),sb.from('rosters').select('*').eq('team_id',teamId),sb.from('injuries').select('*').eq('team_id',teamId).eq('active',true),sb.from('teams').select('id,team,pr,hc').order('team',{ascending:true}),sb.from('pr_history').select('pr,recorded_at').eq('team_id',teamId).order('recorded_at',{ascending:true})]).then(function(results){var games=results[0].data||[];var roster=results[1].data||[];var injuries=results[2].data||[];var allTeamsList=results[3].data||[];var prHistory=results[4].data||[];var totalInjAdj=injuries.reduce(function(s,i){return s+i.impact;},0);var effPR=team.pr-totalInjAdj;var confGames=games.filter(function(g){return g.home&&g.away&&g.home.conference===g.away.conference;});var totalExpW=0;var confExpW=0;games.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);totalExpW+=wp;});confGames.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);confExpW+=wp;});
+var html='';
+var wins=0,losses=0;
+games.forEach(function(g){if(g.home_score==null||g.away_score==null)return;var isHome=String(g.home_team_id)===String(teamId);var won=isHome?(g.home_score>g.away_score):(g.away_score>g.home_score);if(won)wins++;else losses++;});
+html+='<div class="team-header"><div><div class="team-header-name">'+team.team+'</div><div class="team-header-sub">'+team.conference+'&nbsp;|&nbsp;Coach: '+(team.coach||'--')+'</div><div style="margin-top:8px;font-size:13px;font-weight:700;color:#fff;letter-spacing:1px">'+wins+'-'+losses+'<span style="font-size:10px;opacity:0.7;margin-left:6px">W-L</span></div></div><div style="flex:1;padding:0 16px">'+(prHistory.length>0||team.pr_preseason?buildPRSparkline(prHistory,team.pr,team.pr_preseason):'<div style="font-size:10px;opacity:0.6;color:#fff">PR chart available after first game</div>')+'</div><div style="text-align:right"><div style="font-size:28px;font-weight:700;color:#fff">'+team.pr.toFixed(1)+'</div><div style="font-size:11px;opacity:0.8">POWER RATING'+(totalInjAdj>0?' (EFF: '+effPR.toFixed(1)+')':'')+'</div>'+(team.pr_preseason?'<div style="font-size:10px;opacity:0.6;color:#fff">Pre: '+parseFloat(team.pr_preseason).toFixed(1)+'</div>':'')+'</div></div>';
 html+='<div class="team-stat-row"><div class="team-stat"><div class="team-stat-label">Overall Exp W</div><div class="team-stat-val">'+totalExpW.toFixed(1)+'</div><div class="team-stat-sub">from '+games.length+' games</div></div><div class="team-stat"><div class="team-stat-label">Conf Exp W</div><div class="team-stat-val">'+confExpW.toFixed(1)+'</div><div class="team-stat-sub">from '+confGames.length+' conf games</div></div><div class="team-stat"><div class="team-stat-label">Home Court</div><div class="team-stat-val" style="color:var(--amb)">'+team.hc.toFixed(1)+'</div><div class="team-stat-sub">pts advantage</div></div><div class="team-stat"><div class="team-stat-label">Injury Adj</div><div class="team-stat-val" style="color:var(--red2)">-'+totalInjAdj.toFixed(1)+'</div><div class="team-stat-sub">'+injuries.length+' player(s) out</div></div></div>';
 html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div>';
 html+='<div class="panel"><div class="panel-hdr"><div class="panel-title">Schedule ('+games.length+' games)</div></div><table class="data" style="font-size:11px"><thead><tr><th>#</th><th>OPP</th><th>LOC</th><th>CONF</th><th>SPREAD</th><th>WIN%</th><th>RESULT</th></tr></thead><tbody>';
