@@ -223,6 +223,7 @@ table.data tr:hover td{background:#f5ede0}
   <button class="nav-btn" id="nav-prupdate" onclick="showPage('prupdate',this)" style="display:none">PR UPDATE</button>
   <button class="nav-btn" id="nav-rosterload" onclick="showPage('rosterload',this)" style="display:none">ROSTER LOADER</button>
   <button class="nav-btn" onclick="showPage('tools',this)">ODDS TOOLS</button>
+  <button class="nav-btn" onclick="showPage('powerindex',this)">POWER INDEX</button>
 </div>
 <div class="ticker" id="ticker-bar" style="display:none">
   <div class="ticker-track" id="ticker-track"></div>
@@ -442,6 +443,21 @@ table.data tr:hover td{background:#f5ede0}
   </div>
 </div>
 </div>
+<div id="page-powerindex" style="display:none">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+  <div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--acc)">PR POWER INDEX</div>
+    <div style="font-size:10px;color:var(--txt3);margin-top:3px">Teams ranked by tier — updates live as PRs change</div>
+  </div>
+  <button class="btn primary" onclick="loadPowerIndex()">REFRESH</button>
+</div>
+<div id="power-index-body"><div style="text-align:center;color:var(--txt3);padding:40px;font-size:12px">Loading...</div></div>
+<div style="margin-top:24px">
+  <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--acc);margin-bottom:4px">UPSET ALERTS</div>
+  <div style="font-size:10px;color:var(--txt3);margin-bottom:12px">Auto-generated when PR updates are approved — dog was +7 or more to lose</div>
+  <div id="upset-alerts-body"><div style="text-align:center;color:var(--txt3);padding:20px;font-size:12px">No upsets recorded yet this season</div></div>
+</div>
+</div>
 <div id="page-prupdate" style="display:none">
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
   <div>
@@ -551,7 +567,7 @@ return{ha:ha,aa:aa,r:r};
 }
 function updateClock(){var n=new Date();var h=n.getHours()%12||12;var m=String(n.getMinutes()).padStart(2,'0');var s=String(n.getSeconds()).padStart(2,'0');var ap=n.getHours()<12?'AM':'PM';document.getElementById('clock').textContent=h+':'+m+':'+s+' '+ap+' ET';}
 setInterval(updateClock,1000);updateClock();
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
 function quickCalc(){var h=parseFloat(document.getElementById('qc-home').value);var hc=parseFloat(document.getElementById('qc-hc').value)||3.5;var a=parseFloat(document.getElementById('qc-away').value);if(isNaN(h)||isNaN(a)){document.getElementById('qc-result').textContent='--';return;}var sp=calcSpread(h,hc,a);var ml=spreadToML(sp);var r=Math.round(sp*2)/2;document.getElementById('qc-result').textContent=(r>=0?'HOME ':'AWAY ')+Math.abs(r).toFixed(1)+' ('+fmtOdds(ml.fav)+')';}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
 function getHeatClass(idx,total){var pct=idx/total;if(pct<0.2)return'pr-row-1';if(pct<0.4)return'pr-row-2';if(pct<0.6)return'pr-row-3';if(pct<0.8)return'pr-row-4';return'pr-row-5';}
@@ -723,7 +739,16 @@ function renderPRUpdateCards(){var body=document.getElementById('pru-games-body'
 function buildScheduledCard(g){if(!g.home||!g.away)return'';var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var rsp=Math.round(sp*2)/2;var favTeam=rsp>=0?g.home.team:g.away.team;var isConf=g.home.conference===g.away.conference;var html='<div class="pru-card" id="pru-card-'+g.id+'" style="border-left:4px solid var(--bdr)">';html+='<div class="pru-header"><div><div class="pru-matchup">'+g.away.team+' @ '+g.home.team+'</div><div style="font-size:10px;color:var(--txt3);margin-top:3px">'+g.game_date+' &nbsp;|&nbsp; '+(isConf?'CONF':'NON-CONF')+'&nbsp;|&nbsp;<span style="color:var(--txt3)">SCHEDULED</span></div></div><div class="pru-spread">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</div></div>';html+='<div class="pru-teams"><div class="pru-team"><div class="pru-team-name">'+g.away.team+'</div><div class="pru-team-pr">PR: '+g.away.pr.toFixed(1)+'</div></div><div class="pru-vs">@</div><div class="pru-team"><div class="pru-team-name">'+g.home.team+'</div><div class="pru-team-pr">PR: '+g.home.pr.toFixed(1)+'</div></div></div>';html+='<div class="pru-actions"><button class="btn primary" onclick="markGameFinal('+g.id+')">MARK FINAL</button></div>';return html+'</div>';}
 function buildActiveCard(g){if(!g.home||!g.away)return'';var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var rsp=Math.round(sp*2)/2;var favTeam=rsp>=0?g.home.team:g.away.team;var isConf=g.home.conference===g.away.conference;var html='<div class="pru-card" id="pru-card-'+g.id+'" style="border-left:4px solid var(--amb)">';html+='<div class="pru-header"><div><div class="pru-matchup">'+g.away.team+' @ '+g.home.team+'</div><div style="font-size:10px;color:var(--txt3);margin-top:3px">'+g.game_date+' &nbsp;|&nbsp; '+(isConf?'CONF':'NON-CONF')+'&nbsp;|&nbsp;<span style="color:var(--amb);font-weight:700">FINAL — ENTER SCORE</span></div></div><div class="pru-spread">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</div></div>';html+='<div class="pru-teams"><div class="pru-team"><div class="pru-team-name">'+g.away.team+'</div><div class="pru-team-pr">PR: '+g.away.pr.toFixed(1)+'</div></div><div class="pru-vs">@</div><div class="pru-team"><div class="pru-team-name">'+g.home.team+'</div><div class="pru-team-pr">PR: '+g.home.pr.toFixed(1)+'</div></div></div>';html+='<div class="pru-score-row"><span style="font-size:11px;color:var(--txt3);min-width:90px">'+g.away.team.substring(0,12)+':</span><input class="pru-score-inp" type="number" id="away-score-'+g.id+'" placeholder="0" oninput="calcPRPreview('+g.id+')"><span style="font-size:11px;color:var(--txt3);margin:0 8px">—</span><span style="font-size:11px;color:var(--txt3);min-width:90px">'+g.home.team.substring(0,12)+':</span><input class="pru-score-inp" type="number" id="home-score-'+g.id+'" placeholder="0" oninput="calcPRPreview('+g.id+')"></div>';html+='<div class="pru-adj" id="pru-adj-'+g.id+'"></div>';html+='<div class="pru-actions"><button class="btn success" onclick="approvePR('+g.id+')">✓ APPROVE</button><button class="btn" onclick="skipPR('+g.id+')">SKIP</button><span class="pru-status" id="pru-status-'+g.id+'"></span></div>';return html+'</div>';}
 function calcPRPreview(gameId){var as_=parseInt(document.getElementById('away-score-'+gameId).value);var hs=parseInt(document.getElementById('home-score-'+gameId).value);var adjDiv=document.getElementById('pru-adj-'+gameId);if(isNaN(as_)||isNaN(hs)){adjDiv.style.display='none';return;}var g=pruGames.find(function(x){return x.id===gameId;});if(!g)return;var adj=calcPRAdj(hs,as_,g.home.pr,g.home.hc,g.away.pr);var newHomePR=(g.home.pr+adj.ha).toFixed(1);var newAwayPR=(g.away.pr+adj.aa).toFixed(1);var haColor=adj.ha>0?'color:var(--grn2)':adj.ha<0?'color:var(--red2)':'color:var(--txt3)';var aaColor=adj.aa>0?'color:var(--grn2)':adj.aa<0?'color:var(--red2)':'color:var(--txt3)';adjDiv.innerHTML='<div class="pru-adj-line"><span style="color:var(--txt3)">'+g.away.team+':</span><span style="'+aaColor+';font-weight:700">'+(adj.aa>=0?'+':'')+adj.aa+' → '+newAwayPR+'</span></div><div class="pru-adj-line"><span style="color:var(--txt3)">'+g.home.team+':</span><span style="'+haColor+';font-weight:700">'+(adj.ha>=0?'+':'')+adj.ha+' → '+newHomePR+'</span></div><div style="font-size:10px;color:var(--txt3);margin-top:4px">'+adj.r+'</div>';adjDiv.style.display='block';}
-async function approvePR(gameId){var as_=parseInt(document.getElementById('away-score-'+gameId).value);var hs=parseInt(document.getElementById('home-score-'+gameId).value);if(isNaN(as_)||isNaN(hs)){alert('Enter both scores first');return;}var g=pruGames.find(function(x){return x.id===gameId;});if(!g)return;var adj=calcPRAdj(hs,as_,g.home.pr,g.home.hc,g.away.pr);var newHomePR=Math.round((g.home.pr+adj.ha)*10)/10;var newAwayPR=Math.round((g.away.pr+adj.aa)*10)/10;var today=new Date().toISOString().split('T')[0];var statusEl=document.getElementById('pru-status-'+gameId);if(statusEl){statusEl.textContent='Saving...';statusEl.style.color='var(--txt3)';}var r1=await sb.from('teams').update({pr:newHomePR,updated_at:new Date().toISOString()}).eq('id',g.home_team_id);var r2=await sb.from('teams').update({pr:newAwayPR,updated_at:new Date().toISOString()}).eq('id',g.away_team_id);var r3=await sb.from('games').update({pr_processed:true,pr_processed_at:new Date().toISOString(),home_score:hs,away_score:as_,status:'final'}).eq('id',gameId);await sb.from('pr_history').upsert([{team_id:g.home_team_id,pr:newHomePR,recorded_at:today,game_id:gameId,notes:adj.r},{team_id:g.away_team_id,pr:newAwayPR,recorded_at:today,game_id:gameId,notes:adj.r}],{onConflict:'team_id,game_id'});if(r1.error||r2.error||r3.error){if(statusEl){statusEl.textContent='ERROR';statusEl.style.color='var(--red2)';}return;}g.home.pr=newHomePR;g.away.pr=newAwayPR;g.pr_processed=true;g._hs=hs;g._as=as_;g._adjResult=adj;pruStats.approved++;renderPRUpdateCards();}
+async function approvePR(gameId){var as_=parseInt(document.getElementById('away-score-'+gameId).value);var hs=parseInt(document.getElementById('home-score-'+gameId).value);if(isNaN(as_)||isNaN(hs)){alert('Enter both scores first');return;}var g=pruGames.find(function(x){return x.id===gameId;});if(!g)return;var adj=calcPRAdj(hs,as_,g.home.pr,g.home.hc,g.away.pr);var newHomePR=Math.round((g.home.pr+adj.ha)*10)/10;var newAwayPR=Math.round((g.away.pr+adj.aa)*10)/10;var today=new Date().toISOString().split('T')[0];var statusEl=document.getElementById('pru-status-'+gameId);if(statusEl){statusEl.textContent='Saving...';statusEl.style.color='var(--txt3)';}var r1=await sb.from('teams').update({pr:newHomePR,updated_at:new Date().toISOString()}).eq('id',g.home_team_id);var r2=await sb.from('teams').update({pr:newAwayPR,updated_at:new Date().toISOString()}).eq('id',g.away_team_id);var r3=await sb.from('games').update({pr_processed:true,pr_processed_at:new Date().toISOString(),home_score:hs,away_score:as_,status:'final'}).eq('id',gameId);await sb.from('pr_history').upsert([{team_id:g.home_team_id,pr:newHomePR,recorded_at:today,game_id:gameId,notes:adj.r},{team_id:g.away_team_id,pr:newAwayPR,recorded_at:today,game_id:gameId,notes:adj.r}],{onConflict:'team_id,game_id'});if(r1.error||r2.error||r3.error){if(statusEl){statusEl.textContent='ERROR';statusEl.style.color='var(--red2)';}return;}
+g.home.pr=newHomePR;g.away.pr=newAwayPR;
+g.pr_processed=true;g._hs=hs;g._as=as_;g._adjResult=adj;
+pruStats.approved++;
+var _raw=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
+var _hf=_raw>=0;var _hw=hs>as_;
+var _ds=Math.abs(Math.round(_raw*2)/2);
+if(_ds>=7){var _dw=(_hf&&!_hw)||(!_hf&&_hw);if(_dw){var _wid=_hw?g.home_team_id:g.away_team_id;var _lid=_hw?g.away_team_id:g.home_team_id;var _wt=_hw?g.home.team:g.away.team;var _lt=_hw?g.away.team:g.home.team;var _am=Math.abs(hs-as_);var _sv=_ds>=10?'major':'upset';sb.from('upsets').upsert({game_id:gameId,winner_id:_wid,loser_id:_lid,winner_team:_wt,loser_team:_lt,dog_spread:_ds,actual_margin:_am,severity:_sv,game_date:g.game_date},{onConflict:'game_id'});}}
+renderPRUpdateCards();
+}
 function skipPR(gameId){var g=pruGames.find(function(x){return x.id===gameId;});if(g){g._skipped=true;}pruStats.skipped++;renderPRUpdateCards();}
 async function markGameFinal(gameId){var res=await sb.from('games').update({status:'final'}).eq('id',gameId);if(res.error){alert('Error: '+res.error.message);return;}var g=pruGames.find(function(x){return x.id===gameId;});if(g)g.status='final';renderPRUpdateCards();}
 async function markAllFinal(){var date=document.getElementById('pru-date').value;if(!date){alert('Select a date first');return;}if(!confirm('Mark ALL remaining scheduled games on '+date+' as final?'))return;var res=await sb.from('games').update({status:'final'}).eq('game_date',date).eq('status','scheduled');if(res.error){alert('Error: '+res.error.message);return;}pruGames.forEach(function(g){if(g.status==='scheduled')g.status='final';});renderPRUpdateCards();}
@@ -843,10 +868,10 @@ function mteValidateLocks(){var changed=true;while(changed){changed=false;mteStr
 function initMTE(){sb.from('teams').select('id,team,pr').order('team',{ascending:true}).then(function(res){mteTeams=res.data||[];mteShowEvent(mteEvent,document.getElementById('mte-tab-'+mteEvent));});}
 function mteRefresh(){document.getElementById('mte-status').textContent='Refreshing...';sb.from('teams').select('id,team,pr').order('team',{ascending:true}).then(function(res){mteTeams=res.data||[];Object.keys(mteSlots).forEach(function(s){var fresh=mteTeams.find(function(t){return String(t.id)===String(mteSlots[s].id);});if(fresh)mteSlots[s].pr=fresh.pr;});mteLayout();mteBuildSlotPanel();mteRenderBracket();var st=mteStruct();if(Object.keys(mteSlots).length===st.count)mteRunSim();document.getElementById('mte-status').textContent='PRs updated — '+new Date().toLocaleTimeString();});}
 function mteShowEvent(key,btn){mteEvent=key;mteSlots={};mteLocks={};mteSimResults={champ:{},fin:{}};mteActiveGame=null;document.querySelectorAll('.mte-sub-btn').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');var st=mteStruct();document.getElementById('mte-event-title').textContent=st.name+' — '+st.subtitle;document.getElementById('mte-odds').style.display='none';document.getElementById('mte-h2h-panel').style.display='none';document.getElementById('mte-path-panel').style.display='none';document.getElementById('mte-status').textContent='Loading...';
-  document.getElementById('mte-view-bracket').style.display='block';
-  document.getElementById('mte-view-schedule').style.display='none';
-  document.querySelectorAll('.mte-view-btn').forEach(function(b,i){b.classList.toggle('active',i===0);});
-  mteLoadFromDB();}
+document.getElementById('mte-view-bracket').style.display='block';
+document.getElementById('mte-view-schedule').style.display='none';
+document.querySelectorAll('.mte-view-btn').forEach(function(b,i){b.classList.toggle('active',i===0);});
+mteLoadFromDB();}
 function mteShowSubTab(tab,btn){document.querySelectorAll('.mte-view-btn').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');document.getElementById('mte-view-bracket').style.display=tab==='bracket'?'block':'none';document.getElementById('mte-view-schedule').style.display=tab==='schedule'?'block':'none';if(tab==='schedule')mteBuildSchedule();}
 function mteLoadFromDB(){var key=mteEvent;Promise.all([sb.from('mte_slots').select('slot,team_id,teams(id,team,pr)').eq('event_key',key),sb.from('mte_locks').select('game_id,winning_team_id').eq('event_key',key)]).then(function(results){var slotsRes=results[0].data||[];var locksRes=results[1].data||[];mteSlots={};slotsRes.forEach(function(row){if(row.teams)mteSlots[row.slot]={id:row.teams.id,team:row.teams.team,pr:row.teams.pr};});mteLocks={};locksRes.forEach(function(row){if(row.winning_team_id)mteLocks[row.game_id]=String(row.winning_team_id);});mteValidateLocks();mteLayout();mteBuildSlotPanel();mteRenderBracket();var filled=Object.keys(mteSlots).length;var st=mteStruct();if(filled===st.count)mteRunSim();else document.getElementById('mte-status').textContent='Fill all '+st.count+' slots to generate odds ('+filled+'/'+st.count+').';});}
 function mteBuildSlotPanel(){var st=mteStruct();if(!isAdmin){var html='<div class="ct-seedgroup"><div class="ct-seedgroup-hdr">TEAMS<span class="ct-seedgroup-sub">SLOT ORDER</span></div>';for(var i=0;i<st.count;i++){var t=mteSlots[i];html+='<div class="ct-seedrow"><span class="ct-seednum">'+(i+1)+'</span><span style="font-size:11px;color:var(--txt1);padding:4px 6px;flex:1">'+(t?t.team+'<span style="color:var(--txt3);font-size:9px;margin-left:4px">'+t.pr.toFixed(1)+'</span>':'<span style="color:var(--txt3)">—</span>')+'</span></div>';}html+='<div style="padding:6px 8px;border-top:1px solid var(--bdr2)"><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:4px">PATH TO TITLE</div>';for(var i=0;i<st.count;i++){var t=mteSlots[i];if(t)html+='<button class="btn" style="width:100%;margin-bottom:3px;font-size:9px;text-align:left" onclick="mteShowPath(\''+t.id+'\')">'+t.team+'</button>';}html+='</div>';document.getElementById('mte-slot-panel').innerHTML=html+'</div>';return;}var html='<div class="ct-seedgroup"><div class="ct-seedgroup-hdr">TEAMS<span class="ct-seedgroup-sub">ADMIN</span></div><div style="padding:6px 8px;border-bottom:1px solid var(--bdr2);display:flex;gap:4px"><button class="btn danger" style="flex:1;font-size:9px" onclick="mteReset()">RESET</button><button class="btn" style="flex:1;font-size:9px" onclick="mteShowPathPanel()">PATHS</button></div>';for(var i=0;i<st.count;i++){var t=mteSlots[i];html+='<div class="ct-seedrow"><span class="ct-seednum">'+(i+1)+'</span><select class="ct-seedsel" data-slot="'+i+'" onchange="mteApplySlot(this)"><option value="">— pick team —</option>';mteTeams.forEach(function(tm){var sel=(t&&String(tm.id)===String(t.id))?'selected':'';html+='<option value="'+tm.id+'" '+sel+'>'+tm.team+' ('+tm.pr.toFixed(1)+')</option>';});html+='</select></div>';}document.getElementById('mte-slot-panel').innerHTML=html+'</div>';}
@@ -864,7 +889,77 @@ function mteRenderBracket(){var st=mteStruct(),GM=mteGameMap();var numRounds=st.
 function mteTeamRow(gid,t,dec,clickable){if(!t)return'<div class="ct-team ct-blank"><span class="ct-seed" style="background:var(--bg2)"></span><span class="ct-nm">—</span></div>';var cls='ct-team';if(dec)cls+=(String(t.id)===String(dec))?' ct-win':' ct-elim';if(clickable)cls+=' ct-click';var onclick=clickable?' onclick="mtePickWinner(\''+gid+'\',\''+t.id+'\')"':'';return'<div class="'+cls+'"'+onclick+'><span class="ct-seed" style="background:var(--bg2);color:var(--txt3)"></span><span class="ct-nm">'+t.team+'</span><span class="ct-pr">'+t.pr.toFixed(1)+'</span></div>';}
 function mteRunSim(){var st=mteStruct();if(Object.keys(mteSlots).length<st.count){document.getElementById('mte-odds').style.display='none';return;}var overround=parseFloat(document.getElementById('mte-overround').value)||1.18;var teams=[];for(var i=0;i<st.count;i++){if(mteSlots[i])teams.push({id:mteSlots[i].id,team:mteSlots[i].team,pr:mteSlots[i].pr,slot:i});}var N=25000,champ={},fin={};function srcTeam(src,winners){if(src.slot!=null)return mteSlots[src.slot]?{id:mteSlots[src.slot].id,team:mteSlots[src.slot].team,pr:mteSlots[src.slot].pr}:null;return winners[src.win]||null;}for(var i=0;i<N;i++){var winners={},finalists=[];st.rounds.forEach(function(r){r.games.forEach(function(g){var ta=srcTeam(g.a,winners),tb=srcTeam(g.b,winners),w;if(mteLocks[g.id]){w=(ta&&String(ta.id)===String(mteLocks[g.id]))?ta:(tb&&String(tb.id)===String(mteLocks[g.id]))?tb:(ta&&tb?simG(ta,tb):(ta||tb));}else{w=ta&&tb?simG(ta,tb):(ta||tb);}winners[g.id]=w;if(g.id===st.champGame)finalists=[ta,tb];});});var cw=winners[st.champGame];if(cw)champ[cw.id]=(champ[cw.id]||0)+1;finalists.forEach(function(t){if(t)fin[t.id]=(fin[t.id]||0)+1;});}mteSimResults={champ:champ,fin:fin};function renderOdds(elId,countObj){var rows=teams.map(function(t){var c=countObj[t.id]||0,tp=c/N,mp=Math.min(tp*overround,0.9999),rawML=mp>=0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;return{team:t.team,pr:t.pr,freq:c,tp:tp*100,ml:c?roundML(rawML):null};});rows.sort(function(a,b){return b.freq-a.freq;});var html='';rows.forEach(function(r,i){if(!r.freq)return;html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+r.team+'</td><td class="acc" style="font-weight:700">'+r.pr.toFixed(1)+'</td><td class="muted">'+r.tp.toFixed(1)+'%</td><td class="'+(r.ml<0?'odds-fav':'odds-dog')+'">'+(r.ml>0?'+':'')+r.ml+'</td></tr>';});document.getElementById(elId).innerHTML=html;}
 renderOdds('mte-champ-body',champ);renderOdds('mte-fin-body',fin);document.getElementById('mte-odds').style.display='block';document.getElementById('mte-odds-info').textContent=st.name+' '+st.subtitle+' — 25,000 sims | Overround '+overround+'x'+(Object.keys(mteLocks).length?' | '+Object.keys(mteLocks).length+' result(s) locked':'');}
-/* =================== END MTE EVENTS =================== */
+/* =================== POWER INDEX =================== */
+var TIER_CONFIG=[
+  {key:'elite',label:'ELITE',min:55,max:999,color:'#8b6914',bg:'#fdf3e0'},
+  {key:'contender',label:'CONTENDER',min:50,max:54.9,color:'#2563eb',bg:'#dbeafe'},
+  {key:'tourney',label:'TOURNAMENT',min:45,max:49.9,color:'#059669',bg:'#d1fae5'},
+  {key:'bubble',label:'BUBBLE',min:40,max:44.9,color:'#d97706',bg:'#fef3c7'},
+  {key:'field',label:'FIELD',min:0,max:39.9,color:'#6b7280',bg:'var(--bg2)'},
+];
+function loadPowerIndex(){
+  var body=document.getElementById('power-index-body');
+  body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:20px;font-size:12px">Loading...</div>';
+  sb.from('teams').select('id,team,conference,pr').order('pr',{ascending:false}).then(function(res){
+    var teams=res.data||[];
+    var html='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">';
+    TIER_CONFIG.forEach(function(t){
+      var count=teams.filter(function(tm){return parseFloat(tm.pr)>=t.min&&parseFloat(tm.pr)<=t.max;}).length;
+      html+='<div style="display:flex;align-items:center;gap:5px;font-size:10px"><div style="width:9px;height:9px;border-radius:50%;background:'+t.color+'"></div><span style="color:var(--txt2);font-weight:700">'+t.label+'</span><span style="color:var(--txt3)">'+t.min+(t.max===999?'+':'–'+t.max)+'</span><span style="color:var(--acc);font-weight:700">('+count+')</span></div>';
+    });
+    html+='</div>';
+    TIER_CONFIG.forEach(function(tier){
+      var filtered=teams.filter(function(t){return parseFloat(t.pr)>=tier.min&&parseFloat(t.pr)<=tier.max;});
+      if(!filtered.length)return;
+      var byPR={};
+      filtered.forEach(function(t){var k=parseFloat(t.pr).toFixed(1);if(!byPR[k])byPR[k]=[];byPR[k].push(t);});
+      var prVals=Object.keys(byPR).sort(function(a,b){return b-a;});
+      html+='<div style="margin-bottom:4px"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+tier.color+';margin-bottom:5px;margin-top:12px">'+tier.label+'</div>';
+      prVals.forEach(function(pr){
+        var ts=byPR[pr];
+        html+='<div style="display:flex;align-items:stretch;margin-bottom:3px;border-radius:4px;overflow:hidden">';
+        html+='<div style="font-size:10px;font-weight:700;padding:5px 10px;min-width:56px;text-align:center;background:'+tier.bg+';color:'+tier.color+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+parseFloat(pr).toFixed(1)+'</div>';
+        html+='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px;flex:1;align-items:center;background:var(--bg1)">';
+        ts.forEach(function(t){html+='<span style="font-size:11px;padding:3px 8px;border-radius:3px;font-weight:700;background:'+tier.bg+';color:'+tier.color+'">'+t.team+'<span style="font-size:9px;opacity:0.7;margin-left:3px">'+t.conference+'</span></span>';});
+        html+='</div></div>';
+      });
+      html+='<div style="height:1px;background:var(--bdr);margin:10px 0 2px"></div></div>';
+    });
+    if(!teams.length)html='<div style="text-align:center;color:var(--txt3);padding:20px">No team data found</div>';
+    body.innerHTML=html;
+  });
+  loadUpsetAlerts();
+}
+function loadUpsetAlerts(){
+  var body=document.getElementById('upset-alerts-body');
+  body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:12px;font-size:12px">Loading...</div>';
+  sb.from('upsets').select('*').order('recorded_at',{ascending:false}).limit(50).then(function(res){
+    var upsets=res.data||[];
+    if(!upsets.length){body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:20px;font-size:12px">No upsets recorded yet this season</div>';return;}
+    var html='';
+    upsets.forEach(function(u){
+      var isMajor=u.severity==='major';
+      var borderColor=isMajor?'#dc2626':'#d97706';
+      var badgeBg=isMajor?'#fef2f2':'#fffbeb';
+      var badgeColor=isMajor?'#dc2626':'#d97706';
+      var icon=isMajor?'🚨':'⚡';
+      var label=isMajor?'MAJOR':'UPSET';
+      html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-left:3px solid '+borderColor+';border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center">';
+      html+='<div style="text-align:center;min-width:44px"><div style="font-size:18px">'+icon+'</div><div style="font-size:9px;font-weight:700;color:'+borderColor+';letter-spacing:1px;margin-top:2px">'+label+'</div></div>';
+      html+='<div style="flex:1">';
+      html+='<div style="font-size:13px;font-weight:700;color:var(--txt1)">'+u.winner_team+' <span style="color:var(--grn2);font-size:11px;font-weight:400">won</span></div>';
+      html+='<div style="font-size:11px;color:var(--txt3);margin-top:1px">def. '+u.loser_team+' &nbsp;·&nbsp; was a +'+parseFloat(u.dog_spread).toFixed(1)+' dog &nbsp;·&nbsp; '+u.game_date+'</div>';
+      html+='<div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:'+badgeBg+';color:'+badgeColor+'">+'+parseFloat(u.dog_spread).toFixed(1)+' dog won</span>';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:#f0fdf4;color:#059669">won by '+parseFloat(u.actual_margin).toFixed(0)+'</span>';
+      html+='</div></div>';
+      html+='<div style="text-align:right;min-width:56px"><div style="font-size:22px;font-weight:700;color:'+borderColor+';line-height:1">'+parseFloat(u.dog_spread).toFixed(1)+'</div><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-top:2px">PTS SPREAD</div></div>';
+      html+='</div>';
+    });
+    body.innerHTML=html;
+  });
+}
+/* =================== END POWER INDEX =================== */
 function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';loadDashboard();}else if(p==='CollegeHoops'){isAdmin=false;document.getElementById('login-screen').style.display='none';loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
 document.addEventListener('DOMContentLoaded',function(){document.getElementById('login-user').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});document.getElementById('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});});
 </script>
