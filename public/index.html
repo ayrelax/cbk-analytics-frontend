@@ -305,13 +305,13 @@ table.data tr:hover td{background:#f5ede0}
     </div>
     <table class="data"><thead><tr><th>MATCHUP</th><th>COMB</th><th>SPREAD</th><th>FAV ML</th><th>DOG ML</th></tr></thead>
     <tbody id="dash-lines-body"></tbody></table>
-    <div class="quick-calc">
-      <div class="qc-title">Quick Spread Calc</div>
-      <div class="qc-row">
-        <div class="qc-group"><div class="qc-label">Home PR</div><input class="qc-inp" id="qc-home" placeholder="54.0" oninput="quickCalc()"></div>
-        <div class="qc-group"><div class="qc-label">HC</div><input class="qc-inp" id="qc-hc" placeholder="3.5" style="width:50px" oninput="quickCalc()"></div>
-        <div class="qc-group"><div class="qc-label">Away PR</div><input class="qc-inp" id="qc-away" placeholder="50.0" oninput="quickCalc()"></div>
-        <div class="qc-result" id="qc-result">--</div>
+   <div class="quick-calc">
+      <div class="qc-title">Team Spread Calc</div>
+      <div class="qc-row" style="flex-wrap:wrap;gap:6px;align-items:flex-end">
+        <div class="qc-group"><div class="qc-label">Home Team</div><select class="qc-inp" id="qc-home-team" onchange="quickCalc()" style="width:160px;font-size:10px"><<option value="">Select...</option></select></div>
+        <div class="qc-group"><div class="qc-label">Away Team</div><select class="qc-inp" id="qc-away-team" onchange="quickCalc()" style="width:160px;font-size:10px"><option value="">Select...</option></select></div>
+        <div class="qc-group"><div class="qc-label">Neutral?</div><select class="qc-inp" id="qc-neutral" onchange="quickCalc()" style="width:70px;font-size:10px"><option value="0">No</option><option value="1">Yes</option></select></div>
+        <div class="qc-result" id="qc-result" style="font-size:12px">--</div>
       </div>
     </div>
   </div>
@@ -690,13 +690,14 @@ return{ha:ha,aa:aa,r:r};
 function updateClock(){var n=new Date();var h=n.getHours()%12||12;var m=String(n.getMinutes()).padStart(2,'0');var s=String(n.getSeconds()).padStart(2,'0');var ap=n.getHours()<12?'AM':'PM';document.getElementById('clock').textContent=h+':'+m+':'+s+' '+ap+' ET';}
 setInterval(updateClock,1000);updateClock();
 function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
-function quickCalc(){var h=parseFloat(document.getElementById('qc-home').value);var hc=parseFloat(document.getElementById('qc-hc').value)||3.5;var a=parseFloat(document.getElementById('qc-away').value);if(isNaN(h)||isNaN(a)){document.getElementById('qc-result').textContent='--';return;}var sp=calcSpread(h,hc,a);var ml=spreadToML(sp);var r=Math.round(sp*2)/2;document.getElementById('qc-result').textContent=(r>=0?'HOME ':'AWAY ')+Math.abs(r).toFixed(1)+' ('+fmtOdds(ml.fav)+')';}
+function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
+function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
 function getHeatClass(idx,total){var pct=idx/total;if(pct<0.2)return'pr-row-1';if(pct<0.4)return'pr-row-2';if(pct<0.6)return'pr-row-3';if(pct<0.8)return'pr-row-4';return'pr-row-5';}
 function getGameHeat(idx,total){var pct=idx/total;if(pct<0.2)return'game-heat-1';if(pct<0.4)return'game-heat-2';if(pct<0.6)return'game-heat-3';if(pct<0.8)return'game-heat-4';return'game-heat-5';}
 function loadDashboard(){
 sb.from('teams').select('*').order('pr',{ascending:false}).limit(25).then(function(res){
-var teams=res.data;if(!teams||!teams.length)return;allTeams=teams;buildTicker(teams);
+var teams=res.data;if(!teams||!teams.length)return;allTeams=teams;buildTicker(teams);populateQCDropdowns();
 var topPR=teams[0].pr;var html='';
 teams.slice(0,25).forEach(function(t,i){
 var delta=t.pr_preseason!=null?(t.pr-t.pr_preseason):null;
