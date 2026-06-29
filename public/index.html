@@ -709,7 +709,7 @@ document.getElementById('dash-pr-body').innerHTML=html;
 });
 sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){
 var games=res.data||[];var teamWins={};var teamConf={};var teamPR={};
-games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=hp;teamWins[g.away.id]+=(1-hp);teamConf[g.home.id]=g.home.conference;teamConf[g.away.id]=g.away.conference;teamPR[g.home.id]={name:g.home.team,pr:g.home.pr};teamPR[g.away.id]={name:g.away.team,pr:g.away.pr};});
+games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=(1-hp);teamWins[g.away.id]+=hp;teamConf[g.home.id]=g.home.conference;teamConf[g.away.id]=g.away.conference;teamPR[g.home.id]={name:g.home.team,pr:g.home.pr};teamPR[g.away.id]={name:g.away.team,pr:g.away.pr};});
 var allData=Object.keys(teamWins).map(function(id){return{id:id,team:teamPR[id]?teamPR[id].name:'?',conf:teamConf[id]||'',wins:teamWins[id],pr:teamPR[id]?teamPR[id].pr:0};});
 var p5confs=['SEC','B10','B12','ACC','BE'];var confData={};
 p5confs.forEach(function(c){
