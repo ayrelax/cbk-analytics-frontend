@@ -1920,7 +1920,7 @@ function doLogin(){
   var p=document.getElementById('login-pass').value.trim();
   if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;}
   else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;}
-  else{document.getElementById('login-error').textContent='Invalid credentials';return;}
+  else{document.getElementById('login-err').textContent='Invalid credentials';return;}
   document.getElementById('login-screen').style.display='none';
   document.getElementById('main-app').style.display='block';
   if(isAdmin){
