@@ -1740,7 +1740,6 @@ function loadDashboardATS(){
       if(!g.home||!g.away)return;
       var isHomeCover=g.home_cover;
       var cm=g.cover_margin!=null?parseFloat(g.cover_margin):null;
-      var winner=g.home_score>g.away_score?g.home.team:g.away.team;
       var coverTeam=isHomeCover?g.home.team:g.away.team;
       var coverColor=cm!=null?(cm>0?'var(--grn2)':'var(--red2)'):'var(--txt3)';
       rhtml+='<div style="padding:5px 0;border-bottom:1px solid var(--bg2);font-size:11px">';
@@ -1764,9 +1763,10 @@ function loadPowerIndex(){
       {label:'LOWER',min:0,color:'#888',bg:'#f8f6f3'}
     ];
     var html='';
+    var remaining=teams.slice();
     tiers.forEach(function(tier){
-      var inTier=teams.filter(function(t){return t.pr>=tier.min;});
-      teams=teams.filter(function(t){return t.pr<tier.min;});
+      var inTier=remaining.filter(function(t){return parseFloat(t.pr)>=tier.min;});
+      remaining=remaining.filter(function(t){return parseFloat(t.pr)<tier.min;});
       if(!inTier.length)return;
       html+='<div style="margin-bottom:16px">';
       html+='<div style="background:'+tier.bg+';border-left:4px solid '+tier.color+';padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:2px;color:'+tier.color+';margin-bottom:6px">'+tier.label+' ('+inTier.length+' teams)</div>';
@@ -1930,18 +1930,24 @@ function doLogin(){
   }
   loadDashboard();
 }
+document.addEventListener('DOMContentLoaded',function(){
+  var lu=document.getElementById('login-user');
+  var lp=document.getElementById('login-pass');
+  if(lu)lu.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  if(lp)lp.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+});
 </script>
-<div id="login-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg0)">
-  <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:36px 40px;width:320px;text-align:center">
-    <div style="font-size:14px;font-weight:700;letter-spacing:3px;color:var(--acc);margin-bottom:4px">BERBERT'S</div>
-    <div style="font-size:11px;letter-spacing:2px;color:var(--txt3);margin-bottom:24px">FULL COURT PRESS</div>
-    <input class="field" id="login-user" placeholder="Username" style="margin-bottom:8px;text-align:center">
-    <input class="field" id="login-pass" type="password" placeholder="Password" style="margin-bottom:14px;text-align:center" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="btn primary" onclick="doLogin()" style="width:100%;padding:10px;font-size:11px;letter-spacing:2px">ENTER</button>
-    <div id="login-error" style="color:var(--red2);font-size:11px;margin-top:10px;min-height:16px"></div>
-  </div>
+<div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
+<div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
+<div style="font-size:20px;font-weight:700;letter-spacing:3px;color:var(--acc);margin-bottom:4px">BERBERT'S</div>
+<div style="font-size:10px;letter-spacing:3px;color:var(--txt3);margin-bottom:8px">FULL COURT PRESS</div>
+<div style="width:40px;height:2px;background:var(--acc);margin:0 auto 28px"></div>
+<div style="text-align:left;margin-bottom:12px"><div style="font-size:10px;letter-spacing:2px;color:var(--txt3);margin-bottom:5px;text-transform:uppercase">Username</div><input id="login-user" class="field" type="text" placeholder="Enter username"></div>
+<div style="text-align:left;margin-bottom:22px"><div style="font-size:10px;letter-spacing:2px;color:var(--txt3);margin-bottom:5px;text-transform:uppercase">Password</div><input id="login-pass" class="field" type="password" placeholder="Enter password"></div>
+<button class="btn primary" style="width:100%;padding:10px;font-size:11px;letter-spacing:2px" onclick="doLogin()">SIGN IN</button>
+<div id="login-err" style="color:var(--red2);font-size:11px;margin-top:12px;display:none">Invalid username or password</div>
 </div>
-<div id="main-app" style="display:none">
 </div>
+<div id="admin-badge" style="display:none;position:fixed;bottom:16px;right:16px;background:var(--acc);color:#fff;font-size:9px;letter-spacing:2px;padding:6px 12px;border-radius:4px;z-index:999">ADMIN MODE</div>
 </body>
 </html>
