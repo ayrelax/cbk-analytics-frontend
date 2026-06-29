@@ -1752,16 +1752,12 @@ function loadDashboardATS(){
   });
 }
 function loadPowerIndex(){
-  sb.from('teams').select('id,team,conference,pr,wins,losses').order('pr',{ascending:false}).then(function(res){
+  var body=document.getElementById('power-index-body');
+  body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:20px;font-size:12px">Loading...</div>';
+  sb.from('teams').select('id,team,conference,pr').order('pr',{ascending:false}).then(function(res){
     var teams=res.data||[];
-    var tiers=[
-      {label:'ELITE',min:55,color:'#8b6914',bg:'#fdf3e0'},
-      {label:'TOP 25',min:50,color:'#a07820',bg:'#fdf6e8'},
-      {label:'CONTENDER',min:45,color:'#4a3510',bg:'#f5ede0'},
-      {label:'BUBBLE',min:40,color:'#2c1f0a',bg:'#f0e8d8'},
-      {label:'MID-MAJOR',min:35,color:'#555',bg:'#f5f2ee'},
-      {label:'LOWER',min:0,color:'#888',bg:'#f8f6f3'}
-    ];
+    var html='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">';
+    TIER_CONFIG.forEach(function(t){
     var html='';
     var remaining=teams.slice();
     tiers.forEach(function(tier){
