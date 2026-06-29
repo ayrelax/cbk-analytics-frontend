@@ -1616,141 +1616,152 @@ function mteTeamRow(gid,t,dec,clickable){if(!t)return'<div class="ct-team ct-bla
 function mteRunSim(){var st=mteStruct();if(Object.keys(mteSlots).length<st.count){document.getElementById('mte-odds').style.display='none';return;}var overround=parseFloat(document.getElementById('mte-overround').value)||1.18;var teams=[];for(var i=0;i<st.count;i++){if(mteSlots[i])teams.push({id:mteSlots[i].id,team:mteSlots[i].team,pr:mteSlots[i].pr,slot:i});}var N=25000,champ={},fin={};function srcTeam(src,winners){if(src.slot!=null)return mteSlots[src.slot]?{id:mteSlots[src.slot].id,team:mteSlots[src.slot].team,pr:mteSlots[src.slot].pr}:null;return winners[src.win]||null;}for(var i=0;i<N;i++){var winners={},finalists=[];st.rounds.forEach(function(r){r.games.forEach(function(g){var ta=srcTeam(g.a,winners),tb=srcTeam(g.b,winners),w;if(mteLocks[g.id]){w=(ta&&String(ta.id)===String(mteLocks[g.id]))?ta:(tb&&String(tb.id)===String(mteLocks[g.id]))?tb:(ta&&tb?simG(ta,tb):(ta||tb));}else{w=ta&&tb?simG(ta,tb):(ta||tb);}winners[g.id]=w;if(g.id===st.champGame)finalists=[ta,tb];});});var cw=winners[st.champGame];if(cw)champ[cw.id]=(champ[cw.id]||0)+1;finalists.forEach(function(t){if(t)fin[t.id]=(fin[t.id]||0)+1;});}mteSimResults={champ:champ,fin:fin};function renderOdds(elId,countObj){var rows=teams.map(function(t){var c=countObj[t.id]||0,tp=c/N,mp=Math.min(tp*overround,0.9999),rawML=mp>=0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;return{team:t.team,pr:t.pr,freq:c,tp:tp*100,ml:c?roundML(rawML):null};});rows.sort(function(a,b){return b.freq-a.freq;});var html='';rows.forEach(function(r,i){if(!r.freq)return;html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+r.team+'</td><td class="acc" style="font-weight:700">'+r.pr.toFixed(1)+'</td><td class="muted">'+r.tp.toFixed(1)+'%</td><td class="'+(r.ml<0?'odds-fav':'odds-dog')+'">'+(r.ml>0?'+':'')+r.ml+'</td></tr>';});document.getElementById(elId).innerHTML=html;}
 renderOdds('mte-champ-body',champ);renderOdds('mte-fin-body',fin);document.getElementById('mte-odds').style.display='block';document.getElementById('mte-odds-info').textContent=st.name+' '+st.subtitle+' — 25,000 sims | Overround '+overround+'x'+(Object.keys(mteLocks).length?' | '+Object.keys(mteLocks).length+' result(s) locked':'');}
 /* =================== END MTE =================== */
-function getSpreadBucket(sp){
-  var abs=Math.abs(sp);
-  if(abs<=3)return'dog_3';
-  if(abs<=6)return'dog_6';
-  if(abs<=10)return'dog_10';
-  return'dog_big';
+function getSpreadBucket(spread){
+  if(spread<=-10)return'bigfav';
+  if(spread<=-5)return'medfav';
+  if(spread<=3&&spread>=-3)return'pick';
+  if(spread<=6.5)return'smalldog';
+  return'bigdog';
 }
 async function rebuildATSStats(teamId){
-  var gres=await sb.from('games').select('id,home_team_id,away_team_id,home_score,away_score,home_spread,away_spread,home_cover,away_cover,cover_margin,neutral_site,game_date,home:home_team_id(id,team,pr,hc,conference),away:away_team_id(id,team,pr,hc,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).eq('status','final').not('home_cover','is',null);
-  var games=gres.data||[];
-  var s={team_id:teamId,ats_w:0,ats_l:0,ats_push:0,ats_streak:0,home_w:0,home_l:0,away_w:0,away_l:0,neutral_w:0,neutral_l:0,fav_w:0,fav_l:0,dog_w:0,dog_l:0,conf_w:0,conf_l:0,nonconf_w:0,nonconf_l:0,dog_3_w:0,dog_3_l:0,dog_6_w:0,dog_6_l:0,dog_10_w:0,dog_10_l:0,dog_big_w:0,dog_big_l:0,last_updated:new Date().toISOString()};
-  var streak=0;
-  games.sort(function(a,b){return a.game_date<b.game_date?-1:1;});
+  var res=await sb.from('games').select('id,game_date,home_team_id,away_team_id,home_score,away_score,home_spread,home_cover,away_cover,cover_margin,neutral_site,status,home:home_team_id(id,team,conference),away:away_team_id(id,team,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).eq('status','final').not('home_cover','is',null).order('game_date',{ascending:true});
+  var games=res.data||[];
+  var s={ats_w:0,ats_l:0,ats_p:0,home_ats_w:0,home_ats_l:0,home_ats_p:0,away_ats_w:0,away_ats_l:0,away_ats_p:0,neutral_ats_w:0,neutral_ats_l:0,conf_ats_w:0,conf_ats_l:0,nonconf_ats_w:0,nonconf_ats_l:0,fav_ats_w:0,fav_ats_l:0,dog_ats_w:0,dog_ats_l:0,bigfav_w:0,bigfav_l:0,bigfav_margin:0,medfav_w:0,medfav_l:0,medfav_margin:0,pick_w:0,pick_l:0,pick_margin:0,smalldog_w:0,smalldog_l:0,smalldog_margin:0,bigdog_w:0,bigdog_l:0,bigdog_margin:0,total_margin:0,best_cover:-999,worst_cover:999,best_cover_opp:null,best_cover_date:null,worst_cover_opp:null,worst_cover_date:null,streak:0,last_dir:null};
+  if(!games.length){await sb.from('ats_stats').upsert({team_id:parseInt(teamId),ats_w:0,ats_l:0,ats_p:0,cover_pct:0,avg_cover_margin:0,updated_at:new Date().toISOString()},{onConflict:'team_id'});return;}
   games.forEach(function(g){
     var isHome=String(g.home_team_id)===String(teamId);
     var covered=isHome?g.home_cover:g.away_cover;
-    if(covered===null)return;
-    if(covered){s.ats_w++;streak=streak>=0?streak+1:1;}
-    else{s.ats_l++;streak=streak<=0?streak-1:-1;}
-    if(g.neutral_site){if(covered)s.neutral_w++;else s.neutral_l++;}
-    else if(isHome){if(covered)s.home_w++;else s.home_l++;}
-    else{if(covered)s.away_w++;else s.away_l++;}
-    var sp=isHome?(g.home_spread||0):(g.away_spread||0);
-    var isFav=sp<=0;
-    if(isFav){if(covered)s.fav_w++;else s.fav_l++;}
-    else{if(covered)s.dog_w++;else s.dog_l++;}
+    var push=g.home_cover===null&&g.away_cover===null;
+    var margin=isHome?(g.cover_margin||0):-(g.cover_margin||0);
+    var spread=isHome?(g.home_spread||0):-(g.home_spread||0);
+    var isFav=spread<0;
+    var isNeutral=g.neutral_site;
     var isConf=g.home&&g.away&&g.home.conference===g.away.conference;
-    if(isConf){if(covered)s.conf_w++;else s.conf_l++;}
-    else{if(covered)s.nonconf_w++;else s.nonconf_l++;}
-    if(!isFav){
-      var bucket=getSpreadBucket(Math.abs(sp));
-      s[bucket+'_w']=s[bucket+'_w']||0;s[bucket+'_l']=s[bucket+'_l']||0;
-      if(covered)s[bucket+'_w']++;else s[bucket+'_l']++;
+    var oppTeam=isHome?(g.away?g.away.team:'?'):(g.home?g.home.team:'?');
+    var bucket=getSpreadBucket(spread);
+    if(push){
+      if(isNeutral){}
+      else if(isHome)s.home_ats_p++;else s.away_ats_p++;
+      s.ats_p++;s.streak=0;s.last_dir=null;
+    } else if(covered){
+      s.ats_w++;
+      if(isNeutral)s.neutral_ats_w++;else if(isHome)s.home_ats_w++;else s.away_ats_w++;
+      if(isConf)s.conf_ats_w++;else s.nonconf_ats_w++;
+      if(isFav)s.fav_ats_w++;else s.dog_ats_w++;
+      s[bucket+'_w']++;s[bucket+'_margin']+=margin;
+      if(s.last_dir==='w')s.streak++;else s.streak=1;s.last_dir='w';
+    } else {
+      s.ats_l++;
+      if(isNeutral)s.neutral_ats_l++;else if(isHome)s.home_ats_l++;else s.away_ats_l++;
+      if(isConf)s.conf_ats_l++;else s.nonconf_ats_l++;
+      if(isFav)s.fav_ats_l++;else s.dog_ats_l++;
+      s[bucket+'_l']++;s[bucket+'_margin']+=margin;
+      if(s.last_dir==='l')s.streak--;else s.streak=-1;s.last_dir='l';
     }
+    s.total_margin+=margin;
+    if(margin>s.best_cover){s.best_cover=margin;s.best_cover_opp=oppTeam;s.best_cover_date=g.game_date;}
+    if(margin<s.worst_cover){s.worst_cover=margin;s.worst_cover_opp=oppTeam;s.worst_cover_date=g.game_date;}
   });
-  s.ats_streak=streak;
-  await sb.from('ats_stats').upsert(s,{onConflict:'team_id'});
+  var last5=games.slice(-5);var last10=games.slice(-10);
+  var l5w=0,l5l=0,l10w=0,l10l=0;
+  last5.forEach(function(g){var isHome=String(g.home_team_id)===String(teamId);var c=isHome?g.home_cover:g.away_cover;if(c===true)l5w++;else if(c===false)l5l++;});
+  last10.forEach(function(g){var isHome=String(g.home_team_id)===String(teamId);var c=isHome?g.home_cover:g.away_cover;if(c===true)l10w++;else if(c===false)l10l++;});
+  var total=s.ats_w+s.ats_l;
+  var pct=total>0?Math.round((s.ats_w/total)*1000)/10:0;
+  var avgMargin=games.length>0?Math.round((s.total_margin/games.length)*10)/10:0;
+  function bktAvg(key){var t=s[key+'_w']+s[key+'_l'];return t>0?Math.round((s[key+'_margin']/t)*10)/10:0;}
+  await sb.from('ats_stats').upsert({
+    team_id:parseInt(teamId),ats_w:s.ats_w,ats_l:s.ats_l,ats_p:s.ats_p,cover_pct:pct,avg_cover_margin:avgMargin,
+    home_ats_w:s.home_ats_w,home_ats_l:s.home_ats_l,home_ats_p:s.home_ats_p,
+    away_ats_w:s.away_ats_w,away_ats_l:s.away_ats_l,away_ats_p:s.away_ats_p,
+    neutral_ats_w:s.neutral_ats_w,neutral_ats_l:s.neutral_ats_l,
+    conf_ats_w:s.conf_ats_w,conf_ats_l:s.conf_ats_l,
+    nonconf_ats_w:s.nonconf_ats_w,nonconf_ats_l:s.nonconf_ats_l,
+    fav_ats_w:s.fav_ats_w,fav_ats_l:s.fav_ats_l,
+    dog_ats_w:s.dog_ats_w,dog_ats_l:s.dog_ats_l,
+    bigfav_w:s.bigfav_w,bigfav_l:s.bigfav_l,bigfav_margin:bktAvg('bigfav'),
+    medfav_w:s.medfav_w,medfav_l:s.medfav_l,medfav_margin:bktAvg('medfav'),
+    pick_w:s.pick_w,pick_l:s.pick_l,pick_margin:bktAvg('pick'),
+    smalldog_w:s.smalldog_w,smalldog_l:s.smalldog_l,smalldog_margin:bktAvg('smalldog'),
+    bigdog_w:s.bigdog_w,bigdog_l:s.bigdog_l,bigdog_margin:bktAvg('bigdog'),
+    last5_w:l5w,last5_l:l5l,last10_w:l10w,last10_l:l10l,
+    best_cover:s.best_cover===-999?0:s.best_cover,worst_cover:s.worst_cover===999?0:s.worst_cover,
+    best_cover_opp:s.best_cover_opp,best_cover_date:s.best_cover_date,
+    worst_cover_opp:s.worst_cover_opp,worst_cover_date:s.worst_cover_date,
+    ats_streak:s.streak,updated_at:new Date().toISOString()
+  },{onConflict:'team_id'});
 }
-function loadTeamATS(teamId,el){
-  if(!el)return;
-  sb.from('ats_stats').select('*').eq('team_id',teamId).single().then(function(res){
-    var a=res.data;
-    if(!a||a.ats_w+a.ats_l===0){el.innerHTML='<div style="color:var(--txt3);font-size:12px">No ATS data yet — grades after first approved game</div>';return;}
-    var total=a.ats_w+a.ats_l;
-    var pct=Math.round(a.ats_w/total*100);
-    var streakStr=a.ats_streak>0?'W'+a.ats_streak+' ATS':a.ats_streak<0?'L'+Math.abs(a.ats_streak)+' ATS':'Even';
-    var streakColor=a.ats_streak>1?'var(--grn2)':a.ats_streak<-1?'var(--red2)':'var(--txt3)';
-    function splitRow(label,w,l){var t=w+l;if(!t)return'';var p=Math.round(w/t*100);return'<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bg2);font-size:11px"><span style="color:var(--txt3)">'+label+'</span><span style="font-weight:700;color:'+(p>=55?'var(--grn2)':p<=45?'var(--red2)':'var(--txt1)')+'">'+w+'-'+l+' ('+p+'%)</span></div>';}
-    var html='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">';
-    html+='<div style="background:var(--bg2);border-radius:4px;padding:8px 10px;text-align:center"><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:3px">OVERALL ATS</div><div style="font-size:16px;font-weight:700;color:var(--acc)">'+a.ats_w+'-'+a.ats_l+'</div><div style="font-size:10px;color:var(--txt3)">'+pct+'%</div></div>';
-    html+='<div style="background:var(--bg2);border-radius:4px;padding:8px 10px;text-align:center"><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:3px">STREAK</div><div style="font-size:16px;font-weight:700;color:'+streakColor+'">'+streakStr+'</div><div style="font-size:10px;color:var(--txt3)">current</div></div>';
-    var favTotal=a.fav_w+a.fav_l;var favPct=favTotal?Math.round(a.fav_w/favTotal*100):0;
-    html+='<div style="background:var(--bg2);border-radius:4px;padding:8px 10px;text-align:center"><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-bottom:3px">AS FAV</div><div style="font-size:16px;font-weight:700;color:var(--txt1)">'+a.fav_w+'-'+a.fav_l+'</div><div style="font-size:10px;color:var(--txt3)">'+favPct+'%</div></div>';
-    html+='</div>';
-    html+='<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--txt3);margin-bottom:6px;text-transform:uppercase">SPLITS</div>';
-    html+=splitRow('Home',a.home_w,a.home_l);
-    html+=splitRow('Away',a.away_w,a.away_l);
-    html+=splitRow('Neutral',a.neutral_w,a.neutral_l);
-    html+=splitRow('As Dog',a.dog_w,a.dog_l);
-    html+=splitRow('Conf',a.conf_w,a.conf_l);
-    html+=splitRow('Non-Conf',a.nonconf_w,a.nonconf_l);
-    if(a.dog_3_w+a.dog_3_l>0||a.dog_6_w+a.dog_6_l>0||a.dog_10_w+a.dog_10_l>0||a.dog_big_w+a.dog_big_l>0){
-      html+='<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--txt3);margin:10px 0 6px;text-transform:uppercase">AS DOG BY SPREAD</div>';
-      html+=splitRow('Dog 1-3',a.dog_3_w,a.dog_3_l);
-      html+=splitRow('Dog 3.5-6',a.dog_6_w,a.dog_6_l);
-      html+=splitRow('Dog 6.5-10',a.dog_10_w,a.dog_10_l);
-      html+=splitRow('Dog 10+',a.dog_big_w,a.dog_big_l);
-    }
-    el.innerHTML=html;
-  });
-}
-function loadDashboardATS(){
-  var today=new Date().toISOString().split('T')[0];
-  var anglesEl=document.getElementById('dash-ats-angles');
-  var bodyEl=document.getElementById('dash-ats-body');
+function fmtATS(w,l,p){var s=w+'-'+l;if(p)s+='-'+p;return s;}
+function fmtStreak(n){if(n===0)return'--';return(n>0?'<span style="color:var(--grn2);font-weight:700">W'+n+'</span>':'<span style="color:var(--red2);font-weight:700">L'+Math.abs(n)+'</span>');}
+function fmtM(n){if(n==null||isNaN(n))return'--';var v=parseFloat(n).toFixed(1);return(n>0?'<span style="color:var(--grn2)">+'+v+'</span>':'<span style="color:var(--red2)">'+v+'</span>');}
+function fmtPct(w,l){var t=w+l;if(!t)return'--';var p=Math.round(w/t*100);var c=p>=55?'var(--grn2)':p<=45?'var(--red2)':'var(--txt1)';return'<span style="color:'+c+';font-weight:700">'+p+'%</span>';}
+function loadTeamATS(teamId,container){
   Promise.all([
-    sb.from('games').select('id,game_date,home_team_id,away_team_id,neutral_site,home_score,away_score,home_cover,away_cover,cover_margin,status,home:home_team_id(id,team,pr,hc,conference),away:away_team_id(id,team,pr,hc,conference)').eq('game_date',today),
-    sb.from('ats_stats').select('*')
+    sb.from('ats_stats').select('*').eq('team_id',teamId).single(),
+    sb.from('games').select('id,game_date,home_team_id,away_team_id,neutral_site,home_cover,away_cover,cover_margin,home_spread,home:home_team_id(id,team,pr,conference),away:away_team_id(id,team,pr,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).eq('status','final').not('home_cover','is',null).order('cover_margin',{ascending:false}).limit(5),
+    sb.from('games').select('id,game_date,home_team_id,away_team_id,neutral_site,home_cover,away_cover,cover_margin,home_spread,home:home_team_id(id,team,pr,conference),away:away_team_id(id,team,pr,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).eq('status','final').not('home_cover','is',null).order('cover_margin',{ascending:true}).limit(5),
+    sb.from('games').select('id,game_date,home_team_id,away_team_id,neutral_site,home:home_team_id(id,team,pr,conference),away:away_team_id(id,team,pr,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).in('status',['scheduled']).order('game_date',{ascending:true}).limit(10)
   ]).then(function(results){
-    var games=results[0].data||[];
-    var atsData=results[1].data||[];
-    var atsMap={};atsData.forEach(function(a){atsMap[a.team_id]=a;});
-    var open=games.filter(function(g){return g.status==='scheduled'||g.status==='live';});
-    var final=games.filter(function(g){return g.status==='final'&&g.home_cover!==null;});
-    var angles=[];
-    open.forEach(function(g){
-      if(!g.home||!g.away)return;
-      [{teamObj:g.home,teamId:g.home_team_id,isHome:true},{teamObj:g.away,teamId:g.away_team_id,isHome:false}].forEach(function(side){
-        var a=atsMap[side.teamId];if(!a||a.ats_w+a.ats_l<3)return;
-        var sp=calcSpread(g.home.pr,g.home.hc||3,g.away.pr,g.neutral_site);
-        var teamSp=side.isHome?-sp:sp;
-        var bucket=getSpreadBucket(teamSp);
-        var bW=a[bucket+'_w']||0;var bL=a[bucket+'_l']||0;var bTotal=bW+bL;
-        var bPct=bTotal>=3?Math.round(bW/bTotal*100):null;
-        var opp=side.isHome?g.away.team:g.home.team;
-        if(bPct&&bPct>=60)angles.push({team:side.teamObj.team,opp:opp,spread:fmtSp(teamSp),text:bW+'-'+bL+' ATS in this spot ('+bPct+'%)',score:bPct*bTotal});
-        if(a.ats_streak>=2)angles.push({team:side.teamObj.team,opp:opp,spread:fmtSp(teamSp),text:'W'+a.ats_streak+' ATS cover streak',score:a.ats_streak*12});
-        var homeTotal=a.home_w+a.home_l;
-        if(side.isHome&&homeTotal>=3){var hp=Math.round(a.home_w/homeTotal*100);if(hp>=65)angles.push({team:side.teamObj.team,opp:opp,spread:fmtSp(teamSp),text:a.home_w+'-'+a.home_l+' ATS at home ('+hp+'%)',score:hp*homeTotal/10});}
-        var awayTotal=a.away_w+a.away_l;
-        if(!side.isHome&&awayTotal>=3){var ap=Math.round(a.away_w/awayTotal*100);if(ap>=65)angles.push({team:side.teamObj.team,opp:opp,spread:fmtSp(teamSp),text:a.away_w+'-'+a.away_l+' ATS on road ('+ap+'%)',score:ap*awayTotal/10});}
-      });
+    var a=results[0].data;
+    var bigCovers=results[1].data||[];
+    var bigMisses=results[2].data||[];
+    var upcoming=results[3].data||[];
+    if(!a||a.ats_w+a.ats_l+a.ats_p===0){container.innerHTML='<div style="padding:14px;color:var(--txt3);font-size:12px">No ATS data yet — populates automatically as games are graded</div>';return;}
+    var html='';
+    html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">';
+    html+='<div class="team-stat"><div class="team-stat-label">Overall ATS</div><div class="team-stat-val" style="font-size:16px">'+fmtATS(a.ats_w,a.ats_l,a.ats_p)+'</div><div class="team-stat-sub">'+(a.ats_w+a.ats_l+a.ats_p)+' games graded</div></div>';
+    html+='<div class="team-stat"><div class="team-stat-label">Cover %</div><div class="team-stat-val" style="font-size:20px;color:'+(a.cover_pct>=55?'var(--grn2)':a.cover_pct<=45?'var(--red2)':'var(--txt1)')+'">'+a.cover_pct+'%</div><div class="team-stat-sub">vs model spread</div></div>';
+    html+='<div class="team-stat"><div class="team-stat-label">Avg Margin</div><div class="team-stat-val" style="font-size:20px;color:'+(a.avg_cover_margin>0?'var(--grn2)':a.avg_cover_margin<0?'var(--red2)':'var(--txt1)')+'">'+( a.avg_cover_margin>0?'+':'')+parseFloat(a.avg_cover_margin).toFixed(1)+'</div><div class="team-stat-sub">pts vs spread</div></div>';
+    html+='<div class="team-stat"><div class="team-stat-label">ATS Streak</div><div class="team-stat-val" style="font-size:20px">'+fmtStreak(a.ats_streak)+'</div><div class="team-stat-sub">current run</div></div>';
+    html+='</div>';
+    html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">';
+    html+='<div style="background:var(--bg2);border-radius:4px;padding:10px 12px"><div style="font-size:9px;letter-spacing:2px;color:var(--acc);font-weight:700;margin-bottom:8px">LOCATION</div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;align-items:center"><span style="color:var(--txt3)">Home</span><span style="color:var(--txt1);font-weight:700">'+fmtATS(a.home_ats_w,a.home_ats_l,a.home_ats_p)+' &nbsp;'+fmtPct(a.home_ats_w,a.home_ats_l)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;align-items:center"><span style="color:var(--txt3)">Away</span><span style="color:var(--txt1);font-weight:700">'+fmtATS(a.away_ats_w,a.away_ats_l,a.away_ats_p)+' &nbsp;'+fmtPct(a.away_ats_w,a.away_ats_l)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;align-items:center"><span style="color:var(--txt3)">Neutral</span><span style="color:var(--txt1);font-weight:700">'+fmtATS(a.neutral_ats_w||0,a.neutral_ats_l||0)+' &nbsp;'+fmtPct(a.neutral_ats_w||0,a.neutral_ats_l||0)+'</span></div></div>';
+    html+='<div style="background:var(--bg2);border-radius:4px;padding:10px 12px"><div style="font-size:9px;letter-spacing:2px;color:var(--acc);font-weight:700;margin-bottom:8px">GAME TYPE</div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;align-items:center"><span style="color:var(--txt3)">Conf</span><span style="color:var(--txt1);font-weight:700">'+fmtATS(a.conf_ats_w,a.conf_ats_l)+' &nbsp;'+fmtPct(a.conf_ats_w,a.conf_ats_l)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;align-items:center"><span style="color:var(--txt3)">Non-Conf</span><span style="color:var(--txt1);font-weight:700">'+fmtATS(a.nonconf_ats_w||0,a.nonconf_ats_l||0)+' &nbsp;'+fmtPct(a.nonconf_ats_w||0,a.nonconf_ats_l||0)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;align-items:center"><span style="color:var(--txt3)">Role</span><span style="color:var(--txt1);font-size:10px;font-weight:700">Fav: '+fmtATS(a.fav_ats_w,a.fav_ats_l)+' &nbsp; Dog: '+fmtATS(a.dog_ats_w,a.dog_ats_l)+'</span></div></div>';
+    html+='<div style="background:var(--bg2);border-radius:4px;padding:10px 12px"><div style="font-size:9px;letter-spacing:2px;color:var(--acc);font-weight:700;margin-bottom:8px">RECENT FORM</div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;align-items:center"><span style="color:var(--txt3)">Last 5</span><span style="color:var(--txt1);font-weight:700">'+fmtATS(a.last5_w,a.last5_l)+' &nbsp;'+fmtPct(a.last5_w,a.last5_l)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;align-items:center"><span style="color:var(--txt3)">Last 10</span><span style="color:var(--txt1);font-weight:700">'+fmtATS(a.last10_w,a.last10_l)+' &nbsp;'+fmtPct(a.last10_w,a.last10_l)+'</span></div></div>';
+    html+='</div>';
+    html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;overflow:hidden;margin-bottom:12px">';
+    html+='<div style="background:#fdf9f4;padding:7px 12px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--acc);border-bottom:1px solid var(--bdr)">SPREAD RANGE BREAKDOWN</div>';
+    html+='<table class="data" style="font-size:11px"><thead><tr><th>RANGE</th><th>ATS</th><th>COVER %</th><th>AVG MARGIN</th></tr></thead><tbody>';
+    var ranges=[
+      {label:'Big fav (-10+)',w:a.bigfav_w,l:a.bigfav_l,m:a.bigfav_margin},
+      {label:'Med fav (-5 to -9.5)',w:a.medfav_w,l:a.medfav_l,m:a.medfav_margin},
+      {label:'Pick/small fav (-3 to +3)',w:a.pick_w,l:a.pick_l,m:a.pick_margin},
+      {label:'Small dog (+3.5 to +6.5)',w:a.smalldog_w,l:a.smalldog_l,m:a.smalldog_margin},
+      {label:'Big dog (+7+)',w:a.bigdog_w,l:a.bigdog_l,m:a.bigdog_margin},
+    ];
+    ranges.forEach(function(r){
+      var total=r.w+r.l;
+      if(!total){html+='<tr><td class="muted">'+r.label+'</td><td class="muted">--</td><td class="muted">--</td><td class="muted">--</td></tr>';return;}
+      html+='<tr><td class="bold">'+r.label+'</td><td>'+fmtATS(r.w,r.l)+'</td><td>'+fmtPct(r.w,r.l)+'</td><td>'+fmtM(r.m)+'</td></tr>';
     });
-    angles.sort(function(a,b){return b.score-a.score;});
-    var seen={};var top=[];
-    angles.forEach(function(a){if(!seen[a.team]&&top.length<6){seen[a.team]=true;top.push(a);}});
-    if(!top.length){anglesEl.innerHTML='<div style="color:var(--txt3);font-size:11px;padding:4px 0">No strong ATS edges today</div>';}
-    else{
-      var html='';
-      top.forEach(function(ang){
-        html+='<div style="display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid var(--bg2)">';
-        html+='<span style="color:var(--grn2);font-size:12px;flex-shrink:0">▲</span>';
-        html+='<div><div style="font-size:11px;font-weight:700;color:var(--txt1)">'+ang.team+' <span style="color:var(--txt3);font-size:10px;font-weight:400">'+ang.spread+'</span></div>';
-        html+='<div style="font-size:10px;color:var(--grn2)">'+ang.text+'</div>';
-        html+='<div style="font-size:9px;color:var(--txt3)">vs '+ang.opp+'</div></div></div>';
-      });
-      anglesEl.innerHTML=html;
-    }
-    if(!final.length){bodyEl.innerHTML='<div style="color:var(--txt3);font-size:11px;padding:4px 0">No graded games today yet</div>';return;}
-    var rhtml='';
-    final.forEach(function(g){
-      if(!g.home||!g.away)return;
-      var isHomeCover=g.home_cover;
-      var cm=g.cover_margin!=null?parseFloat(g.cover_margin):null;
-      var coverTeam=isHomeCover?g.home.team:g.away.team;
-      var coverColor=cm!=null?(cm>0?'var(--grn2)':'var(--red2)'):'var(--txt3)';
-      rhtml+='<div style="padding:5px 0;border-bottom:1px solid var(--bg2);font-size:11px">';
-      rhtml+='<div style="font-weight:700;color:var(--txt1)">'+g.away.team+' @ '+g.home.team+'</div>';
-      rhtml+='<div style="color:var(--txt3);font-size:10px">Final: <strong>'+g.away_score+' — '+g.home_score+'</strong> &nbsp;|&nbsp; ';
-      rhtml+='<span style="color:'+coverColor+';font-weight:700">'+coverTeam+' '+(cm!=null?(cm>0?'+':'')+cm.toFixed(1)+' vs spread':'COV')+'</span></div>';
-      rhtml+='</div>';
-    });
-    bodyEl.innerHTML=rhtml||'<div style="color:var(--txt3);font-size:11px">No results yet</div>';
-  });
+    html+='</tbody></table></div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+    html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;overflow:hidden">';
+    html+='<div style="background:#f0fdf4;padding:7px 12px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--grn2);border-bottom:1px solid var(--bdr)">BIGGEST COVERS</div>';
+    if(bigCovers.length){bigCovers.forEach(function(g){var isHome=String(g.home_team_id)===String(teamId);var opp=isHome?g.away:g.home;var margin=isHome?(g.cover_margin||0):-(g.cover_margin||0);var spread=isHome?(g.home_spread||0):-(g.home_spread||0);if(margin<=0)return;html+='<div style="padding:7px 12px;border-bottom:1px solid var(--bg2);display:flex;justify-content:space-between;align-items:center;font-size:11px"><div><div class="bold">'+(opp?opp.team:'?')+'</div><div style="font-size:10px;color:var(--txt3)">'+g.game_date+' &nbsp;'+fmtSp(spread)+'</div></div><span style="font-size:14px;font-weight:700;color:var(--grn2)">+'+parseFloat(margin).toFixed(1)+'</span></div>';});}else{html+='<div style="padding:12px;color:var(--txt3);font-size:11px">None yet</div>';}
+    html+='</div>';
+    html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;overflow:hidden">';
+    html+='<div style="background:#fef2f2;padding:7px 12px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--red2);border-bottom:1px solid var(--bdr)">BIGGEST MISSES</div>';
+    if(bigMisses.length){bigMisses.forEach(function(g){var isHome=String(g.home_team_id)===String(teamId);var opp=isHome?g.away:g.home;var margin=isHome?(g.cover_margin||0):-(g.cover_margin||0);var spread=isHome?(g.home_spread||0):-(g.home_spread||0);if(margin>=0)return;html+='<div style="padding:7px 12px;border-bottom:1px solid var(--bg2);display:flex;justify-content:space-between;align-items:center;font-size:11px"><div><div class="bold">'+(opp?opp.team:'?')+'</div><div style="font-size:10px;color:var(--txt3)">'+g.game_date+' &nbsp;'+fmtSp(spread)+'</div></div><span style="font-size:14px;font-weight:700;color:var(--red2)">'+parseFloat(margin).toFixed(1)+'</span></div>';});}else{html+='<div style="padding:12px;color:var(--txt3);font-size:11px">None yet</div>';}
+    html+='</div></div>';
+    container.innerHTML=html;
+  }).catch(function(e){container.innerHTML='<div style="padding:14px;color:var(--txt3);font-size:12px">No ATS data yet</div>';console.error(e);});
 }
+var TIER_CONFIG=[
+  {key:'elite',label:'ELITE',min:55,max:999,color:'#8b6914',bg:'#fdf3e0'},
+  {key:'contender',label:'CONTENDER',min:50,max:54.9,color:'#2563eb',bg:'#dbeafe'},
+  {key:'tourney',label:'TOURNAMENT',min:45,max:49.9,color:'#059669',bg:'#d1fae5'},
+  {key:'bubble',label:'BUBBLE',min:40,max:44.9,color:'#d97706',bg:'#fef3c7'},
+  {key:'field',label:'FIELD',min:0,max:39.9,color:'#6b7280',bg:'var(--bg2)'},
+];
 function loadPowerIndex(){
   var body=document.getElementById('power-index-body');
   body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:20px;font-size:12px">Loading...</div>';
@@ -1758,48 +1769,72 @@ function loadPowerIndex(){
     var teams=res.data||[];
     var html='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">';
     TIER_CONFIG.forEach(function(t){
+      var count=teams.filter(function(tm){return parseFloat(tm.pr)>=t.min&&parseFloat(tm.pr)<=t.max;}).length;
+      html+='<div style="display:flex;align-items:center;gap:5px;font-size:10px"><div style="width:9px;height:9px;border-radius:50%;background:'+t.color+'"></div><span style="color:var(--txt2);font-weight:700">'+t.label+'</span><span style="color:var(--txt3)">'+t.min+(t.max===999?'+':'–'+t.max)+'</span><span style="color:var(--acc);font-weight:700">('+count+')</span></div>';
+    });
+    html+='</div>';
+    TIER_CONFIG.forEach(function(tier){
+      var filtered=teams.filter(function(t){return parseFloat(t.pr)>=tier.min&&parseFloat(t.pr)<=tier.max;});
+      if(!filtered.length)return;
+      var byPR={};
+      filtered.forEach(function(t){var k=parseFloat(t.pr).toFixed(1);if(!byPR[k])byPR[k]=[];byPR[k].push(t);});
+      var prVals=Object.keys(byPR).sort(function(a,b){return b-a;});
+      html+='<div style="margin-bottom:4px"><div style="font-size:9px;font-weight:700;letter-spacing:2px;color:'+tier.color+';margin-bottom:5px;margin-top:12px">'+tier.label+'</div>';
+      prVals.forEach(function(pr){
+        var ts=byPR[pr];
+        html+='<div style="display:flex;align-items:stretch;margin-bottom:3px;border-radius:4px;overflow:hidden">';
+        html+='<div style="font-size:10px;font-weight:700;padding:5px 10px;min-width:56px;text-align:center;background:'+tier.bg+';color:'+tier.color+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+parseFloat(pr).toFixed(1)+'</div>';
+        html+='<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px;flex:1;align-items:center;background:var(--bg1)">';
+        ts.forEach(function(t){html+='<span style="font-size:11px;padding:3px 8px;border-radius:3px;font-weight:700;background:'+tier.bg+';color:'+tier.color+'">'+t.team+'<span style="font-size:9px;opacity:0.7;margin-left:3px">'+t.conference+'</span></span>';});
+        html+='</div></div>';
+      });
+      html+='<div style="height:1px;background:var(--bdr);margin:10px 0 2px"></div></div>';
+    });
+    if(!teams.length)html='<div style="text-align:center;color:var(--txt3);padding:20px">No team data found</div>';
+    body.innerHTML=html;
+  });
+  loadUpsetAlerts();
+}
+function loadUpsetAlerts(){
+  var body=document.getElementById('upset-alerts-body');
+  body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:12px;font-size:12px">Loading...</div>';
+  sb.from('upsets').select('*').order('recorded_at',{ascending:false}).limit(50).then(function(res){
+    var upsets=res.data||[];
+    if(!upsets.length){body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:20px;font-size:12px">No upsets recorded yet this season</div>';return;}
     var html='';
-    var remaining=teams.slice();
-    tiers.forEach(function(tier){
-      var inTier=remaining.filter(function(t){return parseFloat(t.pr)>=tier.min;});
-      remaining=remaining.filter(function(t){return parseFloat(t.pr)<tier.min;});
-      if(!inTier.length)return;
-      html+='<div style="margin-bottom:16px">';
-      html+='<div style="background:'+tier.bg+';border-left:4px solid '+tier.color+';padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:2px;color:'+tier.color+';margin-bottom:6px">'+tier.label+' ('+inTier.length+' teams)</div>';
-      html+='<div style="display:flex;flex-wrap:wrap;gap:5px">';
-      inTier.forEach(function(t){
-        var wl=(t.wins||0)+'-'+(t.losses||0);
-        html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;padding:6px 10px;font-size:11px;min-width:130px">';
-        html+='<div style="font-weight:700;color:var(--txt1)">'+t.team+'</div>';
-        html+='<div style="display:flex;justify-content:space-between;margin-top:2px">';
-        html+='<span style="color:var(--txt3);font-size:10px">'+t.conference+'</span>';
-        html+='<span style="color:var(--acc);font-weight:700;font-size:11px">'+parseFloat(t.pr).toFixed(1)+'</span>';
-        html+='</div>';
-        html+='<div style="font-size:9px;color:var(--txt3);margin-top:1px">'+wl+'</div>';
-        html+='</div>';
-      });
+    upsets.forEach(function(u){
+      var isMajor=u.severity==='major';
+      var borderColor=isMajor?'#dc2626':'#d97706';
+      var badgeBg=isMajor?'#fef2f2':'#fffbeb';
+      var badgeColor=isMajor?'#dc2626':'#d97706';
+      var icon=isMajor?'&#128680;':'&#9889;';
+      var label=isMajor?'MAJOR':'UPSET';
+      html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-left:3px solid '+borderColor+';border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center">';
+      html+='<div style="text-align:center;min-width:44px"><div style="font-size:18px">'+icon+'</div><div style="font-size:9px;font-weight:700;color:'+borderColor+';letter-spacing:1px;margin-top:2px">'+label+'</div></div>';
+      html+='<div style="flex:1">';
+      html+='<div style="font-size:13px;font-weight:700;color:var(--txt1)">'+u.winner_team+' <span style="color:var(--grn2);font-size:11px;font-weight:400">won</span></div>';
+      html+='<div style="font-size:11px;color:var(--txt3);margin-top:1px">def. '+u.loser_team+' &nbsp;·&nbsp; was a +'+parseFloat(u.dog_spread).toFixed(1)+' underdog &nbsp;·&nbsp; '+u.game_date+'</div>';
+      html+='<div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:'+badgeBg+';color:'+badgeColor+'">fav lost by '+parseFloat(u.actual_margin).toFixed(0)+'</span>';
+      html+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:#f0fdf4;color:#059669">'+u.winner_team+' +'+parseFloat(u.dog_spread).toFixed(1)+'</span>';
       html+='</div></div>';
+      html+='<div style="text-align:right;min-width:56px"><div style="font-size:22px;font-weight:700;color:'+borderColor+';line-height:1">'+parseFloat(u.dog_spread).toFixed(1)+'</div><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;margin-top:2px">FAV SPREAD</div></div>';
+      html+='</div>';
     });
-    document.getElementById('power-index-body').innerHTML=html||'<div style="color:var(--txt3);padding:20px">No teams found</div>';
-    sb.from('upsets').select('*').order('game_date',{ascending:false}).limit(20).then(function(ures){
-      var upsets=ures.data||[];
-      if(!upsets.length){document.getElementById('upset-alerts-body').innerHTML='<div style="text-align:center;color:var(--txt3);padding:20px;font-size:12px">No upsets recorded yet this season</div>';return;}
-      var uhtml='';
-      upsets.forEach(function(u){
-        var sevColor=u.severity==='major'?'var(--red2)':'var(--amb)';
-        uhtml+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-left:4px solid '+sevColor+';border-radius:4px;padding:10px 14px;margin-bottom:6px">';
-        uhtml+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
-        uhtml+='<div style="font-size:12px;font-weight:700;color:var(--txt1)">'+u.winner_team+' def. '+u.loser_team+'</div>';
-        uhtml+='<div style="font-size:10px;font-weight:700;color:'+sevColor+';letter-spacing:1px;text-transform:uppercase">'+u.severity+'</div>';
-        uhtml+='</div>';
-        uhtml+='<div style="font-size:11px;color:var(--txt3)">'+u.game_date+' &nbsp;|&nbsp; Dog spread: <strong style="color:var(--txt1)">+'+u.dog_spread+'</strong> &nbsp;|&nbsp; Won by: <strong style="color:'+sevColor+'">'+u.actual_margin+'</strong></div>';
-        uhtml+='</div>';
-      });
-      document.getElementById('upset-alerts-body').innerHTML=uhtml;
-    });
+    body.innerHTML=html;
   });
 }
 var agAllTeams=[];
+async function deleteGame(gameId){
+  if(!isAdmin)return;
+  var g=pruGames.find(function(x){return x.id===gameId;});
+  var matchup=g&&g.home&&g.away?(g.away.team+' @ '+g.home.team):'this game';
+  if(!confirm('DELETE '+matchup+'? This cannot be undone.'))return;
+  var res=await sb.from('games').delete().eq('id',gameId);
+  if(res.error){alert('Error: '+res.error.message);return;}
+  pruGames=pruGames.filter(function(x){return x.id!==gameId;});
+  renderPRUpdateCards();
+}
 function toggleAddGame(){
   if(!isAdmin)return;
   var p=document.getElementById('add-game-panel');
@@ -1857,7 +1892,7 @@ function agUpdatePreview(){
     +'<span class="odds-fav">'+fmtOdds(ml.fav)+'</span>'
     +'<span class="odds-dog">'+fmtOdds(ml.dog)+'</span>'
     +'<span style="color:var(--txt3)">'+Math.round(favWP*100)+'% win prob</span>'
-    +(neutral?'<span class="gc-badge gc-badge-neutral" style="font-size:9px">NEUTRAL</span>':'')
+    +(neutral?'<span class="gc-badge gc-badge-neutral">NEUTRAL</span>':'')
     +'</div>';
   prev.style.display='block';
 }
@@ -1901,31 +1936,7 @@ function agClearForm(){
   document.getElementById('ag-preview').style.display='none';
   document.getElementById('ag-neutral').value='false';
 }
-async function deleteGame(gameId){
-  if(!isAdmin)return;
-  var g=pruGames.find(function(x){return x.id===gameId;});
-  var matchup=g&&g.home&&g.away?(g.away.team+' @ '+g.home.team):'this game';
-  if(!confirm('DELETE '+matchup+'? This cannot be undone.'))return;
-  var res=await sb.from('games').delete().eq('id',gameId);
-  if(res.error){alert('Error: '+res.error.message);return;}
-  pruGames=pruGames.filter(function(x){return x.id!==gameId;});
-  renderPRUpdateCards();
-}
-function doLogin(){
-  var u=document.getElementById('login-user').value.trim();
-  var p=document.getElementById('login-pass').value.trim();
-  if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;}
-  else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;}
-  else{document.getElementById('login-err').textContent='Invalid credentials';return;}
-  var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);
-  document.getElementById('login-screen').style.display='none';
-  if(isAdmin){
-    document.getElementById('nav-prupdate').style.display='block';
-    document.getElementById('nav-rosterload').style.display='block';
-    document.getElementById('admin-badge').style.display='flex';
-  }
-  loadDashboard();
-}
+function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
 document.addEventListener('DOMContentLoaded',function(){
   var lu=document.getElementById('login-user');
   var lp=document.getElementById('login-pass');
@@ -1945,5 +1956,6 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 </div>
 <div id="admin-badge" style="display:none;position:fixed;bottom:16px;right:16px;background:var(--acc);color:#fff;font-size:9px;letter-spacing:2px;padding:6px 12px;border-radius:4px;z-index:999">ADMIN MODE</div>
+</div>
 </body>
 </html>
