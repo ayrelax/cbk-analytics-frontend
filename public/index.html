@@ -1921,10 +1921,12 @@ function doLogin(){
   if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;}
   else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;}
   else{document.getElementById('login-err').textContent='Invalid credentials';return;}
+  var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);
   document.getElementById('login-screen').style.display='none';
   if(isAdmin){
-    document.getElementById('nav-prupdate').style.display='';
-    document.getElementById('nav-rosterload').style.display='';
+    document.getElementById('nav-prupdate').style.display='block';
+    document.getElementById('nav-rosterload').style.display='block';
+    document.getElementById('admin-badge').style.display='flex';
   }
   loadDashboard();
 }
