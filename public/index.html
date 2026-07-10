@@ -275,6 +275,7 @@ table.data tr:hover td{background:#f5ede0}
   <button class="nav-btn" onclick="showPage('marketodds',this)">MARKET ODDS</button>
   <button class="nav-btn" id="nav-prupdate" onclick="showPage('prupdate',this)" style="display:none">PR UPDATE</button>
   <button class="nav-btn" id="nav-rosterload" onclick="showPage('rosterload',this)" style="display:none">ROSTER LOADER</button>
+  <button class="nav-btn" id="nav-schedloader" onclick="showPage('schedloader',this)" style="display:none">SCHEDULE LOADER</button>
   <button class="nav-btn" onclick="showPage('tools',this)">ODDS TOOLS</button>
 </div>
 <div class="ticker" id="ticker-bar" style="display:none">
@@ -617,6 +618,26 @@ table.data tr:hover td{background:#f5ede0}
 </div>
 <div id="roster-status" style="margin-bottom:10px"></div>
 <div id="roster-preview"></div>
+</div>
+<div id="page-schedloader" style="display:none">
+<div style="font-size:12px;color:var(--txt2);margin-bottom:4px">ADMIN ONLY — Load your schedule</div>
+<div style="font-size:11px;color:var(--txt3);margin-bottom:12px">Four columns: &nbsp;<b>DATE &nbsp;|&nbsp; NEUTRAL (0 or 1) &nbsp;|&nbsp; AWAY TEAM &nbsp;|&nbsp; HOME TEAM</b><br>Team names must match POWER RATINGS exactly. Blank rows are ignored. <b style="color:var(--red2)">Uploading replaces the entire schedule.</b></div>
+<div class="dropzone" style="padding:26px" onclick="document.getElementById('sched-excel-input').click()">
+<div style="font-size:14px;color:var(--txt2);margin-bottom:6px">Drop your schedule Excel file here</div>
+<div style="font-size:11px;color:var(--txt3)">.xlsx / .xls / .csv &nbsp;&mdash;&nbsp; reads the first sheet</div>
+<input type="file" id="sched-excel-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleSchedFile(this.files[0])">
+</div>
+<div style="font-size:10px;color:var(--txt3);letter-spacing:2px;text-align:center;margin:4px 0 10px">— OR PASTE BELOW —</div>
+<textarea id="sched-input" class="field" spellcheck="false" placeholder="11/3/2026&#9;0&#9;Milwaukee&#9;Hampton&#10;11/3/2026&#9;1&#9;Florida&#9;Arizona&#10;..." style="width:100%;height:220px;font-family:'Courier New',monospace;font-size:11px;line-height:1.5;resize:vertical;white-space:pre;overflow:auto"></textarea>
+<div class="search-bar" style="margin-top:10px">
+  <button class="btn primary" onclick="schedValidate()">VALIDATE</button>
+  <button class="btn" onclick="schedClear()">CLEAR</button>
+</div>
+<div id="sched-status" style="margin-bottom:10px"></div>
+<div id="sched-commit" class="search-bar" style="display:none">
+  <button class="btn danger" onclick="schedCommit()">REPLACE ALL GAMES</button>
+  <span style="font-size:10px;color:var(--txt3);letter-spacing:1px">Deletes every existing game, then loads this schedule</span>
+</div>
 </div>
 <div id="page-tools" style="display:none">
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
@@ -1944,6 +1965,129 @@ document.addEventListener('DOMContentLoaded',function(){
   if(lu)lu.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   if(lp)lp.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 });
+/* ================= SCHEDULE LOADER (admin only) — ADDITIVE ================= */
+var _schedRows=[];var _schedTeamMap={};
+function schedNorm(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();}
+function schedSerialToDate(n){var ms=(n-25569)*86400*1000;var d=new Date(ms);if(isNaN(d.getTime()))return null;return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');}
+function schedParseDate(raw){var s=String(raw||'').trim();if(!s)return null;if(/^\d{5}$/.test(s)){var n=parseInt(s,10);if(n>20000&&n<60000)return schedSerialToDate(n);}var iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(iso)return iso[1]+'-'+String(iso[2]).padStart(2,'0')+'-'+String(iso[3]).padStart(2,'0');var us=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(us){var mo=parseInt(us[1],10),da=parseInt(us[2],10),yr=parseInt(us[3],10);if(yr<100)yr+=2000;if(mo<1||mo>12||da<1||da>31)return null;return yr+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0');}return null;}
+function schedSplitLine(line){var parts=line.split('\t').map(function(x){return x.trim();}).filter(function(x){return x!=='';});if(parts.length<4){parts=line.split(/\s{2,}/).map(function(x){return x.trim();}).filter(function(x){return x!=='';});}if(parts.length<4&&line.indexOf(',')>=0){parts=line.split(',').map(function(x){return x.trim();}).filter(function(x){return x!=='';});}return parts;}
+function schedParse(txt){var lines=String(txt||'').split(/\r?\n/);var rows=[],bad=[];for(var i=0;i<lines.length;i++){var line=lines[i];if(!line.replace(/[\t\s]/g,''))continue;var p=schedSplitLine(line);if(p.length<4){bad.push({line:i+1,why:'needs 4 columns, found '+p.length,text:line.trim().slice(0,50)});continue;}var d=schedParseDate(p[0]);if(!d){bad.push({line:i+1,why:'unreadable date "'+p[0]+'"',text:line.trim().slice(0,50)});continue;}var nv=p[1].trim();if(nv!=='0'&&nv!=='1'){bad.push({line:i+1,why:'neutral must be 0 or 1, found "'+nv+'"',text:line.trim().slice(0,50)});continue;}var away=p[2].trim(),home=p[3].trim();if(!away||!home){bad.push({line:i+1,why:'missing team name',text:line.trim().slice(0,50)});continue;}if(schedNorm(away)===schedNorm(home)){bad.push({line:i+1,why:'team plays itself',text:line.trim().slice(0,50)});continue;}rows.push({date:d,neutral:nv==='1',away:away,home:home,line:i+1});}return{rows:rows,bad:bad};}
+function schedConflicts(rows){
+var pairSeen={},pairDupes={},dayTeam={},sameDay={},counts={};
+rows.forEach(function(r){
+counts[r.away]=(counts[r.away]||0)+1;counts[r.home]=(counts[r.home]||0)+1;
+var a=schedNorm(r.away),h=schedNorm(r.home);
+var pk=r.date+'|'+(a<h?a+'~'+h:h+'~'+a);
+if(pairSeen[pk])pairDupes[r.date+' \u2014 '+r.away+' vs '+r.home]=1;else pairSeen[pk]=1;
+[[a,r.away],[h,r.home]].forEach(function(t){var dk=r.date+'|'+t[0];if(!dayTeam[dk])dayTeam[dk]={name:t[1],n:0};dayTeam[dk].n++;});
+});
+Object.keys(dayTeam).forEach(function(k){if(dayTeam[k].n>1){sameDay[k.split('|')[0]+' \u2014 '+dayTeam[k].name+' ('+dayTeam[k].n+' games)']=1;}});
+return{pairDupes:Object.keys(pairDupes).sort(),sameDay:Object.keys(sameDay).sort(),counts:counts};
+}
+function schedStatus(html){document.getElementById('sched-status').innerHTML=html;}
+function schedClear(){document.getElementById('sched-input').value='';var fi=document.getElementById('sched-excel-input');if(fi)fi.value='';_schedRows=[];document.getElementById('sched-commit').style.display='none';schedStatus('');}
+async function schedValidate(note){
+if(!isAdmin){alert('Admin only');return;}
+document.getElementById('sched-commit').style.display='none';_schedRows=[];
+var txt=document.getElementById('sched-input').value;
+if(!txt.trim()){schedStatus('<div style="color:var(--txt3);font-size:12px">Nothing pasted yet.</div>');return;}
+schedStatus('<div style="color:var(--txt3);font-size:12px">Parsing and matching teams...</div>');
+var res=schedParse(txt);
+var tr=await sb.from('teams').select('id,team').range(0,9999);
+if(tr.error){schedStatus('<div style="color:var(--red2);font-size:12px">Error loading teams: '+tr.error.message+'</div>');return;}
+_schedTeamMap={};tr.data.forEach(function(t){_schedTeamMap[schedNorm(t.team)]=t.id;});
+var unmatched={};
+res.rows.forEach(function(r){r.away_id=_schedTeamMap[schedNorm(r.away)];r.home_id=_schedTeamMap[schedNorm(r.home)];if(!r.away_id)unmatched[r.away]=(unmatched[r.away]||0)+1;if(!r.home_id)unmatched[r.home]=(unmatched[r.home]||0)+1;});
+var un=Object.keys(unmatched).sort();
+var cf=schedConflicts(res.rows);
+var gc=await sb.from('games').select('id',{count:'exact',head:true});
+var existing=(gc&&gc.count!=null)?gc.count:'?';
+var html='';
+if(note)html+='<div style="background:#fff8f0;border:1px solid var(--acc2);border-radius:6px;padding:10px;margin-bottom:10px;font-size:11px;color:var(--amb)">'+note+'</div>';
+if(res.rows.length){var ds=res.rows.map(function(r){return r.date;}).sort();
+html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:12px;margin-bottom:10px;font-size:12px">';
+html+='<div>Parsed <b style="color:var(--acc)">'+res.rows.length+'</b> games &nbsp;|&nbsp; '+ds[0]+' &rarr; '+ds[ds.length-1]+'</div>';
+html+='<div style="color:var(--txt3);font-size:11px;margin-top:4px">Currently in database: '+existing+' games</div>';
+html+='</div>';}
+if(res.bad.length){html+='<div style="background:#fff5f5;border:1px solid var(--red2);border-radius:6px;padding:12px;margin-bottom:10px"><div style="color:var(--red2);font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:6px">'+res.bad.length+' BAD ROW(S)</div>';res.bad.slice(0,25).forEach(function(b){html+='<div style="font-size:11px;color:var(--txt2)">Line '+b.line+': '+b.why+' &nbsp;<span style="color:var(--txt3)">'+b.text+'</span></div>';});if(res.bad.length>25)html+='<div style="font-size:11px;color:var(--txt3);margin-top:4px">...and '+(res.bad.length-25)+' more</div>';html+='</div>';}
+if(un.length){html+='<div style="background:#fff5f5;border:1px solid var(--red2);border-radius:6px;padding:12px;margin-bottom:10px"><div style="color:var(--red2);font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:6px">'+un.length+' UNMATCHED TEAM NAME(S)</div>';un.forEach(function(n){html+='<div style="font-size:11px;color:var(--txt2)">&ldquo;'+n+'&rdquo; <span style="color:var(--txt3)">('+unmatched[n]+' games)</span></div>';});html+='<div style="font-size:11px;color:var(--txt3);margin-top:6px">Fix these names in your paste so they match the POWER RATINGS list exactly.</div></div>';}
+if(cf.pairDupes.length){html+='<div style="background:#fff5f5;border:1px solid var(--red2);border-radius:6px;padding:12px;margin-bottom:10px"><div style="color:var(--red2);font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:6px">'+cf.pairDupes.length+' SAME MATCHUP ON THE SAME DATE</div>';cf.pairDupes.slice(0,20).forEach(function(k){html+='<div style="font-size:11px;color:var(--txt2)">'+k+'</div>';});if(cf.pairDupes.length>20)html+='<div style="font-size:11px;color:var(--txt3);margin-top:4px">...and '+(cf.pairDupes.length-20)+' more</div>';html+='</div>';}
+if(cf.sameDay.length){html+='<div style="background:#fff5f5;border:1px solid var(--red2);border-radius:6px;padding:12px;margin-bottom:10px"><div style="color:var(--red2);font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:6px">'+cf.sameDay.length+' TEAM(S) PLAYING MORE THAN ONCE ON A DATE</div>';cf.sameDay.slice(0,20).forEach(function(k){html+='<div style="font-size:11px;color:var(--txt2)">'+k+'</div>';});if(cf.sameDay.length>20)html+='<div style="font-size:11px;color:var(--txt3);margin-top:4px">...and '+(cf.sameDay.length-20)+' more</div>';html+='<div style="font-size:11px;color:var(--txt3);margin-top:6px">Fix the dates for these games, then validate again.</div></div>';}
+if(res.rows.length){var names=Object.keys(cf.counts).sort(function(a,b){return cf.counts[b]-cf.counts[a]||a.localeCompare(b);});var hi=names[0],lo=names[names.length-1];html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:12px;margin-bottom:10px;font-size:11px"><div style="color:var(--acc);font-weight:700;letter-spacing:1px;margin-bottom:6px">GAMES PER TEAM</div><div style="color:var(--txt2)">'+names.length+' teams &nbsp;|&nbsp; most: <b>'+hi+' ('+cf.counts[hi]+')</b> &nbsp;|&nbsp; fewest: <b>'+lo+' ('+cf.counts[lo]+')</b></div><details style="margin-top:6px"><summary style="cursor:pointer;color:var(--txt3);font-size:11px">show all</summary><div style="max-height:200px;overflow:auto;margin-top:6px">';names.forEach(function(n){html+='<div style="color:var(--txt2)">'+n+' &mdash; '+cf.counts[n]+'</div>';});html+='</div></details></div>';}
+var blocked=(res.bad.length>0||un.length>0||cf.pairDupes.length>0||cf.sameDay.length>0);
+if(blocked){html+='<div style="color:var(--red2);font-size:12px;font-weight:700">Upload blocked. Fix the items above, then validate again.</div>';}
+else if(!res.rows.length){html+='<div style="color:var(--red2);font-size:12px">No valid rows found.</div>';}
+else{html+='<div style="color:var(--grn2);font-size:12px;font-weight:700">All '+res.rows.length+' games validated. Every team name matched.</div>';_schedRows=res.rows;document.getElementById('sched-commit').style.display='flex';}
+schedStatus(html);
+}
+async function schedCommit(){
+if(!isAdmin){alert('Admin only');return;}
+if(!_schedRows.length){alert('Run VALIDATE first.');return;}
+var typed=prompt('This DELETES every game currently in the database and replaces them with '+_schedRows.length+' new games.\n\nThis cannot be undone.\n\nType REPLACE to confirm:');if(typed!=='REPLACE'){schedStatus('<div style="color:var(--txt3);font-size:12px">Cancelled. Nothing was changed.</div>');return;}
+document.getElementById('sched-commit').style.display='none';
+schedStatus('<div style="color:var(--txt3);font-size:12px">Working... do not close this tab.</div>');
+var del=await sb.from('games').delete().gte('id',0);
+if(del.error){schedStatus('<div style="color:var(--red2);font-size:12px">DELETE failed: '+del.error.message+'<br>Nothing was inserted. Your games are untouched.</div>');document.getElementById('sched-commit').style.display='flex';return;}
+var payload=_schedRows.map(function(r){return{game_date:r.date,away_team_id:r.away_id,home_team_id:r.home_id,neutral_site:r.neutral,status:'scheduled',pr_processed:false};});
+var done=0;
+for(var i=0;i<payload.length;i+=500){
+var chunk=payload.slice(i,i+500);
+var ins=await sb.from('games').insert(chunk);
+if(ins.error){schedStatus('<div style="color:var(--red2);font-size:12px"><b>INSERT failed after '+done+' games:</b> '+ins.error.message+'<br><br>The database is now partially loaded. Re-run VALIDATE and use REPLACE ALL to start clean.</div>');return;}
+done+=chunk.length;
+schedStatus('<div style="color:var(--txt3);font-size:12px">Inserted '+done+' / '+payload.length+' games...</div>');
+}
+var gc2=await sb.from('games').select('id',{count:'exact',head:true});
+var total=(gc2&&gc2.count!=null)?gc2.count:'?';
+schedStatus('<div style="background:#f2fbf3;border:1px solid var(--grn2);border-radius:6px;padding:14px"><div style="color:var(--grn2);font-weight:700;font-size:13px">Done — '+done+' games loaded.</div><div style="color:var(--txt3);font-size:11px;margin-top:4px">Database now holds '+total+' games. Check DASHBOARD or GAME SPREADS to confirm.</div></div>');
+_schedRows=[];
+}
+function schedCellToText(v){
+if(v===null||v===undefined)return'';
+if(v instanceof Date){return(v.getMonth()+1)+'/'+v.getDate()+'/'+v.getFullYear();}
+return String(v).trim();
+}
+function handleSchedFile(file){
+if(!isAdmin){alert('Admin only');return;}
+if(!file)return;
+schedStatus('<div style="color:var(--txt3);font-size:12px">Reading '+file.name+'...</div>');
+var reader=new FileReader();
+reader.onload=function(e){
+try{
+var wb=XLSX.read(e.target.result,{type:'array'});
+var sheetName=wb.SheetNames[0];
+var rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:true,blankrows:false});
+var grid=rows.map(function(r){return(r||[]).map(schedCellToText);});
+grid=grid.filter(function(r){return r.some(function(c){return c!=='';});});
+if(!grid.length){schedStatus('<div style="color:var(--red2);font-size:12px">'+file.name+' has no data rows.</div>');return;}
+var maxLen=0;grid.forEach(function(r){if(r.length>maxLen)maxLen=r.length;});
+var offset=0;
+for(var c=0;c<maxLen;c++){var any=grid.some(function(r){return(r[c]||'')!=='';});if(any){offset=c;break;}}
+var lines=[];
+grid.forEach(function(r){
+var four=[0,1,2,3].map(function(k){return r[offset+k]||'';});
+if(four.every(function(x){return x==='';}))return;
+lines.push(four.join('\t'));
+});
+if(!lines.length){schedStatus('<div style="color:var(--red2);font-size:12px">No usable rows in '+file.name+'. Expected 4 columns: date, neutral, away, home.</div>');return;}
+var note='';
+if(lines.length&&!schedParseDate(lines[0].split('\t')[0])){
+var hdr=lines.shift();
+note='Ignored what looks like a header row: <b>'+hdr.replace(/\t/g,' | ')+'</b>';
+}
+if(!lines.length){schedStatus('<div style="color:var(--red2);font-size:12px">Only a header row found in '+file.name+'.</div>');return;}
+document.getElementById('sched-input').value=lines.join('\n');
+schedValidate(note);
+}catch(err){
+schedStatus('<div style="color:var(--red2);font-size:12px">Could not read that file: '+err.message+'</div>');
+}
+};
+reader.onerror=function(){schedStatus('<div style="color:var(--red2);font-size:12px">Failed to read the file.</div>');};
+reader.readAsArrayBuffer(file);
+}
+if(typeof window.loadDashboardATS!=='function'){window.loadDashboardATS=function(){};}
+(function(){var _origDoLogin=window.doLogin;window.doLogin=function(){try{_origDoLogin.apply(this,arguments);}finally{if(isAdmin){var b=document.getElementById('nav-schedloader');if(b)b.style.display='block';}}};})();
+/* =============== END SCHEDULE LOADER =============== */
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
