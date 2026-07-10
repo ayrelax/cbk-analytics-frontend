@@ -250,6 +250,12 @@ table.data tr:hover td{background:#f5ede0}
 .cr-pr{font-size:10px;color:var(--txt3);min-width:34px;text-align:right}
 .cr-wl{min-width:38px;text-align:right;font-weight:700;color:var(--txt1);font-size:10px}
 .cr-cwl{min-width:38px;text-align:right;font-size:10px;color:var(--txt3)}
+
+.seg{display:inline-flex;border:1px solid var(--bdr2);border-radius:6px;overflow:hidden}
+.seg-btn{background:var(--bg1);border:none;padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--txt3);cursor:pointer;font-family:inherit}
+.seg-btn.active{background:var(--acc);color:#fff}
+.seg-btn:not(.active):hover{background:var(--bg2)}
+.pl-lbl{font-size:9px;color:var(--txt3);letter-spacing:1px;font-weight:700;margin-bottom:3px}
 </style>
 </head>
 <body>
@@ -273,6 +279,7 @@ table.data tr:hover td{background:#f5ede0}
   <button class="nav-btn" onclick="showPage('ncaa',this)">NCAA TOURNAMENT</button>
   <button class="nav-btn" onclick="showPage('powerindex',this)">POWER INDEX</button>
   <button class="nav-btn" onclick="showPage('marketodds',this)">MARKET ODDS</button>
+  <button class="nav-btn" onclick="showPage('plays',this)">TEAM PLAYS</button>
   <button class="nav-btn" id="nav-prupdate" onclick="showPage('prupdate',this)" style="display:none">PR UPDATE</button>
   <button class="nav-btn" id="nav-rosterload" onclick="showPage('rosterload',this)" style="display:none">ROSTER LOADER</button>
   <button class="nav-btn" onclick="showPage('tools',this)">ODDS TOOLS</button>
@@ -618,6 +625,23 @@ table.data tr:hover td{background:#f5ede0}
 <div id="roster-status" style="margin-bottom:10px"></div>
 <div id="roster-preview"></div>
 </div>
+<div id="page-plays" style="display:none">
+  <div id="plays-leaderboard" style="margin-bottom:14px"></div>
+  <div class="search-bar" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <div class="seg" id="plays-timeframe">
+      <button class="seg-btn active" data-tf="overall" onclick="playsSetTf(this)">OVERALL</button>
+      <button class="seg-btn" data-tf="month" onclick="playsSetTf(this)">MONTHLY</button>
+      <button class="seg-btn" data-tf="week" onclick="playsSetTf(this)">WEEKLY</button>
+    </div>
+    <select id="plays-person" class="field" style="max-width:170px" onchange="playsRender()">
+      <option value="">All People</option>
+    </select>
+    <span id="plays-range-label" style="font-size:11px;color:var(--txt3);letter-spacing:1px"></span>
+  </div>
+  <div id="plays-admin-panel" style="display:none;margin-bottom:14px"></div>
+  <div id="plays-summary" style="margin-bottom:12px"></div>
+  <div id="plays-table"></div>
+</div>
 <div id="page-tools" style="display:none">
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
 <div class="panel"><div class="panel-hdr"><div class="panel-title">Odds Converter</div></div><div style="padding:14px"><input class="field" id="conv-in" placeholder="-110" oninput="convertOdds()" style="margin-bottom:8px"><div style="font-size:12px;color:var(--txt2)" id="conv-out">Decimal: -- Implied: --</div></div></div>
@@ -689,7 +713,7 @@ return{ha:ha,aa:aa,r:r};
 }
 function updateClock(){var n=new Date();var h=n.getHours()%12||12;var m=String(n.getMinutes()).padStart(2,'0');var s=String(n.getSeconds()).padStart(2,'0');var ap=n.getHours()<12?'AM':'PM';document.getElementById('clock').textContent=h+':'+m+':'+s+' '+ap+' ET';}
 setInterval(updateClock,1000);updateClock();
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -1990,6 +2014,121 @@ document.addEventListener('DOMContentLoaded',function(){
   if(lu)lu.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   if(lp)lp.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 });
+
+/* ================= TEAM PLAYS (public view, admin edit) — ADDITIVE ================= */
+var PLAYS_PEOPLE=['Patrick','Torch','Drook','Brady','Phil','Rich','Craig'];
+var _playsData=[];var _playsTf='overall';var _playsGamesForDate=[];
+function playsFmtMoney(n){if(n===null||n===undefined||n==='')return'--';var v=parseFloat(n);var s=v<0?'-':'';return s+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function playsFmtPct(n){if(n===null||n===undefined||!isFinite(n))return'--';return(n>=0?'':'')+n.toFixed(2)+'%';}
+function playsHold(pl,handle){var h=parseFloat(handle);var p=parseFloat(pl);if(!h||isNaN(h)||isNaN(p))return null;return p/h*100;}
+function playsWeekStart(d){var dt=new Date(d+'T00:00:00');var day=dt.getDay();var diff=(day-3+7)%7;dt.setDate(dt.getDate()-diff);return dt.toISOString().split('T')[0];}
+function playsInTf(playDate){if(_playsTf==='overall')return true;var today=new Date().toISOString().split('T')[0];if(_playsTf==='week'){return playsWeekStart(playDate)===playsWeekStart(today);}if(_playsTf==='month'){return playDate.slice(0,7)===today.slice(0,7);}return true;}
+function playsRangeLabel(){var today=new Date().toISOString().split('T')[0];if(_playsTf==='week'){var ws=playsWeekStart(today);var we=new Date(ws+'T00:00:00');we.setDate(we.getDate()+6);return'Week: '+ws+' \u2192 '+we.toISOString().split('T')[0]+' (Wed\u2013Tue)';}if(_playsTf==='month'){return'Month: '+today.slice(0,7);}return'All time';}
+async function loadPlays(){
+  document.getElementById('plays-table').innerHTML='<div style="color:var(--txt3);padding:20px;font-size:12px">Loading plays...</div>';
+  var res=await sb.from('plays').select('*').order('play_date',{ascending:false}).order('id',{ascending:false}).range(0,9999);
+  if(res.error){document.getElementById('plays-table').innerHTML='<div style="color:var(--red2);padding:20px;font-size:12px">Error: '+res.error.message+'</div>';return;}
+  _playsData=res.data||[];
+  var sel=document.getElementById('plays-person');
+  if(sel.options.length<=1){PLAYS_PEOPLE.forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});}
+  if(isAdmin)renderPlaysAdmin();
+  playsRender();
+}
+function playsSetTf(btn){_playsTf=btn.getAttribute('data-tf');var seg=document.getElementById('plays-timeframe');Array.prototype.forEach.call(seg.children,function(b){b.classList.remove('active');});btn.classList.add('active');playsRender();}
+function playsAgg(rows){var w=0,l=0,p=0,pl=0,handle=0;rows.forEach(function(r){if(r.result==='W')w++;else if(r.result==='L')l++;else if(r.result==='P')p++;pl+=parseFloat(r.pl)||0;handle+=parseFloat(r.handle)||0;});var hold=handle?pl/handle*100:null;return{w:w,l:l,p:p,pl:pl,handle:handle,hold:hold,n:rows.length};}
+function playsRender(){
+  var person=document.getElementById('plays-person').value;
+  document.getElementById('plays-range-label').textContent=playsRangeLabel();
+  // leaderboard is ALWAYS overall (per spec), not affected by timeframe
+  var lb=document.getElementById('plays-leaderboard');
+  var cards=PLAYS_PEOPLE.map(function(pn){var rows=_playsData.filter(function(r){return r.person===pn;});var a=playsAgg(rows);return{person:pn,a:a};});
+  cards.sort(function(x,y){return y.a.pl-x.a.pl;});
+  var lbHtml='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  cards.forEach(function(c){var pos=c.a.pl>=0;var bg=pos?'linear-gradient(135deg,#2e7d32,#1b5e20)':'linear-gradient(135deg,#c62828,#b71c1c)';var rec=c.a.w+'-'+c.a.l+(c.a.p?'-'+c.a.p:'');
+    lbHtml+='<div style="flex:1;min-width:120px;background:'+bg+';border-radius:8px;padding:10px 12px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15)"><div style="font-size:12px;font-weight:700;letter-spacing:1px;opacity:.95">'+c.person.toUpperCase()+'</div><div style="font-size:18px;font-weight:800;margin-top:2px">'+playsFmtMoney(c.a.pl)+'</div><div style="font-size:10px;opacity:.9;margin-top:2px">'+rec+' &nbsp;\u2022&nbsp; '+(c.a.hold!==null?playsFmtPct(c.a.hold):'--')+'</div></div>';});
+  lbHtml+='</div>';
+  lb.innerHTML=lbHtml;
+  // filtered set for table + summary (timeframe + person)
+  var rows=_playsData.filter(function(r){return playsInTf(r.play_date)&&(!person||r.person===person);});
+  var a=playsAgg(rows);
+  var plColor=a.pl>=0?'var(--grn2)':'var(--red2)';var holdColor=(a.hold||0)>=0?'var(--grn2)':'var(--red2)';
+  document.getElementById('plays-summary').innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+    playsStat('RECORD',a.w+'-'+a.l+(a.p?'-'+a.p:''),'var(--txt1)')+
+    playsStat('P/L',playsFmtMoney(a.pl),plColor)+
+    playsStat('HANDLE',playsFmtMoney(a.handle),'var(--txt1)')+
+    playsStat('HOLD %',a.hold!==null?playsFmtPct(a.hold):'--',holdColor)+
+    playsStat('PLAYS',String(a.n),'var(--txt1)')+'</div>';
+  // table
+  if(!rows.length){document.getElementById('plays-table').innerHTML='<div style="color:var(--txt3);padding:20px;text-align:center;font-size:12px">No plays for this filter.</div>';return;}
+  var h='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>DATE</th><th>EVENT</th><th>PERSON</th><th>TYPE</th><th>SIDE</th><th>OUR#</th><th>MKT#</th><th>W/L</th><th>HANDLE</th><th>P/L</th><th>HOLD%</th>'+(isAdmin?'<th></th>':'')+'</tr></thead><tbody>';
+  rows.forEach(function(r){var win=r.result==='W';var loss=r.result==='L';var rowbg=win?'background:#eaf6ea':loss?'background:#fbeaea':'';var hold=playsHold(r.pl,r.handle);var plc=(parseFloat(r.pl)||0)>=0?'var(--grn2)':'var(--red2)';
+    h+='<tr style="'+rowbg+'"><td class="muted">'+r.play_date+'</td><td class="bold">'+(r.event_name||'')+'</td><td>'+r.person+'</td><td style="text-transform:uppercase">'+r.bet_type+'</td><td>'+(r.side||'')+'</td><td>'+(r.our_number!==null?r.our_number:'')+'</td><td>'+(r.market_number!==null?r.market_number:'')+'</td>'+
+    '<td style="font-weight:800;color:'+(win?'var(--grn2)':loss?'var(--red2)':'var(--txt3)')+'">'+(r.result||'--')+'</td>'+
+    '<td>'+playsFmtMoney(r.handle)+'</td><td style="font-weight:700;color:'+plc+'">'+playsFmtMoney(r.pl)+'</td><td style="color:'+plc+'">'+(hold!==null?playsFmtPct(hold):'--')+'</td>'+
+    (isAdmin?'<td><button class="btn" style="padding:2px 8px;font-size:10px" onclick="playsDelete('+r.id+')">\u00d7</button></td>':'')+'</tr>';});
+  h+='</tbody></table></div></div>';
+  document.getElementById('plays-table').innerHTML=h;
+}
+function playsStat(label,val,color){return'<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:8px 14px;min-width:90px"><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;font-weight:700">'+label+'</div><div style="font-size:16px;font-weight:800;color:'+color+';margin-top:2px">'+val+'</div></div>';}
+function renderPlaysAdmin(){
+  var panel=document.getElementById('plays-admin-panel');panel.style.display='block';
+  var personOpts=PLAYS_PEOPLE.map(function(p){return'<option value="'+p+'">'+p+'</option>';}).join('');
+  panel.innerHTML='<div class="panel" style="padding:14px"><div style="font-weight:700;font-size:12px;letter-spacing:1px;color:var(--acc);margin-bottom:10px">ADD A PLAY</div>'+
+  '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
+  '<div><div class="pl-lbl">DATE</div><input type="date" id="pl-date" class="field" style="max-width:150px" onchange="playsLoadGames()"></div>'+
+  '<div style="flex:2;min-width:220px"><div class="pl-lbl">GAME</div><select id="pl-game" class="field" onchange="playsGamePicked()"><option value="">Pick a date first</option></select></div>'+
+  '<div><div class="pl-lbl">PERSON</div><select id="pl-person" class="field" style="max-width:130px">'+personOpts+'</select></div>'+
+  '<div><div class="pl-lbl">TYPE</div><select id="pl-type" class="field" style="max-width:110px"><option value="spread">Spread</option><option value="ml">ML</option><option value="total">Total</option></select></div>'+
+  '<div><div class="pl-lbl">SIDE</div><input id="pl-side" class="field" style="max-width:130px" placeholder="e.g. Duke -4 / OVER"></div>'+
+  '<div><div class="pl-lbl">OUR #</div><input id="pl-our" class="field" style="max-width:80px" placeholder="our"></div>'+
+  '<div><div class="pl-lbl">MKT #</div><input id="pl-mkt" class="field" style="max-width:80px" placeholder="market"></div>'+
+  '<div><div class="pl-lbl">W/L</div><select id="pl-result" class="field" style="max-width:80px"><option value="">--</option><option value="W">W</option><option value="L">L</option><option value="P">Push</option></select></div>'+
+  '<div><div class="pl-lbl">HANDLE</div><input id="pl-handle" class="field" style="max-width:110px" placeholder="$" oninput="playsPreviewHold()"></div>'+
+  '<div><div class="pl-lbl">P/L</div><input id="pl-pl" class="field" style="max-width:110px" placeholder="$ (- for loss)" oninput="playsPreviewHold()"></div>'+
+  '<div><div class="pl-lbl">HOLD%</div><div id="pl-hold-preview" style="font-size:14px;font-weight:800;padding:8px 4px;min-width:60px;color:var(--txt3)">--</div></div>'+
+  '<button class="btn primary" onclick="playsSave()">ADD PLAY</button>'+
+  '</div><div id="pl-form-status" style="font-size:11px;margin-top:8px"></div></div>';
+}
+async function playsLoadGames(){
+  var date=document.getElementById('pl-date').value;var sel=document.getElementById('pl-game');
+  if(!date){sel.innerHTML='<option value="">Pick a date first</option>';return;}
+  sel.innerHTML='<option value="">Loading...</option>';
+  var res=await sb.from('games').select('id, game_date, home:home_team_id(team), away:away_team_id(team)').eq('game_date',date).range(0,999);
+  if(res.error){sel.innerHTML='<option value="">Error loading games</option>';return;}
+  _playsGamesForDate=res.data||[];
+  if(!_playsGamesForDate.length){sel.innerHTML='<option value="">No games on '+date+'</option>';return;}
+  sel.innerHTML='<option value="">Select game...</option>'+_playsGamesForDate.map(function(g){var label=(g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?');return'<option value="'+g.id+'" data-label="'+label+'">'+label+'</option>';}).join('');
+}
+function playsGamePicked(){}
+function playsPreviewHold(){var h=playsHold(document.getElementById('pl-pl').value,document.getElementById('pl-handle').value);var el=document.getElementById('pl-hold-preview');if(h===null){el.textContent='--';el.style.color='var(--txt3)';}else{el.textContent=h.toFixed(2)+'%';el.style.color=h>=0?'var(--grn2)':'var(--red2)';}}
+async function playsSave(){
+  if(!isAdmin)return;
+  var st=document.getElementById('pl-form-status');
+  var gameSel=document.getElementById('pl-game');var gameId=gameSel.value;
+  var label=gameId?gameSel.options[gameSel.selectedIndex].getAttribute('data-label'):'';
+  var date=document.getElementById('pl-date').value;
+  var person=document.getElementById('pl-person').value;
+  var type=document.getElementById('pl-type').value;
+  var side=document.getElementById('pl-side').value.trim();
+  var our=document.getElementById('pl-our').value;var mkt=document.getElementById('pl-mkt').value;
+  var result=document.getElementById('pl-result').value;
+  var handle=document.getElementById('pl-handle').value;var pl=document.getElementById('pl-pl').value;
+  if(!date||!gameId){st.style.color='var(--red2)';st.textContent='Pick a date and a game.';return;}
+  if(!person){st.style.color='var(--red2)';st.textContent='Pick a person.';return;}
+  // soft typo warning: W with negative pl, or L with positive pl
+  var plv=parseFloat(pl);
+  if(result==='W'&&plv<0||result==='L'&&plv>0){if(!confirm('Heads up: result is '+result+' but P/L is '+pl+'. Save anyway?'))return;}
+  st.style.color='var(--txt3)';st.textContent='Saving...';
+  var row={play_date:date,game_id:parseInt(gameId),event_name:label,person:person,bet_type:type,side:side||null,our_number:our===''?null:parseFloat(our),market_number:mkt===''?null:parseFloat(mkt),result:result||null,handle:handle===''?null:parseFloat(handle),pl:pl===''?null:parseFloat(pl)};
+  var res=await sb.from('plays').insert(row);
+  if(res.error){st.style.color='var(--red2)';st.textContent='Error: '+res.error.message;return;}
+  st.style.color='var(--grn2)';st.textContent='\u2713 Play added';
+  ['pl-side','pl-our','pl-mkt','pl-handle','pl-pl'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('pl-result').value='';playsPreviewHold();
+  loadPlays();
+}
+async function playsDelete(id){if(!isAdmin)return;if(!confirm('Delete this play?'))return;var res=await sb.from('plays').delete().eq('id',id);if(res.error){alert('Error: '+res.error.message);return;}loadPlays();}
+/* =============== END TEAM PLAYS =============== */
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
