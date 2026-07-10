@@ -1509,6 +1509,14 @@ var CT_STRUCT={
   {key:'R3',name:'Third Round',games:[{id:'R3G0',a:{seed:8},b:{win:'R2G0'}},{id:'R3G1',a:{seed:5},b:{win:'R2G1'}},{id:'R3G2',a:{seed:7},b:{win:'R2G2'}},{id:'R3G3',a:{seed:6},b:{win:'R2G3'}}]},
   {key:'QF',name:'Quarterfinals',games:[{id:'QFG0',a:{seed:1},b:{win:'R3G0'}},{id:'QFG1',a:{seed:4},b:{win:'R3G1'}},{id:'QFG2',a:{seed:2},b:{win:'R3G2'}},{id:'QFG3',a:{seed:3},b:{win:'R3G3'}}]},
   {key:'SF',name:'Semifinals',games:[{id:'SFG0',a:{win:'QFG0'},b:{win:'QFG1'}},{id:'SFG1',a:{win:'QFG2'},b:{win:'QFG3'}}]},
+  {key:'CH',name:'Championship',games:[{id:'CHG0',a:{win:'SFG0'},b:{win:'SFG1'}}]}]},
+'B12':{name:'Big 12 Tournament',loc:'Kansas City, MO',count:16,champGame:'CHG0',
+ byes:{double:[1,2,3,4],single:[5,6,7,8],first:[9,10,11,12,13,14,15,16]},
+ rounds:[
+  {key:'R1',name:'First Round',games:[{id:'R1G0',a:{seed:12},b:{seed:13}},{id:'R1G1',a:{seed:9},b:{seed:16}},{id:'R1G2',a:{seed:10},b:{seed:15}},{id:'R1G3',a:{seed:11},b:{seed:14}}]},
+  {key:'R2',name:'Second Round',games:[{id:'R2G0',a:{seed:5},b:{win:'R1G0'}},{id:'R2G1',a:{seed:8},b:{win:'R1G1'}},{id:'R2G2',a:{seed:7},b:{win:'R1G2'}},{id:'R2G3',a:{seed:6},b:{win:'R1G3'}}]},
+  {key:'QF',name:'Quarterfinals',games:[{id:'QFG0',a:{seed:4},b:{win:'R2G0'}},{id:'QFG1',a:{seed:1},b:{win:'R2G1'}},{id:'QFG2',a:{seed:2},b:{win:'R2G2'}},{id:'QFG3',a:{seed:3},b:{win:'R2G3'}}]},
+  {key:'SF',name:'Semifinals',games:[{id:'SFG0',a:{win:'QFG0'},b:{win:'QFG1'}},{id:'SFG1',a:{win:'QFG2'},b:{win:'QFG3'}}]},
   {key:'CH',name:'Championship',games:[{id:'CHG0',a:{win:'SFG0'},b:{win:'SFG1'}}]}]}
 };
 var CT_CONF_LABELS={'A10':'ATLANTIC 10','AAC':'AMERICAN','ACC':'ACC','AE':'AMERICA EAST','ASUN':'ASUN','B10':'BIG TEN','B12':'BIG 12','BE':'BIG EAST','BSky':'BIG SKY','BSouth':'BIG SOUTH','BW':'BIG WEST','CAA':'CAA','CUSA':'CONF USA','Hor':'HORIZON','Ivy':'IVY LEAGUE','MAAC':'MAAC','MAC':'MAC','MEAC':'MEAC','MVC':'MISSOURI VALLEY','MWC':'MOUNTAIN WEST','NEC':'NEC','OVC':'OVC','P12':'PAC 12','Pat':'PATRIOT','SBC':'SUN BELT','SEC':'SEC','SL':'SOUTHLAND','SoCon':'SOUTHERN','Sum':'SUMMIT','SWAC':'SWAC','UAC':'UAC','WCC':'WCC'};
@@ -1578,6 +1586,14 @@ var MTE_EVENTS={
 'charleston':{name:"Charleston Classic",subtitle:"4-TEAM",count:4,champGame:'CHG0',rounds:[
   {key:'SF',name:'Semifinals',games:[
     {id:'SFG0',a:{slot:0},b:{slot:1}},{id:'SFG1',a:{slot:2},b:{slot:3}}]},
+  {key:'CH',name:'Championship',games:[{id:'CHG0',a:{win:'SFG0'},b:{win:'SFG1'}}]}]},
+'B12':{name:'Big 12 Tournament',loc:'Kansas City, MO',count:16,champGame:'CHG0',
+ byes:{double:[1,2,3,4],single:[5,6,7,8],first:[9,10,11,12,13,14,15,16]},
+ rounds:[
+  {key:'R1',name:'First Round',games:[{id:'R1G0',a:{seed:12},b:{seed:13}},{id:'R1G1',a:{seed:9},b:{seed:16}},{id:'R1G2',a:{seed:10},b:{seed:15}},{id:'R1G3',a:{seed:11},b:{seed:14}}]},
+  {key:'R2',name:'Second Round',games:[{id:'R2G0',a:{seed:5},b:{win:'R1G0'}},{id:'R2G1',a:{seed:8},b:{win:'R1G1'}},{id:'R2G2',a:{seed:7},b:{win:'R1G2'}},{id:'R2G3',a:{seed:6},b:{win:'R1G3'}}]},
+  {key:'QF',name:'Quarterfinals',games:[{id:'QFG0',a:{seed:4},b:{win:'R2G0'}},{id:'QFG1',a:{seed:1},b:{win:'R2G1'}},{id:'QFG2',a:{seed:2},b:{win:'R2G2'}},{id:'QFG3',a:{seed:3},b:{win:'R2G3'}}]},
+  {key:'SF',name:'Semifinals',games:[{id:'SFG0',a:{win:'QFG0'},b:{win:'QFG1'}},{id:'SFG1',a:{win:'QFG2'},b:{win:'QFG3'}}]},
   {key:'CH',name:'Championship',games:[{id:'CHG0',a:{win:'SFG0'},b:{win:'SFG1'}}]}]}
 };
 var mteEvent='pe16';
