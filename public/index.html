@@ -655,11 +655,10 @@ table.data tr:hover td{background:#f5ede0}
 <div id="bt-status" style="margin-top:12px"></div>
 </div>
 <div id="page-specials" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:4px">PLAYER SPECIALS — Game Leading Scorer</div>
-<div style="font-size:11px;color:var(--txt3);margin-bottom:12px">Pick a game. Loads the top 7 scorers per team from your Torvik stats and prices who leads the game, using each player's PPG, minutes and usage. Adjust the two dials to taste.</div>
-<div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-  <select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select>
-</div>
+<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">PLAYER SPECIALS</div>
+<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button></div>
+<div id="sp-game-view"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game. Loads the top 7 scorers per team and prices who leads the game.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select></div></div>
+<div id="sp-day-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a date. Loads the top 25 scorers among allowed teams playing that day (Power 5 + your 12 mid-majors). Uncheck to trim the field.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-day-date" class="field" style="max-width:200px" onchange="spLoadDay()"><option value="">Select a date...</option></select></div></div>
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
   <div style="min-width:240px">
     <div style="font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px">OVERROUND (HOLD) — <span id="sp-overround-val">1.20</span></div>
@@ -2327,7 +2326,7 @@ function spApplyMargin(){
     var implied=spImplied(odds);bookedTotal+=implied;
     return{player:r.player,team:r.team,ppg:r.ppg,fair:r.fpN,odds:odds};
   });
-  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">GAME LEADING SCORER</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="spExportCSV()">EXPORT CSV</button></div>';
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+(_spMode==='day'?'DAILY LEADING SCORER':'GAME LEADING SCORER')+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="spExportCSV()">EXPORT CSV</button></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>FAIR%</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   rows.forEach(function(r){
     h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td><td class="muted">'+(r.fair*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
@@ -2345,13 +2344,68 @@ function spExportCSV(){
   var flat=_spResult.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,fp:Math.pow(r.prob,_spFlatten)};});
   var s=flat.reduce(function(a,b){return a+b.fp;},0);flat.forEach(function(r){r.fpN=r.fp/s;});
   flat.sort(function(a,b){return b.fpN-a.fpN;});
-  var g=_spGames.filter(function(x){return String(x.id)===String(document.getElementById('sp-game').value);})[0];
-  var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'game';
+  var matchup;var marketName;if(_spMode==='day'){matchup=document.getElementById('sp-day-date')?document.getElementById('sp-day-date').value:'day';marketName='Daily Leading Scorer';}else{var g=_spGames.filter(function(x){return String(x.id)===String(document.getElementById('sp-game').value);})[0];matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'game';marketName='Leading Scorer';}
   var lines=['Player,Team,PPG,Odds'];
   flat.forEach(function(r){var odds=_spOverrides[r.player]!==undefined?_spOverrides[r.player]:spRoundOdds(spAmerican(r.fpN*_spOverround));lines.push('"'+r.player+'",'+r.team+','+r.ppg.toFixed(1)+','+odds);});
   var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='leading_scorer_'+(matchup.replace(/[^a-z0-9]+/gi,'_'))+'.csv';a.click();URL.revokeObjectURL(url);
 }
 /* =============== END PLAYER SPECIALS =============== */
+/* ================= DAILY LEADING SCORER (sub-view of Player Specials) ================= */
+var SP_ALLOWED_CONF=['B12','ACC','B10','SEC','BE'];
+var SP_ALLOWED_TEAMS=['Gonzaga','Utah St.','New Mexico','VCU','Saint Louis','Memphis','San Diego St.','Boise St.','Colorado St.',"Saint Mary's",'San Francisco','Denver'];
+var _spDayGames=[];var _spDayPlayers=[];var _spMode='game';
+function spSwitchMode(mode,btn){
+  _spMode=mode;
+  var seg=document.getElementById('sp-mode');if(seg){Array.prototype.forEach.call(seg.children,function(b){b.classList.remove('active');});btn.classList.add('active');}
+  document.getElementById('sp-game-view').style.display=(mode==='game')?'block':'none';
+  document.getElementById('sp-day-view').style.display=(mode==='day')?'block':'none';
+  document.getElementById('sp-players').innerHTML='';
+  document.getElementById('sp-output').innerHTML='';
+  if(mode==='day')spInitDay();
+}
+async function spInitDay(){
+  var sel=document.getElementById('sp-day-date');
+  if(sel.options.length>1)return; // already loaded
+  sel.innerHTML='<option value="">Loading dates...</option>';
+  var res=await sb.from('games').select('game_date').order('game_date',{ascending:true}).range(0,9999);
+  if(res.error){sel.innerHTML='<option value="">Error</option>';return;}
+  var dates={};(res.data||[]).forEach(function(g){if(g.game_date)dates[g.game_date]=1;});
+  var list=Object.keys(dates).sort();
+  if(!list.length){sel.innerHTML='<option value="">No games scheduled</option>';return;}
+  sel.innerHTML='<option value="">Select a date...</option>'+list.map(function(d){return'<option value="'+d+'">'+d+'</option>';}).join('');
+}
+async function spLoadDay(){
+  var date=document.getElementById('sp-day-date').value;
+  var box=document.getElementById('sp-players');
+  if(!date){box.innerHTML='';document.getElementById('sp-output').innerHTML='';return;}
+  box.innerHTML='<div style="color:var(--txt3);font-size:12px">Finding allowed teams playing '+date+'...</div>';
+  // 1) allowed team ids
+  var tRes=await sb.from('teams').select('id,team,conference').range(0,9999);
+  if(tRes.error){box.innerHTML='<div style="color:var(--red2);font-size:12px">Error loading teams.</div>';return;}
+  var allowedIds={};var allowedNames={};
+  (tRes.data||[]).forEach(function(t){
+    if(SP_ALLOWED_CONF.indexOf(t.conference)>=0||SP_ALLOWED_TEAMS.indexOf(t.team)>=0){allowedIds[t.id]=t.team;allowedNames[t.team]=1;}
+  });
+  // 2) games that day involving an allowed team -> collect allowed team ids actually playing
+  var gRes=await sb.from('games').select('home_team_id,away_team_id').eq('game_date',date).range(0,9999);
+  if(gRes.error){box.innerHTML='<div style="color:var(--red2);font-size:12px">Error loading games.</div>';return;}
+  var playingAllowed={};
+  (gRes.data||[]).forEach(function(g){
+    if(allowedIds[g.home_team_id])playingAllowed[g.home_team_id]=1;
+    if(allowedIds[g.away_team_id])playingAllowed[g.away_team_id]=1;
+  });
+  var teamIds=Object.keys(playingAllowed).map(Number);
+  if(!teamIds.length){box.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">No allowed-conference/team games on '+date+'.</div>';document.getElementById('sp-output').innerHTML='';return;}
+  // 3) players from those teams, top 25 by ppg
+  var pRes=await sb.from('player_stats').select('player_name,team,ppg,mpg,usage_pct,team_id').in('team_id',teamIds).not('ppg','is',null).order('ppg',{ascending:false}).range(0,499);
+  if(pRes.error){box.innerHTML='<div style="color:var(--red2);font-size:12px">Error loading players.</div>';return;}
+  _spDayPlayers=(pRes.data||[]).slice(0,25).map(function(p){p._on=true;return p;});
+  _spPlayers=_spDayPlayers; // reuse the same pricing pipeline
+  _spOverrides={};
+  spRenderPlayers();
+  spPrice();
+}
+/* =============== END DAILY LEADING SCORER =============== */
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
