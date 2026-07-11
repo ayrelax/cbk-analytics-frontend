@@ -2463,20 +2463,23 @@ function _propGenerate(players,g){
   var by3=players.slice().sort(function(a,b){return b.tpm3-a.tpm3;});
   var props=[];
   function add(desc,prob){props.push({desc:desc,prob:prob,odds:propRound(propAmer(prob,ov)),on:true});}
-  byPts.slice(0,5).forEach(function(p){var l=propPickSingle(p,'pts',false,ov);add(p.player_name+' '+l+'+ Points',propPOver(p,'pts',l,false));});
-  byReb.slice(0,4).forEach(function(p){var l=propPickSingle(p,'reb',false,ov);add(p.player_name+' '+l+'+ Rebounds',propPOver(p,'reb',l,false));});
-  byAst.slice(0,3).forEach(function(p){var l=propPickSingle(p,'ast',false,ov);add(p.player_name+' '+l+'+ Assists',propPOver(p,'ast',l,false));});
-  by3.slice(0,4).forEach(function(p){if(p.tpm3<0.5)return;var l=propPickSingle(p,'3pm',false,ov);add(p.player_name+' '+l+'+ Threes',propPOver(p,'3pm',l,false));});
-  byPts.slice(0,4).forEach(function(p){var l=propPickSingle(p,'pts',true,ov);add(p.player_name+' '+l+'+ 1st Half Points',propPOver(p,'pts',l,true));});
-  byReb.slice(0,2).forEach(function(p){var l=propPickSingle(p,'reb',true,ov);add(p.player_name+' '+l+'+ 1st Half Rebounds',propPOver(p,'reb',l,true));});
-  [[byReb[0],byReb[1],'reb','Rebounds'],[byReb[2],byReb[3],'reb','Rebounds'],[byAst[0],byAst[1],'ast','Assists'],[byPts[0],byPts[1],'pts','Points']].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickComb(x[0],x[1],x[2],ov);add(x[0].player_name+' & '+x[1].player_name+' Combine '+l+'+ '+x[3],propComb(x[0],x[1],x[2],l,false));});
-  [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[1],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;var line=20;for(var k=0;k<10;k++){var o=propAmer(propPOver(x[0],'pts',line,false)*propPOver(x[1],'pts',line,false),ov);if(o<=-185){line--;continue;}break;}add(x[0].player_name+' & '+x[1].player_name+' Each Score '+line+'+ Points',propPOver(x[0],'pts',line,false)*propPOver(x[1],'pts',line,false));});
-  [[byPts[0],byPts[1]],[byPts[2],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;add(x[0].player_name+' or '+x[1].player_name+' To Score 30+ Points',1-(1-propPOver(x[0],'pts',30,false))*(1-propPOver(x[1],'pts',30,false)));});
-  // win + player for the FAVORITE
+  // FEWER singles (top 3 pts, top 2 reb, top 2 ast, top 3 threes)
+  byPts.slice(0,3).forEach(function(p){var l=propPickSingle(p,'pts',false,ov);add(p.player_name+' '+l+'+ Points',propPOver(p,'pts',l,false));});
+  byReb.slice(0,2).forEach(function(p){var l=propPickSingle(p,'reb',false,ov);add(p.player_name+' '+l+'+ Rebounds',propPOver(p,'reb',l,false));});
+  byAst.slice(0,2).forEach(function(p){var l=propPickSingle(p,'ast',false,ov);add(p.player_name+' '+l+'+ Assists',propPOver(p,'ast',l,false));});
+  by3.slice(0,3).forEach(function(p){if(p.tpm3<0.5)return;var l=propPickSingle(p,'3pm',false,ov);add(p.player_name+' '+l+'+ Threes',propPOver(p,'3pm',l,false));});
+  byPts.slice(0,2).forEach(function(p){var l=propPickSingle(p,'pts',true,ov);add(p.player_name+' '+l+'+ 1st Half Points',propPOver(p,'pts',l,true));});
+  // MORE combos:
+  [[byReb[0],byReb[1],'reb','Rebounds'],[byReb[0],byReb[2],'reb','Rebounds'],[byAst[0],byAst[1],'ast','Assists'],[byPts[0],byPts[1],'pts','Points'],[byPts[0],byPts[2],'pts','Points'],[by3[0],by3[1],'3pm','Threes']].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickComb(x[0],x[1],x[2],ov);add(x[0].player_name+' & '+x[1].player_name+' Combine '+l+'+ '+x[3],propComb(x[0],x[1],x[2],l,false));});
+  // each-to (5 pairs, 20+ pts)
+  [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[1],byPts[2]],[byPts[0],byPts[3]],[byPts[1],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;var l=20;add(x[0].player_name+' & '+x[1].player_name+' Each Score '+l+'+ Points',propPOver(x[0],'pts',l,false)*propPOver(x[1],'pts',l,false));});
+  // or (3 pairs, 30+)
+  [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[2],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;add(x[0].player_name+' or '+x[1].player_name+' To Score 30+ Points',1-(1-propPOver(x[0],'pts',30,false))*(1-propPOver(x[1],'pts',30,false)));});
+  // win + player, and a win+combine parlay
   var favIsHome=_propWinProb.home>=_propWinProb.away;var favName=favIsHome?g.home.team:g.away.team;var favWP=favIsHome?_propWinProb.home:_propWinProb.away;
-  var favScorers=byPts.filter(function(p){return p.team===favName;}).slice(0,3);
-  favScorers.forEach(function(p){var l=propPickSingle(p,'pts',false,ov);add(favName+' Win & '+p.player_name+' '+l+'+ Points',favWP*propPOver(p,'pts',l,false));});
+  byPts.filter(function(p){return p.team===favName;}).slice(0,3).forEach(function(p){var l=propPickSingle(p,'pts',false,ov);add(favName+' Win & '+p.player_name+' '+l+'+ Points',favWP*propPOver(p,'pts',l,false));});
   byReb.filter(function(p){return p.team===favName;}).slice(0,2).forEach(function(p){var l=propPickSingle(p,'reb',false,ov);add(favName+' Win & '+p.player_name+' '+l+'+ Rebounds',favWP*propPOver(p,'reb',l,false));});
+  if(byReb[0]&&byReb[1]){var cl=propPickComb(byReb[0],byReb[1],'reb',ov);add(favName+' Win & '+byReb[0].player_name+' & '+byReb[1].player_name+' Combine '+cl+'+ Rebounds',favWP*propComb(byReb[0],byReb[1],'reb',cl,false));}
   _propList=props;
   propRender();
 }
