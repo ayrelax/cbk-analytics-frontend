@@ -663,8 +663,8 @@ table.data tr:hover td{background:#f5ede0}
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
   <div style="min-width:240px">
     <div style="font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px">OVERROUND (HOLD) — <span id="sp-overround-val">1.20</span></div>
-    <input type="range" min="1.10" max="1.80" step="0.01" value="1.20" style="width:100%" oninput="spSetOverround(this.value)">
-    <div style="font-size:9px;color:var(--txt3);display:flex;justify-content:space-between"><span>1.10 (low)</span><span>1.80 (heavy)</span></div>
+    <input type="range" min="1.03" max="1.50" step="0.01" value="1.20" style="width:100%" oninput="spSetOverround(this.value)">
+    <div style="font-size:9px;color:var(--txt3);display:flex;justify-content:space-between"><span>1.03 (low)</span><span>1.50 (heavy)</span></div>
   </div>
   <div style="min-width:240px">
     <div style="font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px">FLATTEN — <span id="sp-flatten-val">0.85</span></div>
@@ -2306,8 +2306,8 @@ function spRenderPlayers(){
   box.innerHTML=h;
 }
 function spToggle(i){_spPlayers[i]._on=!_spPlayers[i]._on;spRenderPlayers();spPrice();}
-function spSetOverround(v){_spOverround=parseFloat(v);document.getElementById('sp-overround-val').textContent=_spOverround.toFixed(2);spApplyMargin();}
-function spSetFlatten(v){_spFlatten=parseFloat(v);document.getElementById('sp-flatten-val').textContent=_spFlatten.toFixed(2);spApplyMargin();}
+function spSetOverround(v){_spOverround=parseFloat(v);document.getElementById('sp-overround-val').textContent=_spOverround.toFixed(2);if(_spMode==='props'){propReprice();}else{spApplyMargin();}}
+function spSetFlatten(v){_spFlatten=parseFloat(v);document.getElementById('sp-flatten-val').textContent=_spFlatten.toFixed(2);if(_spMode==='props'){propReprice();}else{spApplyMargin();}}
 function spPrice(){
   var active=_spPlayers.filter(function(p){return p._on;});
   if(active.length<2){document.getElementById('sp-output').innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">Need at least 2 players.</div>';return;}
@@ -2481,6 +2481,18 @@ function _propGenerate(players,g){
   byReb.filter(function(p){return p.team===favName;}).slice(0,2).forEach(function(p){var l=propPickSingle(p,'reb',false,ov);add(favName+' Win & '+p.player_name+' '+l+'+ Rebounds',favWP*propPOver(p,'reb',l,false));});
   if(byReb[0]&&byReb[1]){var cl=propPickComb(byReb[0],byReb[1],'reb',ov);add(favName+' Win & '+byReb[0].player_name+' & '+byReb[1].player_name+' Combine '+cl+'+ Rebounds',favWP*propComb(byReb[0],byReb[1],'reb',cl,false));}
   _propList=props;
+  propRender();
+}
+function propReprice(){
+  if(!_propList||!_propList.length)return;
+  var ov=_spOverround||1.15;var fl=_spFlatten||1.0;
+  _propList.forEach(function(p){
+    if(p._override!==undefined)return; // keep manual overrides
+    var prob=p.prob;
+    // flatten: pull implied prob toward 0.5 (fl<1 flattens; fl=1 no change)
+    var flatProb=Math.pow(prob,fl)/(Math.pow(prob,fl)+Math.pow(1-prob,fl));
+    p.odds=propRound(propAmer(flatProb,ov));
+  });
   propRender();
 }
 function propRender(){
