@@ -2347,8 +2347,8 @@ function spExportCSV(){
   flat.sort(function(a,b){return b.fpN-a.fpN;});
   var g=_spGames.filter(function(x){return String(x.id)===String(document.getElementById('sp-game').value);})[0];
   var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'game';
-  var lines=['Market,Game,Player,Team,PPG,FairPct,Odds'];
-  flat.forEach(function(r){var odds=_spOverrides[r.player]!==undefined?_spOverrides[r.player]:spRoundOdds(spAmerican(r.fpN*_spOverround));lines.push('Leading Scorer,"'+matchup+'","'+r.player+'",'+r.team+','+r.ppg.toFixed(1)+','+(r.fpN*100).toFixed(1)+','+odds);});
+  var lines=['Player,Team,PPG,Odds'];
+  flat.forEach(function(r){var odds=_spOverrides[r.player]!==undefined?_spOverrides[r.player]:spRoundOdds(spAmerican(r.fpN*_spOverround));lines.push('"'+r.player+'",'+r.team+','+r.ppg.toFixed(1)+','+odds);});
   var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='leading_scorer_'+(matchup.replace(/[^a-z0-9]+/gi,'_'))+'.csv';a.click();URL.revokeObjectURL(url);
 }
 /* =============== END PLAYER SPECIALS =============== */
