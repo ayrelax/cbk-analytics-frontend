@@ -1592,8 +1592,8 @@ if(_ds>=7){var _dw=(_hf&&!_hw)||(!_hf&&_hw);if(_dw){var _wid=_hw?g.home_team_id:
 renderPRUpdateCards();
 }
 function skipPR(gameId){var g=pruGames.find(function(x){return x.id===gameId;});if(g){g._skipped=true;}pruStats.skipped++;renderPRUpdateCards();}
-async function markGameFinal(gameId){var res=await sb.from('games').update({status:'final'}).eq('id',gameId);if(res.error){cbkToast('Error',res.error.message,'error');return;}var g=pruGames.find(function(x){return x.id===gameId;});if(g)g.status='final';var _m=g&&g.away&&g.home?((g.away.team||'?')+' vs '+(g.home.team||'?')):'Game';cbkToast('FINAL',_m+' marked final','success');renderPRUpdateCards();}
-async function markAllFinal(){var date=document.getElementById('pru-date').value;if(!date){cbkToast('Pick a date','Select a date first','info');return;}if(!confirm('Mark ALL remaining scheduled games on '+date+' as final?'))return;var res=await sb.from('games').update({status:'final'}).eq('game_date',date).eq('status','scheduled');if(res.error){cbkToast('Error',res.error.message,'error');return;}pruGames.forEach(function(g){if(g.status==='scheduled')g.status='final';});cbkToast('All games final','Remaining games on '+date+' marked final','success');renderPRUpdateCards();}
+async function markGameFinal(gameId){var res=await sb.from('games').update({status:'final'}).eq('id',gameId);if(res.error){cbkToast('Error',res.error.message,'error');return;}var g=pruGames.find(function(x){return x.id===gameId;});if(g)g.status='final';renderPRUpdateCards();}
+async function markAllFinal(){var date=document.getElementById('pru-date').value;if(!date){cbkToast('Pick a date','Select a date first','info');return;}if(!confirm('Mark ALL remaining scheduled games on '+date+' as final?'))return;var res=await sb.from('games').update({status:'final'}).eq('game_date',date).eq('status','scheduled');if(res.error){cbkToast('Error',res.error.message,'error');return;}pruGames.forEach(function(g){if(g.status==='scheduled')g.status='final';});renderPRUpdateCards();}
 function loadConfWins(){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">Loading...</div>';sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){var games=res.data;if(!games||!games.length){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">No games found</div>';return;}var teamWins={};var teamConf={};games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=(sp>=0?fp:1-fp);teamWins[g.away.id]+=(sp<0?fp:1-fp);teamConf[g.home.id]={name:g.home.team,conf:g.home.conference};teamConf[g.away.id]={name:g.away.team,conf:g.away.conference};});confWinsData=Object.keys(teamWins).map(function(id){return{id:id,team:teamConf[id].name,conf:teamConf[id].conf,wins:teamWins[id]};});var sel=document.getElementById('confwins-filter');if(sel.options.length<=1){var confs=[...new Set(confWinsData.map(function(t){return t.conf;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}renderConfWins(confWinsData);});}
 function filterConfWins(){var conf=document.getElementById('confwins-filter').value;renderConfWins(conf?confWinsData.filter(function(t){return t.conf===conf;}):confWinsData);}
 function renderConfWins(data){var byConf={};data.forEach(function(t){if(!byConf[t.conf])byConf[t.conf]=[];byConf[t.conf].push(t);});var html='';Object.keys(byConf).sort().forEach(function(conf){var teams=byConf[conf].sort(function(a,b){return b.wins-a.wins;});var leader=teams[0].wins;var totalWins=teams.reduce(function(s,t){return s+t.wins;},0);var gpt=Math.round(totalWins/teams.length*2);var rawProbs=teams.map(function(t){return 1/(1+Math.exp(-0.4775*(-(leader-t.wins))));});var sum=rawProbs.reduce(function(s,p){return s+p;},0);var mktProbs=rawProbs.map(function(p){return(p/sum)*1.18;});html+='<div class="panel" style="margin-bottom:12px"><div class="panel-hdr"><div class="panel-title">'+conf+'</div></div><table class="data"><thead><tr><th>#</th><th>TEAM</th><th>EXP W</th><th>EXP L</th><th>IMPLIED%</th><th>ML</th></tr></thead><tbody>';teams.forEach(function(t,i){var l=Math.max(0,Math.round((gpt-t.wins)*10)/10);var mp=mktProbs[i];var rawML=mp>0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;var ml=roundML(rawML);html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+t.team+'</td><td class="acc" style="font-weight:700">'+t.wins.toFixed(1)+'</td><td class="muted">'+l.toFixed(1)+'</td><td class="muted">'+(mp*100).toFixed(1)+'%</td><td class="'+(ml<0?'odds-fav':'odds-dog')+'">'+(ml>0?'+':'')+ml+'</td></tr>';});html+='</tbody></table></div>';});document.getElementById('confwins-body').innerHTML=html;}
@@ -2105,7 +2105,7 @@ function agClearForm(){
   document.getElementById('ag-preview').style.display='none';
   document.getElementById('ag-neutral').value='false';
 }
-function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';var _su=document.getElementById('nav-statsupload');if(_su)_su.style.display='block';try{localStorage.setItem('cbk_session','admin');}catch(e){}loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';try{localStorage.setItem('cbk_session','view');}catch(e){}var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
+function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';var _su=document.getElementById('nav-statsupload');if(_su)_su.style.display='block';try{localStorage.setItem('cbk_session','admin');}catch(e){}loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';try{localStorage.setItem('cbk_session','view');}catch(e){}var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';loadDashboard();cbkStartFinalPolling();}else{document.getElementById('login-err').style.display='block';}}
 document.addEventListener('DOMContentLoaded',function(){
   var lu=document.getElementById('login-user');
   var lp=document.getElementById('login-pass');
@@ -2120,7 +2120,7 @@ function restoreSession(){
   isAdmin=(s==='admin');
   var ps=document.getElementById('prelogin-style');if(ps&&ps.parentNode)ps.parentNode.removeChild(ps);
   var ls=document.getElementById('login-screen');if(ls)ls.style.display='none';
-  if(isAdmin){var ab=document.getElementById('admin-badge');if(ab)ab.style.display='flex';var np=document.getElementById('nav-prupdate');if(np)np.style.display='block';var nr=document.getElementById('nav-rosterload');if(nr)nr.style.display='block';var su=document.getElementById('nav-statsupload');if(su)su.style.display='block';}else{var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';}
+  if(isAdmin){var ab=document.getElementById('admin-badge');if(ab)ab.style.display='flex';var np=document.getElementById('nav-prupdate');if(np)np.style.display='block';var nr=document.getElementById('nav-rosterload');if(nr)nr.style.display='block';var su=document.getElementById('nav-statsupload');if(su)su.style.display='block';}else{var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';setTimeout(cbkStartFinalPolling,500);}
   var pg=null;try{pg=localStorage.getItem('cbk_page');}catch(e){}
   if(pg&&pg!=='dashboard'&&document.getElementById('page-'+pg)){
     cbkGoToPage(pg);
@@ -3047,6 +3047,47 @@ function cbkToast(title,msg,type,ms){
   setTimeout(function(){t.classList.remove('show');setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},ms);
 }
 /* ===== end toast ===== */
+
+
+/* ===== LIVE FINAL-SCORE NOTIFICATIONS (view-only) ===== */
+var _cbkAnnounced={};      // game ids already toasted
+var _cbkPollInit=false;    // seeded initial finals?
+var _cbkPollTimer=null;
+function cbkFmtFinalMsg(g){
+  var aw=(g.away&&g.away.team)?g.away.team:(g.away_name||'Away');
+  var hm=(g.home&&g.home.team)?g.home.team:(g.home_name||'Home');
+  var hasScore=(g.home_score!=null&&g.away_score!=null&&g.home_score!==''&&g.away_score!=='');
+  if(hasScore){return aw+' '+g.away_score+', '+hm+' '+g.home_score;}
+  return aw+' vs '+hm;
+}
+async function cbkPollFinals(){
+  try{
+    var res=await sb.from('games').select('id,status,home_score,away_score,home:home_team_id(team),away:away_team_id(team)').eq('status','final').range(0,9999);
+    if(res.error||!res.data)return;
+    var finals=res.data;
+    if(!_cbkPollInit){
+      // first run: remember existing finals silently (don't flood)
+      finals.forEach(function(g){_cbkAnnounced[g.id]=1;});
+      _cbkPollInit=true;
+      return;
+    }
+    finals.forEach(function(g){
+      if(!_cbkAnnounced[g.id]){
+        _cbkAnnounced[g.id]=1;
+        cbkToast('FINAL',cbkFmtFinalMsg(g),'success',6000);
+      }
+    });
+  }catch(e){}
+}
+function cbkStartFinalPolling(){
+  var sess=null;try{sess=localStorage.getItem('cbk_session');}catch(e){}
+  if(isAdmin||sess==='admin')return;   // view-only only
+  if(_cbkPollTimer)return;              // already running
+  cbkPollFinals();            // seed immediately
+  _cbkPollTimer=setInterval(cbkPollFinals,30000); // every 30s
+}
+/* ===== end live final notifications ===== */
+
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
