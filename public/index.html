@@ -2064,7 +2064,15 @@ function restoreSession(){
   if(isAdmin){var ab=document.getElementById('admin-badge');if(ab)ab.style.display='flex';var np=document.getElementById('nav-prupdate');if(np)np.style.display='block';var nr=document.getElementById('nav-rosterload');if(nr)nr.style.display='block';var su=document.getElementById('nav-statsupload');if(su)su.style.display='block';}else{var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';}
   loadDashboard();
   var pg=null;try{pg=localStorage.getItem('cbk_page');}catch(e){}
-  if(pg){var btn=document.querySelector('.nav-btn[onclick*="showPage(\''+pg+'\'"]');if(document.getElementById('page-'+pg)){if(btn)showPage(pg,btn);else{try{showPage(pg,{classList:{add:function(){}}});}catch(e){}}}}
+  if(pg&&pg!=='dashboard'&&document.getElementById('page-'+pg)){
+    setTimeout(function(){cbkGoToPage(pg);},60);
+  }
+}
+function cbkGoToPage(pg){
+  if(!document.getElementById('page-'+pg))return;
+  var btn=null;var navs=document.querySelectorAll('.nav-btn');
+  for(var i=0;i<navs.length;i++){var oc=navs[i].getAttribute('onclick')||'';if(oc.indexOf("showPage('"+pg+"'")>=0){btn=navs[i];break;}}
+  try{showPage(pg,btn||{classList:{add:function(){}}});}catch(e){}
 }
 function cbkLogout(){try{localStorage.removeItem('cbk_session');localStorage.removeItem('cbk_page');}catch(e){}location.reload();}
 function cbkLogoutConfirm(){if(confirm('Log out?')){cbkLogout();}}
