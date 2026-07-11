@@ -282,6 +282,7 @@ table.data tr:hover td{background:#f5ede0}
   <button class="nav-btn" onclick="showPage('plays',this)">TEAM PLAYS</button>
   <button class="nav-btn" id="nav-prupdate" onclick="showPage('prupdate',this)" style="display:none">PR UPDATE</button>
   <button class="nav-btn" id="nav-rosterload" onclick="showPage('rosterload',this)" style="display:none">ROSTER LOADER</button>
+  <button class="nav-btn" id="nav-statsupload" onclick="showPage('statsupload',this)" style="display:none">STATS UPLOAD</button>
   <button class="nav-btn" onclick="showPage('tools',this)">ODDS TOOLS</button>
 </div>
 <div class="ticker" id="ticker-bar" style="display:none">
@@ -642,6 +643,16 @@ table.data tr:hover td{background:#f5ede0}
   <div id="plays-summary" style="margin-bottom:12px"></div>
   <div id="plays-table"></div>
 </div>
+<div id="page-statsupload" style="display:none">
+<div style="font-size:12px;color:var(--txt2);margin-bottom:4px">ADMIN ONLY — Upload Bart Torvik player stats</div>
+<div style="font-size:11px;color:var(--txt3);margin-bottom:12px">Drop your roster workbook (the one with the <b>BT CSV STATS</b> sheet). Reads that sheet starting at row 3. Replaces all existing player stats. Run your Torvik query in Excel each morning, then upload here to keep specials pricing current.</div>
+<div class="dropzone" style="padding:26px" onclick="document.getElementById('bt-excel-input').click()">
+<div style="font-size:14px;color:var(--txt2);margin-bottom:6px">Drop your stats Excel file here</div>
+<div style="font-size:11px;color:var(--txt3)">.xlsx / .xls &nbsp;&mdash;&nbsp; finds the BT CSV STATS sheet automatically</div>
+<input type="file" id="bt-excel-input" accept=".xlsx,.xls" style="display:none" onchange="handleBTFile(this.files[0])">
+</div>
+<div id="bt-status" style="margin-top:12px"></div>
+</div>
 <div id="page-tools" style="display:none">
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
 <div class="panel"><div class="panel-hdr"><div class="panel-title">Odds Converter</div></div><div style="padding:14px"><input class="field" id="conv-in" placeholder="-110" oninput="convertOdds()" style="margin-bottom:8px"><div style="font-size:12px;color:var(--txt2)" id="conv-out">Decimal: -- Implied: --</div></div></div>
@@ -713,7 +724,7 @@ return{ha:ha,aa:aa,r:r};
 }
 function updateClock(){var n=new Date();var h=n.getHours()%12||12;var m=String(n.getMinutes()).padStart(2,'0');var s=String(n.getSeconds()).padStart(2,'0');var ap=n.getHours()<12?'AM':'PM';document.getElementById('clock').textContent=h+':'+m+':'+s+' '+ap+' ET';}
 setInterval(updateClock,1000);updateClock();
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='statsupload'){}if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -2007,7 +2018,7 @@ function agClearForm(){
   document.getElementById('ag-preview').style.display='none';
   document.getElementById('ag-neutral').value='false';
 }
-function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
+function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';var _su=document.getElementById('nav-statsupload');if(_su)_su.style.display='block';loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
 document.addEventListener('DOMContentLoaded',function(){
   var lu=document.getElementById('login-user');
   var lp=document.getElementById('login-pass');
@@ -2129,6 +2140,94 @@ async function playsSave(){
 }
 async function playsDelete(id){if(!isAdmin)return;if(!confirm('Delete this play?'))return;var res=await sb.from('plays').delete().eq('id',id);if(res.error){alert('Error: '+res.error.message);return;}loadPlays();}
 /* =============== END TEAM PLAYS =============== */
+
+/* ================= BART TORVIK STATS UPLOAD (admin) — ADDITIVE ================= */
+// Column map (0-indexed) for the "BT CSV STATS" sheet, data starts row 3 (index 2)
+var BT_COLS={player:0,team:1,games:3,min_pct:4,usage_pct:6,ftm:13,fta:14,ft_pct:15,fg2m:16,fg2a:17,fg2_pct:18,fg3m:19,fg3a:20,fg3_pct:21,ft_rate:24,mpg:54,rpg:59,apg:60,ppg:63,three_rate:71};
+var _btPending=[];
+function btNum(v){if(v===null||v===undefined||v==='')return null;var n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isNaN(n)?null:n;}
+function btStatus(html){document.getElementById('bt-status').innerHTML=html;}
+function handleBTFile(file){
+  if(!isAdmin){alert('Admin only');return;}
+  if(!file)return;
+  btStatus('<div style="color:var(--txt3);font-size:12px">Reading '+file.name+'...</div>');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      // find the BT CSV STATS sheet (first sheet whose name contains "BT" and "STAT")
+      var sheetName=null;
+      wb.SheetNames.forEach(function(nm){var up=nm.toUpperCase();if(sheetName===null&&up.indexOf('BT')>=0&&up.indexOf('STAT')>=0)sheetName=nm;});
+      if(!sheetName)sheetName=wb.SheetNames[0];
+      var rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:false});
+      // data starts row 3 => index 2
+      var out=[];var skipped=0;
+      for(var i=2;i<rows.length;i++){
+        var r=rows[i]||[];
+        var player=String(r[BT_COLS.player]||'').trim();
+        var team=String(r[BT_COLS.team]||'').trim();
+        if(!player||!team){skipped++;continue;}
+        out.push({
+          player_name:player,team:team,
+          games:btNum(r[BT_COLS.games]),min_pct:btNum(r[BT_COLS.min_pct]),usage_pct:btNum(r[BT_COLS.usage_pct]),
+          ftm:btNum(r[BT_COLS.ftm]),fta:btNum(r[BT_COLS.fta]),ft_pct:btNum(r[BT_COLS.ft_pct]),
+          fg2m:btNum(r[BT_COLS.fg2m]),fg2a:btNum(r[BT_COLS.fg2a]),fg2_pct:btNum(r[BT_COLS.fg2_pct]),
+          fg3m:btNum(r[BT_COLS.fg3m]),fg3a:btNum(r[BT_COLS.fg3a]),fg3_pct:btNum(r[BT_COLS.fg3_pct]),
+          ft_rate:btNum(r[BT_COLS.ft_rate]),mpg:btNum(r[BT_COLS.mpg]),rpg:btNum(r[BT_COLS.rpg]),
+          apg:btNum(r[BT_COLS.apg]),ppg:btNum(r[BT_COLS.ppg]),three_rate:btNum(r[BT_COLS.three_rate])
+        });
+      }
+      if(!out.length){btStatus('<div style="color:var(--red2);font-size:12px">No player rows found in sheet "'+sheetName+'" starting at row 3.</div>');return;}
+      btValidate(out,sheetName,skipped);
+    }catch(err){btStatus('<div style="color:var(--red2);font-size:12px">Could not read file: '+err.message+'</div>');}
+  };
+  reader.onerror=function(){btStatus('<div style="color:var(--red2);font-size:12px">Failed to read the file.</div>');};
+  reader.readAsArrayBuffer(file);
+}
+async function btValidate(players,sheetName,skipped){
+  btStatus('<div style="color:var(--txt3);font-size:12px">Matching '+players.length+' players to teams...</div>');
+  var tr=await sb.from('teams').select('id,team').range(0,9999);
+  if(tr.error){btStatus('<div style="color:var(--red2);font-size:12px">Error loading teams: '+tr.error.message+'</div>');return;}
+  var teamMap={};tr.data.forEach(function(t){teamMap[t.team.toLowerCase().trim()]=t.id;});
+  var unmatched={};
+  players.forEach(function(p){var tid=teamMap[p.team.toLowerCase().trim()];p.team_id=tid||null;if(!tid)unmatched[p.team]=(unmatched[p.team]||0)+1;});
+  var un=Object.keys(unmatched).sort();
+  // sanity: how many have a usable PPG
+  var withPPG=players.filter(function(p){return p.ppg!==null;}).length;
+  var teamsCount=Object.keys(players.reduce(function(a,p){a[p.team]=1;return a;},{})).length;
+  var html='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:12px;margin-bottom:10px;font-size:12px">';
+  html+='<div>Sheet: <b>'+sheetName+'</b></div>';
+  html+='<div style="margin-top:4px">Parsed <b style="color:var(--acc)">'+players.length+'</b> players across <b>'+teamsCount+'</b> teams';
+  if(skipped)html+=' <span style="color:var(--txt3)">('+skipped+' blank rows skipped)</span>';
+  html+='</div><div style="color:var(--txt3);font-size:11px;margin-top:4px">'+withPPG+' have a points-per-game value</div></div>';
+  // spot-check preview: show a few well-known players so user can eyeball columns are right
+  var preview=players.filter(function(p){return p.ppg!==null;}).sort(function(a,b){return b.ppg-a.ppg;}).slice(0,8);
+  html+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:10px;margin-bottom:10px"><div style="font-size:10px;letter-spacing:1px;color:var(--acc);font-weight:700;margin-bottom:6px">TOP 8 SCORERS (verify columns look right)</div><table style="width:100%;font-size:11px;border-collapse:collapse"><tr style="color:var(--txt3);text-align:left"><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>MPG</th><th>USG%</th><th>RPG</th><th>APG</th></tr>';
+  preview.forEach(function(p){html+='<tr><td class="bold">'+p.player_name+'</td><td>'+p.team+'</td><td>'+(p.ppg!=null?p.ppg:'')+'</td><td>'+(p.mpg!=null?p.mpg:'')+'</td><td>'+(p.usage_pct!=null?p.usage_pct:'')+'</td><td>'+(p.rpg!=null?p.rpg:'')+'</td><td>'+(p.apg!=null?p.apg:'')+'</td></tr>';});
+  html+='</table><div style="font-size:10px;color:var(--txt3);margin-top:6px">If PPG/MPG/USG look wrong, the column map needs a tweak \u2014 tell me before committing.</div></div>';
+  if(un.length){html+='<div style="background:#fff5f5;border:1px solid var(--red2);border-radius:6px;padding:12px;margin-bottom:10px"><div style="color:var(--red2);font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:6px">'+un.length+' UNMATCHED TEAM NAME(S)</div>';un.forEach(function(n){html+='<div style="font-size:11px;color:var(--txt2)">\u201c'+n+'\u201d <span style="color:var(--txt3)">('+unmatched[n]+' players)</span></div>';});html+='<div style="font-size:11px;color:var(--txt3);margin-top:6px">These players will still upload, but won\u2019t link to a team for game odds until the name matches. You can commit anyway or fix the sheet.</div></div>';}
+  _btPending=players;
+  html+='<div class="search-bar"><button class="btn primary" onclick="btCommit()">REPLACE ALL STATS ('+players.length+' players)</button><span style="font-size:10px;color:var(--txt3);letter-spacing:1px">Clears old stats, loads this file</span></div>';
+  btStatus(html);
+}
+async function btCommit(){
+  if(!isAdmin){alert('Admin only');return;}
+  if(!_btPending.length){alert('Nothing to commit — upload a file first.');return;}
+  btStatus('<div style="color:var(--txt3);font-size:12px">Clearing old stats...</div>');
+  var del=await sb.from('player_stats').delete().gte('id',0);
+  if(del.error){btStatus('<div style="color:var(--red2);font-size:12px">Error clearing stats: '+del.error.message+'</div>');return;}
+  var done=0;
+  for(var i=0;i<_btPending.length;i+=200){
+    var chunk=_btPending.slice(i,i+200);
+    var res=await sb.from('player_stats').insert(chunk);
+    if(res.error){btStatus('<div style="color:var(--red2);font-size:12px">Insert failed after '+done+': '+res.error.message+'<br>Re-run to retry.</div>');return;}
+    done+=chunk.length;
+    btStatus('<div style="color:var(--txt3);font-size:12px">Uploaded '+done+' / '+_btPending.length+'...</div>');
+  }
+  btStatus('<div style="background:#f2fbf3;border:1px solid var(--grn2);border-radius:6px;padding:14px"><div style="color:var(--grn2);font-weight:700;font-size:13px">Done — '+done+' players loaded.</div><div style="color:var(--txt3);font-size:11px;margin-top:4px">Player stats are fresh. Specials pricing will use these.</div></div>');
+  _btPending=[];
+}
+/* =============== END BART TORVIK STATS UPLOAD =============== */
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
