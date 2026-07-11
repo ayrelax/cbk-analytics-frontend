@@ -2463,22 +2463,27 @@ function _propGenerate(players,g){
   var byAst=players.slice().sort(function(a,b){return b.apg-a.apg;});
   var by3=players.slice().sort(function(a,b){return b.tpm3-a.tpm3;});
   var props=[];var seen={};
-  function add(desc,prob){if(seen[desc])return;seen[desc]=1;props.push({desc:desc,prob:prob,odds:propRound(propAmer(prob,ov)),on:true});}
+  function add(desc,prob,rawOdds){if(seen[desc])return;seen[desc]=1;props.push({desc:desc,prob:prob,odds:rawOdds!==undefined?rawOdds:propRound(propAmer(prob,ov)),on:true,fixed:rawOdds!==undefined});}
   var PTS_C=[30,35,40,45,50,55,60],REB_C=[15,20,25,30],AST_C=[10,15,20],THREE_C=[6,8,10],PTS5=[15,20,25,30],REB5=[10,15,20];
   // COMBINES
   [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[1],byPts[2]],[byPts[0],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickFives(function(L){return propComb(x[0],x[1],'pts',L,false);},PTS_C,250,900,ov);add(x[0].player_name+' & '+x[1].player_name+' To Combine For '+l+'+ Points',propComb(x[0],x[1],'pts',l,false));});
   [[byReb[0],byReb[1]],[byReb[0],byReb[2]],[byReb[1],byReb[2]]].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickFives(function(L){return propComb(x[0],x[1],'reb',L,false);},REB_C,250,900,ov);add(x[0].player_name+' & '+x[1].player_name+' To Combine For '+l+'+ Rebounds',propComb(x[0],x[1],'reb',l,false));});
   [[byAst[0],byAst[1]],[byAst[0],byAst[2]]].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickFives(function(L){return propComb(x[0],x[1],'ast',L,false);},AST_C,250,900,ov);add(x[0].player_name+' & '+x[1].player_name+' To Combine For '+l+'+ Assists',propComb(x[0],x[1],'ast',l,false));});
   [[by3[0],by3[1]],[by3[0],by3[2]]].forEach(function(x){if(!x[0]||!x[1]||x[1].tpm3<0.4)return;var l=propPickFives(function(L){return propComb(x[0],x[1],'3pm',L,false);},THREE_C,250,900,ov);add(x[0].player_name+' & '+x[1].player_name+' To Combine For '+l+'+ Threes',propComb(x[0],x[1],'3pm',l,false));});
-  // EACH-TO
-  [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[1],byPts[2]],[byPts[0],byPts[3]],[byPts[1],byPts[3]],[byPts[2],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickFives(function(L){return propPOver(x[0],'pts',L,false)*propPOver(x[1],'pts',L,false);},PTS5,300,900,ov);add(x[0].player_name+' & '+x[1].player_name+' To Each Score '+l+'+ Points',propPOver(x[0],'pts',l,false)*propPOver(x[1],'pts',l,false));});
-  // OR
-  [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[2],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickFives(function(L){return 1-(1-propPOver(x[0],'pts',L,false))*(1-propPOver(x[1],'pts',L,false));},PTS5,250,900,ov);add(x[0].player_name+' or '+x[1].player_name+' To Score '+l+'+ Points',1-(1-propPOver(x[0],'pts',l,false))*(1-propPOver(x[1],'pts',l,false)));});
-  // WIN + PLAYER
-  var favIsHome=_propWinProb.home>=_propWinProb.away;var favName=favIsHome?g.home.team:g.away.team;var favWP=favIsHome?_propWinProb.home:_propWinProb.away;
-  byPts.filter(function(p){return p.team===favName;}).slice(0,3).forEach(function(p){var l=propPickFives(function(L){return favWP*propPOver(p,'pts',L,false);},PTS5,200,900,ov);add(favName+' To Win & '+p.player_name+' '+l+'+ Points',favWP*propPOver(p,'pts',l,false));});
-  byReb.filter(function(p){return p.team===favName;}).slice(0,2).forEach(function(p){var l=propPickFives(function(L){return favWP*propPOver(p,'reb',L,false);},REB5,200,900,ov);add(favName+' To Win & '+p.player_name+' '+l+'+ Rebounds',favWP*propPOver(p,'reb',l,false));});
-  if(byReb[0]&&byReb[1]){add(favName+' To Win & '+byReb[0].player_name+' & '+byReb[1].player_name+' To Combine For 20+ Rebounds',favWP*propComb(byReb[0],byReb[1],'reb',20,false));}
+  // EACH-TO (reachable) + longer version only if it prices <= +2500
+  [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[1],byPts[2]],[byPts[0],byPts[3]],[byPts[1],byPts[3]],[byPts[2],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickFives(function(L){return propPOver(x[0],'pts',L,false)*propPOver(x[1],'pts',L,false);},PTS5,300,900,ov);add(x[0].player_name+' & '+x[1].player_name+' To Each Score '+l+'+ Points',propPOver(x[0],'pts',l,false)*propPOver(x[1],'pts',l,false));var l2=l+5;if(l2<=30){var p2=propPOver(x[0],'pts',l2,false)*propPOver(x[1],'pts',l2,false);if(propAmer(p2,ov)<=2500)add(x[0].player_name+' & '+x[1].player_name+' To Each Score '+l2+'+ Points',p2);}});
+  // OR (reachable) + longer version only if <= +2500
+  [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[2],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickFives(function(L){return 1-(1-propPOver(x[0],'pts',L,false))*(1-propPOver(x[1],'pts',L,false));},PTS5,250,900,ov);add(x[0].player_name+' or '+x[1].player_name+' To Score '+l+'+ Points',1-(1-propPOver(x[0],'pts',l,false))*(1-propPOver(x[1],'pts',l,false)));var l2=l+5;if(l2<=30){var p2=1-(1-propPOver(x[0],'pts',l2,false))*(1-propPOver(x[1],'pts',l2,false));if(propAmer(p2,ov)<=2500)add(x[0].player_name+' or '+x[1].player_name+' To Score '+l2+'+ Points',p2);}});
+  // WIN + PLAYER for BOTH teams
+  var homeName=g.home.team,awayName=g.away.team;
+  var wp={};wp[homeName]=_propWinProb.home;wp[awayName]=_propWinProb.away;
+  [homeName,awayName].forEach(function(tm){
+    byPts.filter(function(p){return p.team===tm;}).slice(0,3).forEach(function(p){var l=propPickFives(function(L){return wp[tm]*propPOver(p,'pts',L,false);},PTS5,200,1500,ov);add(tm+' To Win & '+p.player_name+' '+l+'+ Points',wp[tm]*propPOver(p,'pts',l,false));});
+    byReb.filter(function(p){return p.team===tm;}).slice(0,1).forEach(function(p){var l=propPickFives(function(L){return wp[tm]*propPOver(p,'reb',L,false);},REB5,200,1500,ov);add(tm+' To Win & '+p.player_name+' '+l+'+ Rebounds',wp[tm]*propPOver(p,'reb',l,false));});
+  });
+  // BUZZER props (fixed, cap-exempt)
+  add('Will Any Player Score A Go Ahead Field Goal With 0.0 Seconds Left In The Game',null,'+5000');
+  [awayName,homeName].forEach(function(tm){byPts.filter(function(p){return p.team===tm;}).slice(0,5).forEach(function(p){add(p.player_name+' To Score A Go Ahead Field Goal With 0.0 Seconds Left In The Game',null,'+20000');});});
   _propList=props;
   propRender();
 }
@@ -2486,6 +2491,7 @@ function propReprice(){
   if(!_propList||!_propList.length)return;
   var ov=_spOverround||1.15;var fl=_spFlatten||1.0;
   _propList.forEach(function(p){
+    if(p.fixed)return; // keep fixed novelty odds (buzzer beaters)
     if(p._override!==undefined)return; // keep manual overrides
     var prob=p.prob;
     // flatten: pull implied prob toward 0.5 (fl<1 flattens; fl=1 no change)
