@@ -656,10 +656,10 @@ table.data tr:hover td{background:#f5ede0}
 </div>
 <div id="page-specials" style="display:none">
 <div style="font-size:12px;color:var(--txt2);margin-bottom:8px">PLAYER SPECIALS</div>
-<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button><button class="seg-btn" onclick="spSwitchMode('props',this)">GAME PROPS</button></div>
+<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button><button class="seg-btn" onclick="spSwitchMode('props',this)">GAME PROPS</button><button class="seg-btn" onclick="spSwitchMode('first3',this)">FIRST 3PT</button></div>
 <div id="sp-game-view"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game. Loads the top 7 scorers per team and prices who leads the game.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select></div></div>
 <div id="sp-day-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a date. Loads the top 25 scorers among allowed teams playing that day (Power 5 + your 12 mid-majors). Uncheck to trim the field.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-day-date" class="field" style="max-width:200px" onchange="spLoadDay()"><option value="">Select a date...</option></select></div></div>
-<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select></div><div id="prop-output"></div></div>
+<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select></div><div id="prop-output"></div></div><div id="sp-first3-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores the first 3-point field goal. Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from 3PM + 3PA per game and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="f3-game" class="field" style="max-width:340px" onchange="f3LoadGame()"><option value="">Select a game...</option></select></div><div id="f3-players" style="margin-bottom:14px"></div><div id="f3-output"></div></div>
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
   <div style="min-width:240px">
     <div style="font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px">OVERROUND (HOLD) — <span id="sp-overround-val">1.20</span></div>
@@ -2360,12 +2360,12 @@ function spSwitchMode(mode,btn){
   var seg=document.getElementById('sp-mode');if(seg){Array.prototype.forEach.call(seg.children,function(b){b.classList.remove('active');});btn.classList.add('active');}
   document.getElementById('sp-game-view').style.display=(mode==='game')?'block':'none';
   document.getElementById('sp-day-view').style.display=(mode==='day')?'block':'none';
-  var pv=document.getElementById('sp-props-view');if(pv)pv.style.display=(mode==='props')?'block':'none';
+  var pv=document.getElementById('sp-props-view');if(pv)pv.style.display=(mode==='props')?'block':'none';var f3v=document.getElementById('sp-first3-view');if(f3v)f3v.style.display=(mode==='first3')?'block':'none';
   document.getElementById('sp-players').innerHTML='';
   document.getElementById('sp-output').innerHTML='';
   var po=document.getElementById('prop-output');if(po&&mode!=='props')po.innerHTML='';
   if(mode==='day')spInitDay();
-  if(mode==='props')initProps();
+  if(mode==='props')initProps();if(mode==='first3')initFirst3();
 }
 async function spInitDay(){
   var sel=document.getElementById('sp-day-date');
@@ -2520,6 +2520,107 @@ function propExportCSV(){
   var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='props_'+matchup.replace(/[^a-z0-9]+/gi,'_')+'.csv';a.click();URL.revokeObjectURL(url);
 }
 /* =============== END GAME PROP GENERATOR =============== */
+
+/* ================= FIRST 3PT FG SCORER (Player Specials sub-view) ================= */
+var _f3Game=null;var _f3Players=[];var _f3Games=[];
+async function initFirst3(){
+  var sel=document.getElementById('f3-game');
+  if(sel.options.length>1)return;
+  sel.innerHTML='<option value="">Loading games...</option>';
+  var res=await sb.from('games').select('id,game_date,home:home_team_id(id,team),away:away_team_id(id,team)').order('game_date',{ascending:true}).range(0,9999);
+  if(res.error){sel.innerHTML='<option value="">Error</option>';return;}
+  _f3Games=res.data||[];
+  if(!_f3Games.length){sel.innerHTML='<option value="">No games</option>';return;}
+  sel.innerHTML='<option value="">Select a game...</option>'+_f3Games.map(function(g){return'<option value="'+g.id+'">'+g.game_date+'  '+(g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')+'</option>';}).join('');
+}
+async function f3LoadGame(){
+  var gid=document.getElementById('f3-game').value;
+  var box=document.getElementById('f3-players');var out=document.getElementById('f3-output');
+  if(!gid){box.innerHTML='';out.innerHTML='';return;}
+  var g=_f3Games.filter(function(x){return String(x.id)===String(gid);})[0];
+  if(!g||!g.home||!g.away){box.innerHTML='<div style="color:var(--red2);font-size:12px">Game teams missing.</div>';return;}
+  _f3Game=g;
+  box.innerHTML='<div style="color:var(--txt3);font-size:12px">Loading players...</div>';
+  var res=await sb.from('player_stats').select('player_name,team,ppg,fg3m,fg3a,mpg,games').in('team',[g.away.team,g.home.team]).not('ppg','is',null).order('ppg',{ascending:false}).range(0,499);
+  if(res.error){box.innerHTML='<div style="color:var(--red2);font-size:12px">Error: '+res.error.message+'</div>';return;}
+  var byTeam={};[g.away.team,g.home.team].forEach(function(t){byTeam[t]=[];});
+  (res.data||[]).forEach(function(p){if(byTeam[p.team])byTeam[p.team].push(p);});
+  // list all players PPG order per team; check top 5 by default (starters)
+  _f3Players=[];
+  [g.away.team,g.home.team].forEach(function(t){
+    byTeam[t].forEach(function(p,idx){
+      p.tpm3=(p.games&&p.games>0)?(p.fg3m/p.games):0;
+      p.tpa3=(p.games&&p.games>0)?(p.fg3a/p.games):0;
+      p._on=(idx<5); // top 5 PPG checked
+      _f3Players.push(p);
+    });
+  });
+  f3RenderPlayers();
+  f3Price();
+}
+function f3RenderPlayers(){
+  var box=document.getElementById('f3-players');
+  var teams=[];_f3Players.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team);});
+  var on=_f3Players.filter(function(p){return p._on;}).length;
+  var h='<div style="font-size:11px;color:var(--txt3);margin-bottom:6px">Top 5 by PPG checked as starters. Check/uncheck to match the real starting lineups. '+on+' active.</div><div style="display:flex;gap:12px;flex-wrap:wrap">';
+  teams.forEach(function(t){
+    h+='<div style="flex:1;min-width:230px;background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:10px"><div style="font-weight:700;font-size:12px;color:var(--acc);margin-bottom:6px">'+t+'</div>';
+    _f3Players.forEach(function(p,i){if(p.team!==t)return;
+      h+='<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;cursor:pointer"><input type="checkbox" '+(p._on?'checked':'')+' onchange="f3Toggle('+i+')"> <span style="flex:1">'+p.player_name+'</span><span style="color:var(--txt3);font-size:10px">'+p.tpm3.toFixed(1)+' 3PM \u2022 '+p.tpa3.toFixed(1)+' 3PA</span></label>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+  box.innerHTML=h;
+}
+function f3Toggle(i){_f3Players[i]._on=!_f3Players[i]._on;f3RenderPlayers();f3Price();}
+function f3Price(){
+  var active=_f3Players.filter(function(p){return p._on;});
+  var out=document.getElementById('f3-output');
+  if(active.length<2){out.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">Check at least 2 players.</div>';return;}
+  var ov=_spOverround||1.20;
+  // weight = blend(3PM/g, 3PA/g) * minute factor
+  var rows=active.map(function(p){
+    var blend=(p.tpm3+p.tpa3)/2;
+    var minF=Math.min(1.15,(p.mpg||20)/28);
+    return{player:p.player_name,team:p.team,tpm3:p.tpm3,tpa3:p.tpa3,w:Math.max(0.0001,blend*minF)};
+  });
+  var total=rows.reduce(function(s,x){return s+x.w;},0);
+  rows.forEach(function(r){r.prob=r.w/total;});
+  rows.sort(function(a,b){return b.prob-a.prob;});
+  var booked=0;
+  var body=rows.map(function(r){
+    var odds=(_f3Overrides&&_f3Overrides[r.player]!==undefined)?_f3Overrides[r.player]:propRound(propAmer(r.prob,ov));
+    booked+=f3Implied(odds);
+    return{player:r.player,team:r.team,tpm3:r.tpm3,tpa3:r.tpa3,prob:r.prob,odds:odds};
+  });
+  var g=_f3Game;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">FIRST 3PT FIELD GOAL \u2014 '+matchup+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="f3ExportCSV()">EXPORT CSV</button></div>';
+  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>3PM/g</th><th>3PA/g</th><th>PROB</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
+  body.forEach(function(r){
+    h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.tpm3.toFixed(1)+'</td><td>'+r.tpa3.toFixed(1)+'</td><td class="muted">'+(r.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
+    if(isAdmin)h+='<td><input class="field" style="width:90px;padding:4px 6px;font-size:11px" value="'+r.odds+'" onchange="f3Override(\''+r.player.replace(/'/g,"\\'")+'\',this.value)"></td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div></div>';
+  h+='<div style="font-size:11px;color:var(--txt3);margin-top:6px">Booked total: <b>'+(booked*100).toFixed(1)+'%</b> (hold \u2248 '+((booked-1)*100).toFixed(1)+'%) \u2022 driven by 3PM + 3PA per game and minutes</div>';
+  out.innerHTML=h;
+}
+var _f3Overrides={};
+function f3Implied(a){var n=parseInt(String(a).replace('+',''));if(isNaN(n))return 0;if(n<0)return(-n)/((-n)+100);return 100/(n+100);}
+function f3Override(player,val){var v=String(val).trim();if(v===''){delete _f3Overrides[player];}else{if(v[0]!=='+'&&v[0]!=='-'&&parseFloat(v)>0)v='+'+v;_f3Overrides[player]=v;}f3Price();}
+function f3ExportCSV(){
+  var active=_f3Players.filter(function(p){return p._on;});
+  var ov=_spOverround||1.20;
+  var rows=active.map(function(p){var blend=(p.tpm3+p.tpa3)/2;var minF=Math.min(1.15,(p.mpg||20)/28);return{player:p.player_name,team:p.team,tpm3:p.tpm3,w:Math.max(0.0001,blend*minF)};});
+  var total=rows.reduce(function(s,x){return s+x.w;},0);rows.forEach(function(r){r.prob=r.w/total;});
+  rows.sort(function(a,b){return b.prob-a.prob;});
+  var g=_f3Game;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'game';
+  var lines=['Player,Team,Odds'];
+  rows.forEach(function(r){var odds=(_f3Overrides[r.player]!==undefined)?_f3Overrides[r.player]:propRound(propAmer(r.prob,ov));lines.push('"'+r.player+'",'+r.team+','+odds);});
+  var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='first_3pt_'+matchup.replace(/[^a-z0-9]+/gi,'_')+'.csv';a.click();URL.revokeObjectURL(url);
+}
+/* =============== END FIRST 3PT FG SCORER =============== */
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
