@@ -325,6 +325,39 @@ body,.panel,.nav,.nav-btn,.btn,.field,table,td,th,.card,input,select{transition:
 #cbk-theme-toggle:hover{background:var(--bg3)}
 /* ===== end dark themes ===== */
 
+
+/* ===== DARK MODE FIXES — remap hardcoded light backgrounds to dark shades ===== */
+/* These selectors used hardcoded cream/white bg that vanished in dark mode. */
+body.cbk-warm table.data tr:nth-child(even) td,body.cbk-true table.data tr:nth-child(even) td{background:var(--bg2)}
+body.cbk-warm table.data tr:hover td,body.cbk-true table.data tr:hover td{background:var(--bg3)}
+body.cbk-warm .panel-hdr,body.cbk-true .panel-hdr{background:var(--bg2)}
+body.cbk-warm .quick-calc,body.cbk-true .quick-calc{background:var(--bg2)}
+body.cbk-warm .conf-row.cr-lead,body.cbk-true .conf-row.cr-lead{background:var(--bg2)}
+body.cbk-warm .gc-odds,body.cbk-true .gc-odds{background:var(--bg2)}
+body.cbk-warm .update-banner,body.cbk-true .update-banner{background:var(--bg2)}
+body.cbk-warm .live-badge,body.cbk-true .live-badge{background:var(--bg2)}
+body.cbk-warm .inj-row,body.cbk-true .inj-row{background:var(--bg2)}
+/* accent-tinted "won/highlight" backgrounds -> subtle gold-dark */
+body.cbk-warm .comb-badge,body.cbk-true .comb-badge,
+body.cbk-warm .b-col-hdr,body.cbk-true .b-col-hdr,
+body.cbk-warm .b-team.win,body.cbk-true .b-team.win,
+body.cbk-warm .edit-seed-row.playin-row,body.cbk-true .edit-seed-row.playin-row,
+body.cbk-warm .ct-team.ct-win,body.cbk-true .ct-team.ct-win,
+body.cbk-warm .ct-info-done,body.cbk-true .ct-info-done,
+body.cbk-warm .gc-badge-home,body.cbk-true .gc-badge-home{background:var(--bg3);color:var(--acc)}
+body.cbk-warm .comb-badge,body.cbk-true .comb-badge{color:var(--acc)}
+/* roster rows */
+body.cbk-warm .roster-starter td,body.cbk-true .roster-starter td{background:var(--bg3)!important}
+body.cbk-warm .roster-bench td,body.cbk-true .roster-bench td{background:var(--bg1)!important}
+/* green/red status badges -> keep semantic color, dark bg */
+body.cbk-warm .gc-badge-conf,body.cbk-true .gc-badge-conf,
+body.cbk-warm .gc-badge-final,body.cbk-true .gc-badge-final,
+body.cbk-warm .playin-win,body.cbk-true .playin-win,
+body.cbk-warm .gc-odds.gc-odds-final,body.cbk-true .gc-odds.gc-odds-final{background:var(--bg3)!important;color:var(--grn2)}
+body.cbk-warm .gc-badge-live,body.cbk-true .gc-badge-live{background:var(--bg3);color:var(--red2)}
+body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(--bg3);color:var(--amb2)}
+/* ===== end dark mode fixes ===== */
+
 </style>
 </head>
 <body>
