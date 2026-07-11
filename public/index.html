@@ -314,6 +314,17 @@ table.data tbody tr:hover{background:var(--bg2)}
 }
 /* ===== end polish layer ===== */
 
+
+/* ===== DARK MODE THEMES (body-class overrides of the :root vars) ===== */
+body.cbk-warm{--bg0:#1a1611;--bg1:#241f18;--bg2:#2e2820;--bg3:#38312a;--bg4:#443c32;--acc:#d4af5a;--acc2:#c8a96e;--acc3:#e0b84e;--grn:#4caf50;--grn2:#5cbf60;--red:#e57373;--red2:#e57373;--amb:#ffa726;--amb2:#ffb74d;--pur:#b085d6;--txt1:#f0e9dc;--txt2:#e0d6c4;--txt3:#b3a488;--bdr:#3a332a;--bdr2:#4a4234}
+body.cbk-true{--bg0:#0d0d0f;--bg1:#161619;--bg2:#1f1f23;--bg3:#28282d;--bg4:#333339;--acc:#d4af5a;--acc2:#c8a96e;--acc3:#e6bd4d;--grn:#4caf50;--grn2:#4caf50;--red:#ef5350;--red2:#ef5350;--amb:#ffa726;--amb2:#ffb74d;--pur:#b085d6;--txt1:#f2f2f0;--txt2:#dcdcd8;--txt3:#a0a0a0;--bdr:#2a2a30;--bdr2:#3a3a42}
+/* smooth theme transition */
+body,.panel,.nav,.nav-btn,.btn,.field,table,td,th,.card,input,select{transition:background-color .3s ease,color .3s ease,border-color .3s ease}
+/* the toggle button */
+#cbk-theme-toggle{cursor:pointer;background:var(--bg2);border:1px solid var(--bdr2);color:var(--acc);font-family:inherit;font-size:12px;padding:5px 10px;border-radius:6px;letter-spacing:1px;white-space:nowrap;transition:background .15s ease}
+#cbk-theme-toggle:hover{background:var(--bg3)}
+/* ===== end dark themes ===== */
+
 </style>
 </head>
 <body>
@@ -323,6 +334,7 @@ table.data tbody tr:hover{background:var(--bg2)}
   <div class="top-right">
     <div class="fresh-badge"><div class="fresh-dot"></div>DATA LIVE</div>
     <div class="live-badge"><div class="dot"></div>LIVE</div>
+    <div id="cbk-theme-toggle" onclick="cbkCycleTheme()" title="Toggle light / warm dark / true dark">☀ LIGHT</div>
     <div class="clock" id="clock"></div>
   </div>
 </div>
@@ -801,7 +813,7 @@ if(fs>=10&&hf&&!hw){ha-=0.5;r+=' — fav penalty';}
 if(fs>=10&&!hf&&!aw){aa-=0.5;r+=' — fav penalty';}
 return{ha:ha,aa:aa,r:r};
 }
-function updateClock(){var n=new Date();var h=n.getHours()%12||12;var m=String(n.getMinutes()).padStart(2,'0');var s=String(n.getSeconds()).padStart(2,'0');var ap=n.getHours()<12?'AM':'PM';document.getElementById('clock').textContent=h+':'+m+':'+s+' '+ap+' ET';}
+function updateClock(){var n=new Date();var parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(n);var o={};parts.forEach(function(p){o[p.type]=p.value;});var hh=o.hour==='24'?'00':o.hour;document.getElementById('clock').textContent=hh+':'+o.minute+':'+o.second+' PT';}
 setInterval(updateClock,1000);updateClock();
 function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
@@ -2111,10 +2123,10 @@ document.addEventListener('DOMContentLoaded',function(){
   var lp=document.getElementById('login-pass');
   if(lu)lu.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   if(lp)lp.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  try{cbkInitTheme();}catch(e){}
   try{restoreSession();}catch(e){}
 });
 function restoreSession(){
-  try{console.log('[cbk] restoreSession v2 running, saved page =',localStorage.getItem('cbk_page'));}catch(e){}
   var s=null;try{s=localStorage.getItem('cbk_session');}catch(e){}
   if(s!=='admin'&&s!=='view')return;
   isAdmin=(s==='admin');
@@ -2131,7 +2143,6 @@ function restoreSession(){
   }
 }
 function cbkGoToPage(pg){
-  try{console.log('[cbk] cbkGoToPage ->',pg);}catch(e){}
   if(!document.getElementById('page-'+pg))return;
   var btn=null;var navs=document.querySelectorAll('.nav-btn');
   for(var i=0;i<navs.length;i++){var oc=navs[i].getAttribute('onclick')||'';if(oc.indexOf("showPage('"+pg+"'")>=0){btn=navs[i];break;}}
@@ -3088,6 +3099,28 @@ function cbkStartFinalPolling(){
 }
 /* ===== end live final notifications ===== */
 
+
+/* ===== THEME TOGGLE (Light / Warm Dark / True Dark) ===== */
+var _cbkThemes=[{cls:'',icon:'\u2600',lbl:'LIGHT'},{cls:'cbk-warm',icon:'\ud83c\udf19',lbl:'WARM'},{cls:'cbk-true',icon:'\ud83c\udf19',lbl:'DARK'}];
+function cbkApplyTheme(i){
+  var t=_cbkThemes[i]||_cbkThemes[0];
+  document.body.classList.remove('cbk-warm','cbk-true');
+  if(t.cls)document.body.classList.add(t.cls);
+  var btn=document.getElementById('cbk-theme-toggle');
+  if(btn)btn.textContent=t.icon+' '+t.lbl;
+  try{localStorage.setItem('cbk_theme',String(i));}catch(e){}
+}
+function cbkCycleTheme(){
+  var cur=0;try{cur=parseInt(localStorage.getItem('cbk_theme')||'0',10);}catch(e){}
+  if(isNaN(cur))cur=0;
+  cbkApplyTheme((cur+1)%_cbkThemes.length);
+}
+function cbkInitTheme(){
+  var i=0;try{i=parseInt(localStorage.getItem('cbk_theme')||'0',10);}catch(e){}
+  if(isNaN(i)||i<0||i>2)i=0;
+  cbkApplyTheme(i);
+}
+/* ===== end theme toggle ===== */
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
