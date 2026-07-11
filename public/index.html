@@ -439,7 +439,7 @@ table.data tr:hover td{background:#f5ede0}
     <div class="sim-market"><div class="sim-market-hdr">SWEET 16</div><table class="data"><thead><tr><th>#</th><th>TEAM</th><th>SEED</th><th>PR</th><th>FREQ</th><th>TRUE%</th><th>ML</th></tr></thead><tbody id="sim-sweet16"></tbody></table></div>
   </div>
 </div>
-</div><div id="ncaa-view-schedule" style="display:none"><div style="font-size:11px;color:var(--txt3);margin:4px 0 10px">Schedule grouped by round with spread, moneyline, and pick status. The right panel prices a top-scorer market for the selected round using the leading-scorer model (PPG, usage, minutes).</div><div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap"><div style="flex:0 0 640px;min-width:340px"><div id="ncaa-schedule-body"></div></div><div style="flex:1;min-width:440px"><div style="position:sticky;top:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--acc)">ROUND TOP SCORER</div><button class="btn" style="font-size:10px;padding:3px 10px" onclick="ncaaTopScorerCSV()">EXPORT CSV</button></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:10px;color:var(--txt3)">Overround</span><input id="ncaa-ts-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.25" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="ncaaTSRepriceOv()"><span style="font-size:10px;color:var(--txt3)">edit hold for this market</span></div><select id="ncaa-ts-round" class="field" style="width:100%;margin-bottom:8px" onchange="ncaaTopScorer()"><option value="Round of 64">Round of 64</option><option value="Round of 32">Round of 32</option><option value="Sweet 16">Sweet 16</option><option value="Elite 8">Elite 8</option><option value="Final Four">Final Four</option><option value="Championship">Championship</option><option value="Play-In">Play-In</option></select><div id="ncaa-ts-body"></div></div></div></div></div></div>
+</div><div id="ncaa-view-schedule" style="display:none"><div style="font-size:11px;color:var(--txt3);margin:4px 0 10px">Schedule grouped by round with spread, moneyline, and pick status. The right panel prices a top-scorer market for the selected round using the leading-scorer model (PPG, usage, minutes).</div><div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap"><div style="flex:0 0 640px;min-width:340px"><div id="ncaa-schedule-body"></div></div><div style="flex:1;min-width:440px"><div style="position:sticky;top:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--acc)">ROUND TOP SCORER</div><button class="btn" style="font-size:10px;padding:3px 10px" onclick="ncaaTopScorerCSV()">EXPORT CSV</button></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:10px;color:var(--txt3)">Overround</span><input id="ncaa-ts-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.25" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="ncaaTSRepriceOv()"><span style="font-size:10px;color:var(--txt3)">Flatten</span><input id="ncaa-ts-flat" type="number" step="0.01" min="0.50" max="1.00" value="1.00" style="width:64px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="ncaaTSRepriceOv()"></div><select id="ncaa-ts-round" class="field" style="width:100%;margin-bottom:8px" onchange="ncaaTopScorer()"><option value="Round of 64">Round of 64</option><option value="Round of 32">Round of 32</option><option value="Sweet 16">Sweet 16</option><option value="Elite 8">Elite 8</option><option value="Final Four">Final Four</option><option value="Championship">Championship</option><option value="Play-In">Play-In</option></select><div id="ncaa-ts-body"></div></div></div></div></div></div>
 <div id="page-confwins" style="display:none">
 <div class="search-bar"><select class="field" id="confwins-filter" onchange="filterConfWins()" style="width:160px"><option value="">ALL CONFS</option></select><button class="btn primary" onclick="loadConfWins()">REFRESH</button></div>
 <div id="confwins-body"></div>
@@ -485,7 +485,7 @@ table.data tr:hover td{background:#f5ede0}
   </div>
 </div>
 </div>
-<div id="ct-page-schedule" style="display:none"><div style="font-size:11px;color:var(--txt3);margin:4px 0 10px">Schedule with spread, moneyline, and pick status. The right panel prices a top-scorer market for the selected round.</div><div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap"><div style="flex:0 0 640px;min-width:340px"><div id="ct-schedule-body"></div></div><div style="flex:1;min-width:440px"><div style="position:sticky;top:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--acc)">ROUND TOP SCORER</div><button class="btn" style="font-size:10px;padding:3px 10px" onclick="tsCSV('ct')">EXPORT CSV</button></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:10px;color:var(--txt3)">Overround</span><input id="ct-ts-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.25" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="tsRepriceOv('ct')"><span style="font-size:10px;color:var(--txt3)">edit hold</span></div><select id="ct-ts-round" class="field" style="width:100%;margin-bottom:8px" onchange="ctTopScorer()"></select><div id="ct-ts-body"></div></div></div></div></div>
+<div id="ct-page-schedule" style="display:none"><div style="font-size:11px;color:var(--txt3);margin:4px 0 10px">Schedule with spread, moneyline, and pick status. The right panel prices a top-scorer market for the selected round.</div><div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap"><div style="flex:0 0 640px;min-width:340px"><div id="ct-schedule-body"></div></div><div style="flex:1;min-width:440px"><div style="position:sticky;top:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--acc)">ROUND TOP SCORER</div><button class="btn" style="font-size:10px;padding:3px 10px" onclick="tsCSV('ct')">EXPORT CSV</button></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:10px;color:var(--txt3)">Overround</span><input id="ct-ts-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.25" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="tsRepriceOv('ct')"><span style="font-size:10px;color:var(--txt3)">Flatten</span><input id="ct-ts-flat" type="number" step="0.01" min="0.50" max="1.00" value="1.00" style="width:64px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="tsRepriceOv('ct')"></div><select id="ct-ts-round" class="field" style="width:100%;margin-bottom:8px" onchange="ctTopScorer()"></select><div id="ct-ts-body"></div></div></div></div></div>
 </div>
 <div id="page-mte" style="display:none">
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
@@ -521,7 +521,7 @@ table.data tr:hover td{background:#f5ede0}
       <div id="mte-h2h-panel" style="display:none;background:var(--bg1);border:1px solid var(--bdr2);border-radius:6px;padding:14px;margin-top:10px"></div>
       <div id="mte-path-panel" style="display:none;background:var(--bg1);border:1px solid var(--bdr2);border-radius:6px;padding:14px;margin-top:10px"></div>
     </div>
-    <div id="mte-view-schedule" style="display:none"><div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap"><div style="flex:0 0 640px;min-width:340px"><div id="mte-schedule-body"></div></div><div style="flex:1;min-width:440px"><div style="position:sticky;top:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--acc)">ROUND TOP SCORER</div><button class="btn" style="font-size:10px;padding:3px 10px" onclick="tsCSV('mte')">EXPORT CSV</button></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:10px;color:var(--txt3)">Overround</span><input id="mte-ts-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.25" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="tsRepriceOv('mte')"><span style="font-size:10px;color:var(--txt3)">edit hold</span></div><select id="mte-ts-round" class="field" style="width:100%;margin-bottom:8px" onchange="mteTopScorer()"></select><div id="mte-ts-body"></div></div></div></div></div>
+    <div id="mte-view-schedule" style="display:none"><div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap"><div style="flex:0 0 640px;min-width:340px"><div id="mte-schedule-body"></div></div><div style="flex:1;min-width:440px"><div style="position:sticky;top:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--acc)">ROUND TOP SCORER</div><button class="btn" style="font-size:10px;padding:3px 10px" onclick="tsCSV('mte')">EXPORT CSV</button></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:10px;color:var(--txt3)">Overround</span><input id="mte-ts-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.25" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="tsRepriceOv('mte')"><span style="font-size:10px;color:var(--txt3)">Flatten</span><input id="mte-ts-flat" type="number" step="0.01" min="0.50" max="1.00" value="1.00" style="width:64px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="tsRepriceOv('mte')"></div><select id="mte-ts-round" class="field" style="width:100%;margin-bottom:8px" onchange="mteTopScorer()"></select><div id="mte-ts-body"></div></div></div></div></div>
     <div id="mte-odds" style="display:none;margin-top:14px">
       <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--acc);margin-bottom:8px" id="mte-odds-info"></div>
       <div class="sim-results-grid">
@@ -2883,10 +2883,12 @@ async function ncaaTopScorer(){
 }
 function ncaaTSGetOv(){var el=document.getElementById('ncaa-ts-ov');var v=el?parseFloat(el.value):1.25;return (isNaN(v)||v<1.01)?1.25:v;}
 function ncaaTSRepriceOv(){if(_ncaaTSRows&&_ncaaTSRows.length){ncaaTSRender(document.getElementById('ncaa-ts-round').value);}}
+function ncaaTSGetFlat(){var el=document.getElementById('ncaa-ts-flat');var v=el?parseFloat(el.value):1.0;return (isNaN(v)||v<=0)?1.0:v;}
 function ncaaTSRender(round){
   var box=document.getElementById('ncaa-ts-body');
-  var ov=ncaaTSGetOv();
-  var rows=_ncaaTSRows.slice(0,25);
+  var ov=ncaaTSGetOv();var flat=ncaaTSGetFlat();
+  var _fl=_ncaaTSRows.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,fp:Math.pow(r.prob,flat)};});var _fs=_fl.reduce(function(a,b){return a+b.fp;},0)||1;_fl.forEach(function(r){r.prob=r.fp/_fs;});_fl.sort(function(a,b){return b.prob-a.prob;});
+  var rows=_fl.slice(0,25);
   var h='<div style="font-size:10px;color:var(--txt3);margin-bottom:6px">'+round+' \u2014 most points scored, top 25 of '+_ncaaTSRows.length+' priced \u2022 leading-scorer model</div>';
   h+='<div class="panel" style="padding:0"><div style="max-height:520px;overflow-y:auto"><table class="data" style="font-size:11px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>ODDS</th></tr></thead><tbody>';
   rows.forEach(function(r){h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td><td style="font-weight:800;color:var(--acc3)">'+propRound(propAmer(r.prob,ov))+'</td></tr>';});
@@ -2896,9 +2898,10 @@ function ncaaTSRender(round){
 function ncaaTopScorerCSV(){
   if(!_ncaaTSRows||!_ncaaTSRows.length){alert('No top-scorer market to export. Select a round first.');return;}
   var round=document.getElementById('ncaa-ts-round').value;
-  var ov=ncaaTSGetOv();
+  var ov=ncaaTSGetOv();var flat=ncaaTSGetFlat();
+  var _fl=_ncaaTSRows.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,fp:Math.pow(r.prob,flat)};});var _fs=_fl.reduce(function(a,b){return a+b.fp;},0)||1;_fl.forEach(function(r){r.prob=r.fp/_fs;});_fl.sort(function(a,b){return b.prob-a.prob;});
   var lines=['Player,Team,PPG,Odds'];
-  _ncaaTSRows.forEach(function(r){lines.push('"'+r.player+'",'+r.team+','+r.ppg.toFixed(1)+','+propRound(propAmer(r.prob,ov)));});
+  _fl.forEach(function(r){lines.push('"'+r.player+'",'+r.team+','+r.ppg.toFixed(1)+','+propRound(propAmer(r.prob,ov)));});
   var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='top_scorer_'+round.replace(/[^a-z0-9]+/gi,'_')+'.csv';a.click();URL.revokeObjectURL(url);
 }
 
@@ -2920,11 +2923,13 @@ async function tsBuild(prefix,round,teams){
   _tsShared[prefix]={rows:sim.slice().sort(function(a,b){return b.prob-a.prob;}),round:round};
   tsRender(prefix,round);
 }
+function tsGetFlatFor(prefix){var el=document.getElementById(prefix+'-ts-flat');var v=el?parseFloat(el.value):1.0;return (isNaN(v)||v<=0)?1.0:v;}
 function tsRender(prefix,round){
   var box=document.getElementById(prefix+'-ts-body');
   var data=_tsShared[prefix];if(!data||!data.rows)return;
-  var ov=tsGetOvFor(prefix);
-  var rows=data.rows.slice(0,25);
+  var ov=tsGetOvFor(prefix);var flat=tsGetFlatFor(prefix);
+  var _fl=data.rows.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,fp:Math.pow(r.prob,flat)};});var _fs=_fl.reduce(function(a,b){return a+b.fp;},0)||1;_fl.forEach(function(r){r.prob=r.fp/_fs;});_fl.sort(function(a,b){return b.prob-a.prob;});
+  var rows=_fl.slice(0,25);
   var h='<div style="font-size:10px;color:var(--txt3);margin-bottom:6px">'+round+' \u2014 most points scored, top 25 of '+data.rows.length+' priced \u2022 leading-scorer model</div>';
   h+='<div class="panel" style="padding:0"><div style="max-height:520px;overflow-y:auto"><table class="data" style="font-size:11px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>ODDS</th></tr></thead><tbody>';
   rows.forEach(function(r){h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td><td style="font-weight:800;color:var(--acc3)">'+propRound(propAmer(r.prob,ov))+'</td></tr>';});
@@ -2935,9 +2940,10 @@ function tsRepriceOv(prefix){var d=_tsShared[prefix];if(d&&d.rows&&d.rows.length
 function tsCSV(prefix){
   var data=_tsShared[prefix];
   if(!data||!data.rows||!data.rows.length){alert('No top-scorer market to export. Select a round first.');return;}
-  var ov=tsGetOvFor(prefix);
+  var ov=tsGetOvFor(prefix);var flat=tsGetFlatFor(prefix);
+  var _fl=data.rows.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,fp:Math.pow(r.prob,flat)};});var _fs=_fl.reduce(function(a,b){return a+b.fp;},0)||1;_fl.forEach(function(r){r.prob=r.fp/_fs;});_fl.sort(function(a,b){return b.prob-a.prob;});
   var lines=['Player,Team,PPG,Odds'];
-  data.rows.forEach(function(r){lines.push('"'+r.player+'",'+r.team+','+r.ppg.toFixed(1)+','+propRound(propAmer(r.prob,ov)));});
+  _fl.forEach(function(r){lines.push('"'+r.player+'",'+r.team+','+r.ppg.toFixed(1)+','+propRound(propAmer(r.prob,ov)));});
   var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='top_scorer_'+prefix+'_'+(data.round||'round').replace(/[^a-z0-9]+/gi,'_')+'.csv';a.click();URL.revokeObjectURL(url);
 }
 /* ===== end shared top-scorer engine ===== */
