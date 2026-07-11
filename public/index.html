@@ -2047,7 +2047,7 @@ function agClearForm(){
   document.getElementById('ag-preview').style.display='none';
   document.getElementById('ag-neutral').value='false';
 }
-function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';var _su=document.getElementById('nav-statsupload');if(_su)_su.style.display='block';try{localStorage.setItem('cbk_session','admin');}catch(e){}loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';try{localStorage.setItem('cbk_session','view');}catch(e){}loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
+function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';var _su=document.getElementById('nav-statsupload');if(_su)_su.style.display='block';try{localStorage.setItem('cbk_session','admin');}catch(e){}loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';try{localStorage.setItem('cbk_session','view');}catch(e){}var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';loadDashboard();}else{document.getElementById('login-err').style.display='block';}}
 document.addEventListener('DOMContentLoaded',function(){
   var lu=document.getElementById('login-user');
   var lp=document.getElementById('login-pass');
@@ -2061,12 +2061,13 @@ function restoreSession(){
   isAdmin=(s==='admin');
   var ps=document.getElementById('prelogin-style');if(ps&&ps.parentNode)ps.parentNode.removeChild(ps);
   var ls=document.getElementById('login-screen');if(ls)ls.style.display='none';
-  if(isAdmin){var ab=document.getElementById('admin-badge');if(ab)ab.style.display='flex';var np=document.getElementById('nav-prupdate');if(np)np.style.display='block';var nr=document.getElementById('nav-rosterload');if(nr)nr.style.display='block';var su=document.getElementById('nav-statsupload');if(su)su.style.display='block';}
+  if(isAdmin){var ab=document.getElementById('admin-badge');if(ab)ab.style.display='flex';var np=document.getElementById('nav-prupdate');if(np)np.style.display='block';var nr=document.getElementById('nav-rosterload');if(nr)nr.style.display='block';var su=document.getElementById('nav-statsupload');if(su)su.style.display='block';}else{var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';}
   loadDashboard();
   var pg=null;try{pg=localStorage.getItem('cbk_page');}catch(e){}
   if(pg){var btn=document.querySelector('.nav-btn[onclick*="showPage(\''+pg+'\'"]');if(document.getElementById('page-'+pg)){if(btn)showPage(pg,btn);else{try{showPage(pg,{classList:{add:function(){}}});}catch(e){}}}}
 }
 function cbkLogout(){try{localStorage.removeItem('cbk_session');localStorage.removeItem('cbk_page');}catch(e){}location.reload();}
+function cbkLogoutConfirm(){if(confirm('Log out?')){cbkLogout();}}
 
 /* ================= TEAM PLAYS (public view, admin edit) — ADDITIVE ================= */
 var PLAYS_PEOPLE=['Patrick','Torch','Drook','Brady','Phil','Rich','Craig'];
@@ -2972,7 +2973,7 @@ function tsCSV(prefix){
 <div id="login-err" style="color:var(--red2);font-size:11px;margin-top:12px;display:none">Invalid username or password</div>
 </div>
 </div>
-<div id="admin-badge" style="display:none;position:fixed;bottom:16px;right:16px;background:var(--acc);color:#fff;font-size:9px;letter-spacing:2px;padding:6px 12px;border-radius:4px;z-index:999">ADMIN MODE</div>
+<div id="admin-badge" onclick="cbkLogoutConfirm()" title="Click to log out" style="display:none;position:fixed;bottom:16px;right:16px;background:var(--acc);color:#fff;font-size:9px;letter-spacing:2px;padding:6px 12px;border-radius:4px;z-index:999;cursor:pointer">ADMIN MODE · LOG OUT</div><div id="viewonly-logout" onclick="cbkLogoutConfirm()" title="Click to log out" style="display:none;position:fixed;bottom:16px;right:16px;background:var(--bg2);color:var(--txt2);border:1px solid var(--bdr2);font-size:9px;letter-spacing:2px;padding:6px 12px;border-radius:4px;z-index:999;cursor:pointer">LOG OUT</div>
 </div>
 </body>
 </html>
