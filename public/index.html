@@ -656,9 +656,10 @@ table.data tr:hover td{background:#f5ede0}
 </div>
 <div id="page-specials" style="display:none">
 <div style="font-size:12px;color:var(--txt2);margin-bottom:8px">PLAYER SPECIALS</div>
-<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button></div>
+<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button><button class="seg-btn" onclick="spSwitchMode('props',this)">GAME PROPS</button></div>
 <div id="sp-game-view"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game. Loads the top 7 scorers per team and prices who leads the game.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select></div></div>
 <div id="sp-day-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a date. Loads the top 25 scorers among allowed teams playing that day (Power 5 + your 12 mid-majors). Uncheck to trim the field.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-day-date" class="field" style="max-width:200px" onchange="spLoadDay()"><option value="">Select a date...</option></select></div></div>
+<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select></div><div id="prop-output"></div></div>
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
   <div style="min-width:240px">
     <div style="font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px">OVERROUND (HOLD) — <span id="sp-overround-val">1.20</span></div>
@@ -2359,9 +2360,12 @@ function spSwitchMode(mode,btn){
   var seg=document.getElementById('sp-mode');if(seg){Array.prototype.forEach.call(seg.children,function(b){b.classList.remove('active');});btn.classList.add('active');}
   document.getElementById('sp-game-view').style.display=(mode==='game')?'block':'none';
   document.getElementById('sp-day-view').style.display=(mode==='day')?'block':'none';
+  var pv=document.getElementById('sp-props-view');if(pv)pv.style.display=(mode==='props')?'block':'none';
   document.getElementById('sp-players').innerHTML='';
   document.getElementById('sp-output').innerHTML='';
+  var po=document.getElementById('prop-output');if(po&&mode!=='props')po.innerHTML='';
   if(mode==='day')spInitDay();
+  if(mode==='props')initProps();
 }
 async function spInitDay(){
   var sel=document.getElementById('sp-day-date');
@@ -2406,6 +2410,97 @@ async function spLoadDay(){
   spPrice();
 }
 /* =============== END DAILY LEADING SCORER =============== */
+
+/* ================= GAME PROP GENERATOR (Player Specials sub-view) ================= */
+var _propGame=null;var _propList=[];var _propWinProb=0.5;
+function propErf(x){var t=1/(1+0.3275911*Math.abs(x));var y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return x>=0?y:-y;}
+function propMSD(p,stat,half){var mean,f;if(stat==='pts'){mean=p.ppg;f=0.45;}else if(stat==='reb'){mean=p.rpg;f=0.55;}else if(stat==='ast'){mean=p.apg;f=0.60;}else{mean=p.tpm3;f=0.70;}var u=0.85+((p.usage_pct||18)/28)*0.35;var m=Math.min(1,(p.mpg||25)/30);var sd=Math.max(stat==='pts'?2.5:1.0,mean*f*u*m+mean*0.15);if(half){mean*=0.5;sd*=0.72;}return{mean:mean,sd:sd};}
+function propPOver(p,stat,line,half){var o=propMSD(p,stat,half);var z=((line-0.5)-o.mean)/o.sd;return 1-0.5*(1+propErf(z/Math.SQRT2));}
+function propComb(a,b,stat,line,half){var A=propMSD(a,stat,half),B=propMSD(b,stat,half);var mean=A.mean+B.mean,sd=Math.sqrt(A.sd*A.sd+B.sd*B.sd);var z=((line-0.5)-mean)/sd;return 1-0.5*(1+propErf(z/Math.SQRT2));}
+function propAmer(prob,ov){var p=Math.min(0.985,prob*ov);if(p<=0)return 99999;if(p>=0.5)return Math.round(-100*p/(1-p));return Math.round(100*(1-p)/p);}
+function propRound(n){var neg=n<0,v=Math.abs(n);if(!neg&&v>7500)v=7500;if(v<=300)v=Math.round(v/5)*5;else if(v<=600)v=Math.round(v/10)*10;else if(v<=1000)v=Math.round(v/25)*25;else if(v<=5000)v=Math.round(v/50)*50;else v=Math.round(v/100)*100;if(!neg&&v>7500)v=7500;return(neg?'-':'+')+v;}
+function propPickSingle(p,stat,half,ov){var base=stat==='3pm'?1:(stat==='pts'?(half?6:10):(stat==='ast'?3:4));var o=propMSD(p,stat,half);var line=Math.max(base,Math.ceil(o.mean));for(var k=0;k<12;k++){var odds=propAmer(propPOver(p,stat,line,half),ov);if(odds>=-185||odds>0)break;line++;}var od=propAmer(propPOver(p,stat,line,half),ov);if(od<-140)line++;return line;}
+function propPickComb(a,b,stat,ov){var A=propMSD(a,stat,false),B=propMSD(b,stat,false);var line=Math.ceil(A.mean+B.mean)+1;for(var k=0;k<15;k++){var o=propAmer(propComb(a,b,stat,line,false),ov);if(o>=-185||o>0)break;line++;}return line;}
+async function initProps(){
+  var sel=document.getElementById('prop-game');
+  if(sel.options.length>1)return;
+  sel.innerHTML='<option value="">Loading games...</option>';
+  var res=await sb.from('games').select('id,game_date,home:home_team_id(id,team,pr,hc),away:away_team_id(id,team,pr,hc),neutral_site').order('game_date',{ascending:true}).range(0,9999);
+  if(res.error){sel.innerHTML='<option value="">Error</option>';return;}
+  _propGames=res.data||[];
+  if(!_propGames.length){sel.innerHTML='<option value="">No games</option>';return;}
+  sel.innerHTML='<option value="">Select a game...</option>'+_propGames.map(function(g){return'<option value="'+g.id+'">'+g.game_date+'  '+(g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')+'</option>';}).join('');
+}
+var _propGames=[];
+async function propLoadGame(){
+  var gid=document.getElementById('prop-game').value;
+  var out=document.getElementById('prop-output');
+  if(!gid){out.innerHTML='';return;}
+  var g=_propGames.filter(function(x){return String(x.id)===String(gid);})[0];
+  if(!g||!g.home||!g.away){out.innerHTML='<div style="color:var(--red2);font-size:12px">Game teams missing.</div>';return;}
+  _propGame=g;
+  out.innerHTML='<div style="color:var(--txt3);font-size:12px">Loading players & generating props...</div>';
+  var res=await sb.from('player_stats').select('player_name,team,ppg,rpg,apg,fg3m,mpg,usage_pct,games,team_id').in('team',[g.away.team,g.home.team]).not('ppg','is',null).range(0,499);
+  if(res.error){out.innerHTML='<div style="color:var(--red2);font-size:12px">Error: '+res.error.message+'</div>';return;}
+  var players=(res.data||[]).map(function(p){p.tpm3=(p.games&&p.games>0)?(p.fg3m/p.games):0;return p;});
+  // win prob for favorite from PR spread (same model as site)
+  _propWinProb=propTeamWinProb(g);
+  _propGenerate(players,g);
+}
+function propTeamWinProb(g){
+  try{
+    var sp=(typeof calcSpread==='function')?calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site):0;
+    var abs=Math.abs(Math.round(sp*2)/2);var fp=(typeof SP!=='undefined')?SP[String(-abs)]:undefined;if(fp===undefined)fp=0.5;
+    var homeWP=(sp>=0?fp:1-fp);
+    return{home:homeWP,away:1-homeWP};
+  }catch(e){return{home:0.5,away:0.5};}
+}
+function _propGenerate(players,g){
+  var ov=_spOverround||1.15;
+  var byPts=players.slice().sort(function(a,b){return b.ppg-a.ppg;});
+  var byReb=players.slice().sort(function(a,b){return b.rpg-a.rpg;});
+  var byAst=players.slice().sort(function(a,b){return b.apg-a.apg;});
+  var by3=players.slice().sort(function(a,b){return b.tpm3-a.tpm3;});
+  var props=[];
+  function add(desc,prob){props.push({desc:desc,prob:prob,odds:propRound(propAmer(prob,ov)),on:true});}
+  byPts.slice(0,5).forEach(function(p){var l=propPickSingle(p,'pts',false,ov);add(p.player_name+' '+l+'+ Points',propPOver(p,'pts',l,false));});
+  byReb.slice(0,4).forEach(function(p){var l=propPickSingle(p,'reb',false,ov);add(p.player_name+' '+l+'+ Rebounds',propPOver(p,'reb',l,false));});
+  byAst.slice(0,3).forEach(function(p){var l=propPickSingle(p,'ast',false,ov);add(p.player_name+' '+l+'+ Assists',propPOver(p,'ast',l,false));});
+  by3.slice(0,4).forEach(function(p){if(p.tpm3<0.5)return;var l=propPickSingle(p,'3pm',false,ov);add(p.player_name+' '+l+'+ Threes',propPOver(p,'3pm',l,false));});
+  byPts.slice(0,4).forEach(function(p){var l=propPickSingle(p,'pts',true,ov);add(p.player_name+' '+l+'+ 1st Half Points',propPOver(p,'pts',l,true));});
+  byReb.slice(0,2).forEach(function(p){var l=propPickSingle(p,'reb',true,ov);add(p.player_name+' '+l+'+ 1st Half Rebounds',propPOver(p,'reb',l,true));});
+  [[byReb[0],byReb[1],'reb','Rebounds'],[byReb[2],byReb[3],'reb','Rebounds'],[byAst[0],byAst[1],'ast','Assists'],[byPts[0],byPts[1],'pts','Points']].forEach(function(x){if(!x[0]||!x[1])return;var l=propPickComb(x[0],x[1],x[2],ov);add(x[0].player_name+' & '+x[1].player_name+' Combine '+l+'+ '+x[3],propComb(x[0],x[1],x[2],l,false));});
+  [[byPts[0],byPts[1]],[byPts[0],byPts[2]],[byPts[1],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;var line=20;for(var k=0;k<10;k++){var o=propAmer(propPOver(x[0],'pts',line,false)*propPOver(x[1],'pts',line,false),ov);if(o<=-185){line--;continue;}break;}add(x[0].player_name+' & '+x[1].player_name+' Each Score '+line+'+ Points',propPOver(x[0],'pts',line,false)*propPOver(x[1],'pts',line,false));});
+  [[byPts[0],byPts[1]],[byPts[2],byPts[3]]].forEach(function(x){if(!x[0]||!x[1])return;add(x[0].player_name+' or '+x[1].player_name+' To Score 30+ Points',1-(1-propPOver(x[0],'pts',30,false))*(1-propPOver(x[1],'pts',30,false)));});
+  // win + player for the FAVORITE
+  var favIsHome=_propWinProb.home>=_propWinProb.away;var favName=favIsHome?g.home.team:g.away.team;var favWP=favIsHome?_propWinProb.home:_propWinProb.away;
+  var favScorers=byPts.filter(function(p){return p.team===favName;}).slice(0,3);
+  favScorers.forEach(function(p){var l=propPickSingle(p,'pts',false,ov);add(favName+' Win & '+p.player_name+' '+l+'+ Points',favWP*propPOver(p,'pts',l,false));});
+  byReb.filter(function(p){return p.team===favName;}).slice(0,2).forEach(function(p){var l=propPickSingle(p,'reb',false,ov);add(favName+' Win & '+p.player_name+' '+l+'+ Rebounds',favWP*propPOver(p,'reb',l,false));});
+  _propList=props;
+  propRender();
+}
+function propRender(){
+  var g=_propGame;
+  var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
+  var active=_propList.filter(function(p){return p.on;}).length;
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+matchup+' \u2014 '+active+' PROPS</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="propExportCSV()">EXPORT CSV</button></div>';
+  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr>'+(isAdmin?'<th></th>':'')+'<th>PROP</th><th>FAIR%</th><th>ODDS</th></tr></thead><tbody>';
+  _propList.forEach(function(p,i){
+    h+='<tr style="'+(p.on?'':'opacity:.4')+'">'+(isAdmin?'<td><input type="checkbox" '+(p.on?'checked':'')+' onchange="propToggle('+i+')"></td>':'')+'<td class="bold">'+p.desc+'</td><td class="muted">'+(p.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+p.odds+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  h+='<div style="font-size:11px;color:var(--txt3);margin-top:6px">'+active+' of '+_propList.length+' props active \u2022 uncheck to exclude from export</div>';
+  document.getElementById('prop-output').innerHTML=h;
+}
+function propToggle(i){_propList[i].on=!_propList[i].on;propRender();}
+function propExportCSV(){
+  var g=_propGame;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'game';
+  var lines=['Prop,Odds'];
+  _propList.filter(function(p){return p.on;}).forEach(function(p){lines.push('"'+p.desc+'",'+p.odds);});
+  var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='props_'+matchup.replace(/[^a-z0-9]+/gi,'_')+'.csv';a.click();URL.revokeObjectURL(url);
+}
+/* =============== END GAME PROP GENERATOR =============== */
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
