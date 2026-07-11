@@ -2056,19 +2056,24 @@ document.addEventListener('DOMContentLoaded',function(){
   try{restoreSession();}catch(e){}
 });
 function restoreSession(){
+  try{console.log('[cbk] restoreSession v2 running, saved page =',localStorage.getItem('cbk_page'));}catch(e){}
   var s=null;try{s=localStorage.getItem('cbk_session');}catch(e){}
   if(s!=='admin'&&s!=='view')return;
   isAdmin=(s==='admin');
   var ps=document.getElementById('prelogin-style');if(ps&&ps.parentNode)ps.parentNode.removeChild(ps);
   var ls=document.getElementById('login-screen');if(ls)ls.style.display='none';
   if(isAdmin){var ab=document.getElementById('admin-badge');if(ab)ab.style.display='flex';var np=document.getElementById('nav-prupdate');if(np)np.style.display='block';var nr=document.getElementById('nav-rosterload');if(nr)nr.style.display='block';var su=document.getElementById('nav-statsupload');if(su)su.style.display='block';}else{var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';}
-  loadDashboard();
   var pg=null;try{pg=localStorage.getItem('cbk_page');}catch(e){}
   if(pg&&pg!=='dashboard'&&document.getElementById('page-'+pg)){
-    setTimeout(function(){cbkGoToPage(pg);},60);
+    cbkGoToPage(pg);
+    setTimeout(function(){cbkGoToPage(pg);},120);
+    setTimeout(function(){cbkGoToPage(pg);},400);
+  }else{
+    loadDashboard();
   }
 }
 function cbkGoToPage(pg){
+  try{console.log('[cbk] cbkGoToPage ->',pg);}catch(e){}
   if(!document.getElementById('page-'+pg))return;
   var btn=null;var navs=document.querySelectorAll('.nav-btn');
   for(var i=0;i<navs.length;i++){var oc=navs[i].getAttribute('onclick')||'';if(oc.indexOf("showPage('"+pg+"'")>=0){btn=navs[i];break;}}
