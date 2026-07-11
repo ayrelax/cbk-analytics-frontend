@@ -280,6 +280,7 @@ table.data tr:hover td{background:#f5ede0}
   <button class="nav-btn" onclick="showPage('powerindex',this)">POWER INDEX</button>
   <button class="nav-btn" onclick="showPage('marketodds',this)">MARKET ODDS</button>
   <button class="nav-btn" onclick="showPage('plays',this)">TEAM PLAYS</button>
+  <button class="nav-btn" onclick="showPage('specials',this)">PLAYER SPECIALS</button>
   <button class="nav-btn" id="nav-prupdate" onclick="showPage('prupdate',this)" style="display:none">PR UPDATE</button>
   <button class="nav-btn" id="nav-rosterload" onclick="showPage('rosterload',this)" style="display:none">ROSTER LOADER</button>
   <button class="nav-btn" id="nav-statsupload" onclick="showPage('statsupload',this)" style="display:none">STATS UPLOAD</button>
@@ -653,6 +654,27 @@ table.data tr:hover td{background:#f5ede0}
 </div>
 <div id="bt-status" style="margin-top:12px"></div>
 </div>
+<div id="page-specials" style="display:none">
+<div style="font-size:12px;color:var(--txt2);margin-bottom:4px">PLAYER SPECIALS — Game Leading Scorer</div>
+<div style="font-size:11px;color:var(--txt3);margin-bottom:12px">Pick a game. Loads the top 7 scorers per team from your Torvik stats and prices who leads the game, using each player's PPG, minutes and usage. Adjust the two dials to taste.</div>
+<div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+  <select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select>
+</div>
+<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+  <div style="min-width:240px">
+    <div style="font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px">OVERROUND (HOLD) — <span id="sp-overround-val">1.20</span></div>
+    <input type="range" min="1.10" max="1.80" step="0.01" value="1.20" style="width:100%" oninput="spSetOverround(this.value)">
+    <div style="font-size:9px;color:var(--txt3);display:flex;justify-content:space-between"><span>1.10 (low)</span><span>1.80 (heavy)</span></div>
+  </div>
+  <div style="min-width:240px">
+    <div style="font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px">FLATTEN — <span id="sp-flatten-val">0.85</span></div>
+    <input type="range" min="0.70" max="1.00" step="0.01" value="0.85" style="width:100%" oninput="spSetFlatten(this.value)">
+    <div style="font-size:9px;color:var(--txt3);display:flex;justify-content:space-between"><span>0.70 (flat)</span><span>1.00 (raw)</span></div>
+  </div>
+</div>
+<div id="sp-players" style="margin-bottom:14px"></div>
+<div id="sp-output"></div>
+</div>
 <div id="page-tools" style="display:none">
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
 <div class="panel"><div class="panel-hdr"><div class="panel-title">Odds Converter</div></div><div style="padding:14px"><input class="field" id="conv-in" placeholder="-110" oninput="convertOdds()" style="margin-bottom:8px"><div style="font-size:12px;color:var(--txt2)" id="conv-out">Decimal: -- Implied: --</div></div></div>
@@ -724,7 +746,7 @@ return{ha:ha,aa:aa,r:r};
 }
 function updateClock(){var n=new Date();var h=n.getHours()%12||12;var m=String(n.getMinutes()).padStart(2,'0');var s=String(n.getSeconds()).padStart(2,'0');var ap=n.getHours()<12?'AM':'PM';document.getElementById('clock').textContent=h+':'+m+':'+s+' '+ap+' ET';}
 setInterval(updateClock,1000);updateClock();
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='statsupload'){}if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -2228,6 +2250,108 @@ async function btCommit(){
   _btPending=[];
 }
 /* =============== END BART TORVIK STATS UPLOAD =============== */
+
+/* ================= PLAYER SPECIALS — LEADING SCORER (admin builds, all view) ================= */
+var _spGames=[];var _spPlayers=[];var _spOverround=1.20;var _spFlatten=0.85;var _spResult=[];var _spOverrides={};
+function spAmerican(prob){var p=Math.min(0.985,prob);if(p<=0)return 99999;if(p>=0.5)return Math.round(-100*p/(1-p));return Math.round(100*(1-p)/p);}
+function spRoundOdds(n){var neg=n<0,v=Math.abs(n);if(v<=300)v=Math.round(v/5)*5;else if(v<=600)v=Math.round(v/10)*10;else if(v<=1000)v=Math.round(v/25)*25;else if(v<=5000)v=Math.round(v/50)*50;else v=Math.round(v/100)*100;return(neg?'-':'+')+v;}
+function spSD(p){var base=p.ppg*0.45;var usg=p.usage_pct||18;var mpg=p.mpg||25;var usgF=0.85+(usg/28)*0.35;var minF=Math.min(1,mpg/30);return Math.max(2.5,base*usgF*minF+p.ppg*0.12);}
+function spRandn(m,s){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function spSimulate(players,nSims){
+  var lead={};players.forEach(function(p){lead[p.player_name]=0;});
+  var sds=players.map(spSD);
+  for(var i=0;i<nSims;i++){var best=-1,bn=null;for(var j=0;j<players.length;j++){var sc=spRandn(players[j].ppg,sds[j]);if(sc<0)sc=0;if(sc>best){best=sc;bn=players[j].player_name;}}lead[bn]++;}
+  return players.map(function(p){return{player:p.player_name,team:p.team,ppg:p.ppg,prob:lead[p.player_name]/nSims};});
+}
+async function initSpecials(){
+  var sel=document.getElementById('sp-game');
+  sel.innerHTML='<option value="">Loading games...</option>';
+  var res=await sb.from('games').select('id,game_date,home:home_team_id(id,team),away:away_team_id(id,team)').order('game_date',{ascending:true}).range(0,9999);
+  if(res.error){sel.innerHTML='<option value="">Error loading games</option>';return;}
+  _spGames=res.data||[];
+  if(!_spGames.length){sel.innerHTML='<option value="">No games scheduled</option>';return;}
+  sel.innerHTML='<option value="">Select a game...</option>'+_spGames.map(function(g){var lbl=g.game_date+'  '+(g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?');return'<option value="'+g.id+'">'+lbl+'</option>';}).join('');
+  document.getElementById('sp-overround-val').textContent=_spOverround.toFixed(2);
+  document.getElementById('sp-flatten-val').textContent=_spFlatten.toFixed(2);
+}
+async function spLoadGame(){
+  var gid=document.getElementById('sp-game').value;
+  var box=document.getElementById('sp-players');
+  if(!gid){box.innerHTML='';document.getElementById('sp-output').innerHTML='';return;}
+  var g=_spGames.filter(function(x){return String(x.id)===String(gid);})[0];
+  if(!g||!g.home||!g.away){box.innerHTML='<div style="color:var(--red2);font-size:12px">Game teams missing.</div>';return;}
+  box.innerHTML='<div style="color:var(--txt3);font-size:12px">Loading players...</div>';
+  var teams=[g.away.team,g.home.team];
+  var res=await sb.from('player_stats').select('player_name,team,ppg,mpg,usage_pct').in('team',teams).not('ppg','is',null).order('ppg',{ascending:false}).range(0,999);
+  if(res.error){box.innerHTML='<div style="color:var(--red2);font-size:12px">Error: '+res.error.message+'</div>';return;}
+  var byTeam={};teams.forEach(function(t){byTeam[t]=[];});
+  (res.data||[]).forEach(function(p){if(byTeam[p.team]&&byTeam[p.team].length<7)byTeam[p.team].push(p);});
+  _spPlayers=[];teams.forEach(function(t){byTeam[t].forEach(function(p){p._on=true;_spPlayers.push(p);});});
+  _spOverrides={};
+  spRenderPlayers();
+  spPrice();
+}
+function spRenderPlayers(){
+  var box=document.getElementById('sp-players');
+  var teams=[];_spPlayers.forEach(function(p){if(teams.indexOf(p.team)<0)teams.push(p.team);});
+  var h='<div style="font-size:11px;color:var(--txt3);margin-bottom:6px">Uncheck to remove a player from the market. '+_spPlayers.filter(function(p){return p._on;}).length+' active.</div><div style="display:flex;gap:12px;flex-wrap:wrap">';
+  teams.forEach(function(t){
+    h+='<div style="flex:1;min-width:220px;background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:10px"><div style="font-weight:700;font-size:12px;color:var(--acc);margin-bottom:6px">'+t+'</div>';
+    _spPlayers.forEach(function(p,i){if(p.team!==t)return;
+      h+='<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;cursor:pointer"><input type="checkbox" '+(p._on?'checked':'')+' onchange="spToggle('+i+')"> <span style="flex:1">'+p.player_name+'</span><span style="color:var(--txt3);font-size:11px">'+p.ppg.toFixed(1)+' ppg</span></label>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+  box.innerHTML=h;
+}
+function spToggle(i){_spPlayers[i]._on=!_spPlayers[i]._on;spRenderPlayers();spPrice();}
+function spSetOverround(v){_spOverround=parseFloat(v);document.getElementById('sp-overround-val').textContent=_spOverround.toFixed(2);spApplyMargin();}
+function spSetFlatten(v){_spFlatten=parseFloat(v);document.getElementById('sp-flatten-val').textContent=_spFlatten.toFixed(2);spApplyMargin();}
+function spPrice(){
+  var active=_spPlayers.filter(function(p){return p._on;});
+  if(active.length<2){document.getElementById('sp-output').innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">Need at least 2 players.</div>';return;}
+  var sim=spSimulate(active,60000);
+  _spResult=sim;
+  spApplyMargin();
+}
+function spApplyMargin(){
+  if(!_spResult.length)return;
+  var flat=_spResult.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,prob:r.prob,fp:Math.pow(r.prob,_spFlatten)};});
+  var s=flat.reduce(function(a,b){return a+b.fp;},0);
+  flat.forEach(function(r){r.fpN=r.fp/s;});
+  flat.sort(function(a,b){return b.fpN-a.fpN;});
+  var bookedTotal=0;
+  var rows=flat.map(function(r){
+    var odds=_spOverrides[r.player]!==undefined?_spOverrides[r.player]:spRoundOdds(spAmerican(r.fpN*_spOverround));
+    var implied=spImplied(odds);bookedTotal+=implied;
+    return{player:r.player,team:r.team,ppg:r.ppg,fair:r.fpN,odds:odds};
+  });
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">GAME LEADING SCORER</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="spExportCSV()">EXPORT CSV</button></div>';
+  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>FAIR%</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
+  rows.forEach(function(r){
+    h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td><td class="muted">'+(r.fair*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
+    if(isAdmin)h+='<td><input class="field" style="width:90px;padding:4px 6px;font-size:11px" value="'+r.odds+'" onchange="spOverride(\''+r.player.replace(/'/g,"\\'")+'\',this.value)"></td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div></div>';
+  h+='<div style="font-size:11px;color:var(--txt3);margin-top:6px">Booked total: <b style="color:'+(bookedTotal>1?'var(--grn2)':'var(--red2)')+'">'+(bookedTotal*100).toFixed(1)+'%</b> &nbsp;(hold \u2248 '+((bookedTotal-1)*100).toFixed(1)+'%) &nbsp;\u2022&nbsp; '+rows.length+' players</div>';
+  document.getElementById('sp-output').innerHTML=h;
+}
+function spImplied(american){var n=parseInt(String(american).replace('+',''));if(isNaN(n))return 0;if(n<0)return(-n)/((-n)+100);return 100/(n+100);}
+function spOverride(player,val){var v=String(val).trim();if(v===''){delete _spOverrides[player];}else{if(v[0]!=='+'&&v[0]!=='-'&&parseFloat(v)>0)v='+'+v;_spOverrides[player]=v;}spApplyMargin();}
+function spExportCSV(){
+  var active=_spPlayers.filter(function(p){return p._on;});
+  var flat=_spResult.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,fp:Math.pow(r.prob,_spFlatten)};});
+  var s=flat.reduce(function(a,b){return a+b.fp;},0);flat.forEach(function(r){r.fpN=r.fp/s;});
+  flat.sort(function(a,b){return b.fpN-a.fpN;});
+  var g=_spGames.filter(function(x){return String(x.id)===String(document.getElementById('sp-game').value);})[0];
+  var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'game';
+  var lines=['Market,Game,Player,Team,PPG,FairPct,Odds'];
+  flat.forEach(function(r){var odds=_spOverrides[r.player]!==undefined?_spOverrides[r.player]:spRoundOdds(spAmerican(r.fpN*_spOverround));lines.push('Leading Scorer,"'+matchup+'","'+r.player+'",'+r.team+','+r.ppg.toFixed(1)+','+(r.fpN*100).toFixed(1)+','+odds);});
+  var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='leading_scorer_'+(matchup.replace(/[^a-z0-9]+/gi,'_'))+'.csv';a.click();URL.revokeObjectURL(url);
+}
+/* =============== END PLAYER SPECIALS =============== */
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
