@@ -358,6 +358,15 @@ body.cbk-warm .gc-badge-live,body.cbk-true .gc-badge-live{background:var(--bg3);
 body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(--bg3);color:var(--amb2)}
 /* ===== end dark mode fixes ===== */
 
+
+/* ===== TOURNEY PROPS ===== */
+.tp-group-hdr{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--acc);margin:16px 0 8px;border-bottom:1px solid var(--bdr2);padding-bottom:5px}
+.tp-market{background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(90,60,10,.05)}
+.tp-market-hdr{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--acc);background:var(--bg2);padding:8px 12px;border-bottom:1px solid var(--bdr)}
+.tp-market table{width:100%}
+.tp-odds{font-weight:800;color:var(--acc3)}
+/* ===== end tourney props ===== */
+
 </style>
 </head>
 <body>
@@ -380,6 +389,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   <button class="nav-btn" onclick="showPage('mte',this)">MTEs</button>
   <button class="nav-btn" onclick="showPage('conftourney',this)">CONF TOURNEY</button>
   <button class="nav-btn" onclick="showPage('ncaa',this)">NCAA TOURNAMENT</button>
+  <button class="nav-btn" onclick="showPage('tourneyprops',this)">TOURNEY PROPS</button>
   <button class="nav-btn" onclick="showPage('powerindex',this)">POWER INDEX</button>
   <button class="nav-btn" onclick="showPage('marketodds',this)">MARKET ODDS</button>
   <button class="nav-btn" onclick="showPage('plays',this)">TEAM PLAYS</button>
@@ -543,6 +553,34 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   </div>
 </div>
 </div><div id="ncaa-view-schedule" style="display:none"><div style="font-size:11px;color:var(--txt3);margin:4px 0 10px">Schedule grouped by round with spread, moneyline, and pick status. The right panel prices a top-scorer market for the selected round using the leading-scorer model (PPG, usage, minutes).</div><div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap"><div style="flex:0 0 640px;min-width:340px"><div id="ncaa-schedule-body"></div></div><div style="flex:1;min-width:440px"><div style="position:sticky;top:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--acc)">ROUND TOP SCORER</div><button class="btn" style="font-size:10px;padding:3px 10px" onclick="ncaaTopScorerCSV()">EXPORT CSV</button></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:10px;color:var(--txt3)">Overround</span><input id="ncaa-ts-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.25" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="ncaaTSRepriceOv()"><span style="font-size:10px;color:var(--txt3)">Flatten</span><input id="ncaa-ts-flat" type="number" step="0.01" min="0.50" max="1.00" value="1.00" style="width:64px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px" onchange="ncaaTSRepriceOv()"></div><select id="ncaa-ts-round" class="field" style="width:100%;margin-bottom:8px" onchange="ncaaTopScorer()"><option value="Round of 64">Round of 64</option><option value="Round of 32">Round of 32</option><option value="Sweet 16">Sweet 16</option><option value="Elite 8">Elite 8</option><option value="Final Four">Final Four</option><option value="Championship">Championship</option><option value="Play-In">Play-In</option></select><div id="ncaa-ts-body"></div></div></div></div></div></div>
+<div id="page-tourneyprops" style="display:none">
+  <div style="font-size:11px;color:var(--txt3);margin:4px 0 12px">Tournament futures & props, priced from your uploaded title odds (de-vigged) and the bracket advancement model. Upload or edit each team's title odds, then price all markets.</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+    <span style="font-size:10px;color:var(--txt3)">Overround</span>
+    <input id="tp-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.20" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:4px 6px;font-size:11px">
+    <span style="font-size:10px;color:var(--txt3)">Flatten</span>
+    <input id="tp-flat" type="number" step="0.01" min="0.50" max="1.00" value="1.00" style="width:64px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:4px 6px;font-size:11px">
+    <button class="btn primary" onclick="tpPriceAll()">PRICE ALL MARKETS</button>
+    <button class="btn" onclick="tpExportCSV()">EXPORT CSV</button>
+  </div>
+  <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
+    <div style="flex:0 0 560px;min-width:340px">
+      <div class="panel">
+        <div class="panel-hdr">TITLE ODDS — UPLOAD &amp; EDIT</div>
+        <div style="padding:12px">
+          <div style="font-size:10px;color:var(--txt3);margin-bottom:6px">Paste sportsbook odds (one per line: <b>Team, +500</b>), then Load. Or edit any team's odds directly in the table below.</div>
+          <textarea id="tp-odds-paste" placeholder="Duke, +450&#10;Houston, +550&#10;Kansas, +700" style="width:100%;height:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:8px;font-size:11px;font-family:inherit;box-sizing:border-box"></textarea>
+          <div style="margin-top:8px"><button class="btn" onclick="tpUploadOdds()">LOAD PASTED ODDS</button></div>
+        </div>
+        <div id="tp-odds-editor" style="max-height:520px;overflow-y:auto;padding:0 4px 4px"></div>
+      </div>
+    </div>
+    <div style="flex:1;min-width:440px">
+      <div id="tp-results"><div style="color:var(--txt3);font-size:12px;padding:14px">Enter title odds, then click <b>PRICE ALL MARKETS</b> to generate every prop.</div></div>
+    </div>
+  </div>
+</div>
+
 <div id="page-confwins" style="display:none">
 <div class="search-bar"><select class="field" id="confwins-filter" onchange="filterConfWins()" style="width:160px"><option value="">ALL CONFS</option></select><button class="btn primary" onclick="loadConfWins()">REFRESH</button></div>
 <div id="confwins-body"></div>
@@ -848,7 +886,7 @@ return{ha:ha,aa:aa,r:r};
 }
 function updateClock(){var n=new Date();var parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(n);var o={};parts.forEach(function(p){o[p.type]=p.value;});var hh=o.hour==='24'?'00':o.hour;document.getElementById('clock').textContent=hh+':'+o.minute+':'+o.second+' PT';}
 setInterval(updateClock,1000);updateClock();
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -3154,6 +3192,377 @@ function cbkInitTheme(){
   cbkApplyTheme(i);
 }
 /* ===== end theme toggle ===== */
+
+/* ============================================================
+   TOURNEY PROPS ENGINE
+   Two inputs:
+   (A) De-vigged title odds per team  -> "produce winner" markets
+   (B) Bracket round-survival probs    -> win totals, seed props, counts, farthest
+   ============================================================ */
+var TP_REGIONS=['East','West','South','Midwest'];
+var _tpTitleOdds={};   // team -> American odds (raw sportsbook)
+var _tpTrueProb={};    // team -> de-vigged true title probability
+var _tpSurvival={};    // team -> [p win R64, p win R32, ... cumulative] (7 rounds)
+var _tpSeeding=[];     // [{team,seed,ri,pr,conference}]
+var _tpOverround=1.20; // applied on top when posting
+var _tpFlatten=1.00;
+
+/* ---------- de-vig ---------- */
+function tpImpliedFromAmerican(a){
+  if(a===null||a===undefined||a==='')return null;
+  a=parseFloat(a);if(isNaN(a))return null;
+  return a<0? (-a)/((-a)+100) : 100/(a+100);
+}
+function tpAmericanFromProb(p,ov){
+  var q=Math.min(0.985,Math.max(0.0001,p*(ov||1)));
+  if(q>=0.5)return Math.round(-100*q/(1-q));
+  return Math.round(100*(1-q)/q);
+}
+function tpRoundOdds(ml){var neg=ml<0,v=Math.abs(ml);if(v<=300)v=Math.round(v/5)*5;else if(v<=600)v=Math.round(v/10)*10;else if(v<=1000)v=Math.round(v/25)*25;else v=Math.round(v/50)*50;return(neg?-v:v);}
+function tpFmtOdds(ml){ml=tpRoundOdds(ml);return(ml>0?'+':'')+ml;}
+/* de-vig: normalize all raw implied probs to sum to 1 */
+function tpDevig(){
+  _tpTrueProb={};
+  var teams=Object.keys(_tpTitleOdds);
+  var sum=0;var imp={};
+  teams.forEach(function(t){var ip=tpImpliedFromAmerican(_tpTitleOdds[t]);if(ip!=null){imp[t]=ip;sum+=ip;}});
+  if(sum<=0)return;
+  teams.forEach(function(t){if(imp[t]!=null)_tpTrueProb[t]=imp[t]/sum;});
+}
+
+/* ---------- game win prob from power ratings (neutral court) ---------- */
+function tpGameWinProb(prA,prB){
+  var sp=calcSpread(prA,0,prB,true);        // A's spread vs B, neutral
+  var rsp=Math.round(sp*2)/2;
+  var key=String(-Math.abs(rsp));
+  var favp=(typeof SP!=='undefined'&&SP[key]!=null)?SP[key]:0.5;
+  return sp>=0?favp:(1-favp);               // if A favored, favp; else invert
+}
+
+/* ---------- bracket survival via bracket-order Monte Carlo ---------- */
+/* Build a proper 64-team bracket order from seeding, sim many times,
+   record for each team cumulative P(win >= k games). */
+var SEED_ORDER=[1,16,8,9,5,12,4,13,6,11,3,14,7,10,2,15]; // standard bracket slot order
+function tpBuildRegionTeams(ri){
+  // returns 16 teams in bracket slot order for region ri; null if missing
+  var bySeed={};
+  _tpSeeding.forEach(function(e){if(e.ri===ri&&!e.playin)bySeed[e.seed]=e;});
+  var slots=[];
+  for(var i=0;i<SEED_ORDER.length;i++){var s=SEED_ORDER[i];slots.push(bySeed[s]||null);}
+  return slots;
+}
+function tpSimulate(nSims){
+  // reset survival counts
+  var surv={}; _tpSeeding.forEach(function(e){if(!e.playin)surv[e.team]=[0,0,0,0,0,0,0];});
+  var regionSlots=[0,1,2,3].map(tpBuildRegionTeams);
+  // check we have a full field
+  var full=regionSlots.every(function(sl){return sl.every(function(t){return t;});});
+  if(!full)return{surv:surv,full:false};
+  for(var s=0;s<nSims;s++){
+    var regionWinners=[];var regionFinalists=[];
+    for(var ri=0;ri<4;ri++){
+      var teams=regionSlots[ri].slice();
+      var round=teams.map(function(t){return t;});
+      var gamesWon={};round.forEach(function(t){gamesWon[t.team]=0;});
+      // 4 rounds within region -> region champ (reaches Final Four)
+      var cur=round;
+      for(var r=0;r<4;r++){
+        var next=[];
+        for(var g=0;g<cur.length;g+=2){
+          var A=cur[g],B=cur[g+1];
+          var pA=tpGameWinProb(A.pr,B.pr);
+          var w=(Math.random()<pA)?A:B;
+          gamesWon[w.team]++;
+          next.push(w);
+        }
+        cur=next;
+      }
+      var champ=cur[0];
+      regionWinners.push(champ);
+      // record region-internal wins (up to 4) as cumulative survival
+      Object.keys(gamesWon).forEach(function(tm){
+        for(var k=0;k<gamesWon[tm];k++)surv[tm][k]++;
+      });
+    }
+    // Final Four: semifinals (region 0 v 1, 2 v 3), then final
+    var s1A=regionWinners[0],s1B=regionWinners[1],s2A=regionWinners[2],s2B=regionWinners[3];
+    var f1=(Math.random()<tpGameWinProb(s1A.pr,s1B.pr))?s1A:s1B;
+    var f2=(Math.random()<tpGameWinProb(s2A.pr,s2B.pr))?s2A:s2B;
+    // finalists win their 5th game
+    surv[f1.team][4]++; surv[f2.team][4]++;
+    var champ=(Math.random()<tpGameWinProb(f1.pr,f2.pr))?f1:f2;
+    surv[champ.team][5]++; // 6th win = title
+  }
+  // normalize to probabilities
+  Object.keys(surv).forEach(function(tm){surv[tm]=surv[tm].map(function(c){return c/nSims;});});
+  return{surv:surv,full:true,regionSlots:regionSlots};
+}
+
+/* ---------- MARKET BUILDERS ---------- */
+
+/* expected wins per team = sum of cumulative survival probs */
+function tpExpectedWins(team){
+  var s=_tpSurvival[team];if(!s)return 0;
+  return s.reduce(function(a,b){return a+b;},0);
+}
+
+/* (A) ODDS-DERIVED MARKETS (from de-vigged true title probs) */
+function tpConferenceToWin(){
+  var byConf={};
+  _tpSeeding.forEach(function(e){
+    var p=_tpTrueProb[e.team]||0;var c=e.conference||'?';
+    byConf[c]=(byConf[c]||0)+p;
+  });
+  return Object.keys(byConf).map(function(c){return{label:c,prob:byConf[c]};}).sort(function(a,b){return b.prob-a.prob;});
+}
+function tpRegionToWin(){
+  var byReg={};
+  _tpSeeding.forEach(function(e){
+    var p=_tpTrueProb[e.team]||0;var r=TP_REGIONS[e.ri]||('R'+e.ri);
+    byReg[r]=(byReg[r]||0)+p;
+  });
+  return Object.keys(byReg).map(function(r){return{label:r,prob:byReg[r]};}).sort(function(a,b){return b.prob-a.prob;});
+}
+function tpSeedToWin(){
+  var bySeed={};
+  _tpSeeding.forEach(function(e){
+    if(e.playin)return;var p=_tpTrueProb[e.team]||0;
+    bySeed[e.seed]=(bySeed[e.seed]||0)+p;
+  });
+  return Object.keys(bySeed).map(function(s){return{label:s+' Seed',seed:+s,prob:bySeed[s]};}).sort(function(a,b){return a.seed-b.seed;});
+}
+function tpSeedWinsTitle(seed){
+  // P(a #seed wins tournament) = sum of that seed's four teams' true title probs
+  var p=0;_tpSeeding.forEach(function(e){if(!e.playin&&e.seed===seed)p+=(_tpTrueProb[e.team]||0);});
+  return p;
+}
+
+/* (B) SIM-DERIVED MARKETS (from survival probabilities) */
+/* Total team wins O/U = expected wins for a team */
+function tpTotalTeamWins(){
+  return _tpSeeding.filter(function(e){return !e.playin;}).map(function(e){
+    return{team:e.team,seed:e.seed,region:TP_REGIONS[e.ri],ew:tpExpectedWins(e.team)};
+  }).sort(function(a,b){return b.ew-a.ew;});
+}
+/* Total seed wins O/U = sum of expected wins for all four teams on a seed */
+function tpTotalSeedWins(){
+  var bySeed={};
+  _tpSeeding.forEach(function(e){if(e.playin)return;bySeed[e.seed]=(bySeed[e.seed]||0)+tpExpectedWins(e.team);});
+  return Object.keys(bySeed).map(function(s){return{seed:+s,ew:bySeed[s]};}).sort(function(a,b){return a.seed-b.seed;});
+}
+/* Total conf wins O/U = sum expected wins for a conference's teams */
+function tpTotalConfWins(){
+  var byConf={};
+  _tpSeeding.forEach(function(e){if(e.playin)return;var c=e.conference||'?';byConf[c]=(byConf[c]||0)+tpExpectedWins(e.team);});
+  return Object.keys(byConf).map(function(c){return{conf:c,ew:byConf[c]};}).sort(function(a,b){return b.ew-a.ew;});
+}
+/* Will a [seed] win a first round game = 1 - product of R1 loss probs */
+function tpSeedWinsR1(seed){
+  var pLoseAll=1;var found=false;
+  _tpSeeding.forEach(function(e){
+    if(e.playin||e.seed!==seed)return;found=true;
+    var s=_tpSurvival[e.team];var pWinR1=s?s[0]:0;
+    pLoseAll*=(1-pWinR1);
+  });
+  return found?(1-pLoseAll):null;
+}
+/* How many [seed]-seeds reach Final Four = Poisson-binomial over their P(reach F4) */
+function tpSeedReachF4Probs(seed){
+  // P(reach F4) = P(win 4 region games) = survival[3] (cumulative through E8 win)
+  var ps=[];
+  _tpSeeding.forEach(function(e){if(!e.playin&&e.seed===seed){var s=_tpSurvival[e.team];ps.push(s?s[3]:0);}});
+  return ps;
+}
+function tpPoissonBinomial(ps){
+  var dist=[1];
+  ps.forEach(function(pi){
+    var next=new Array(dist.length+1).fill(0);
+    for(var j=0;j<dist.length;j++){next[j]+=dist[j]*(1-pi);next[j+1]+=dist[j]*pi;}
+    dist=next;
+  });
+  return dist; // dist[k] = P(exactly k)
+}
+/* Which [seed]-seed progresses farthest — Monte Carlo over their exit rounds */
+function tpFarthest(seed,nSims){
+  var teams=_tpSeeding.filter(function(e){return !e.playin&&e.seed===seed;});
+  if(teams.length<2)return[];
+  var far={};teams.forEach(function(e){far[e.team]=0;});
+  function drawWins(surv){var u=Math.random();var w=0;for(var i=0;i<surv.length;i++){if(u<=surv[i])w=i+1;else break;}return w;}
+  nSims=nSims||100000;
+  for(var s=0;s<nSims;s++){
+    var best=-1,winners=[];
+    teams.forEach(function(e){var w=drawWins(_tpSurvival[e.team]||[]);if(w>best){best=w;winners=[e.team];}else if(w===best){winners.push(e.team);}});
+    winners.forEach(function(t){far[t]+=1/winners.length;});
+  }
+  return teams.map(function(e){return{team:e.team,prob:far[e.team]/nSims};}).sort(function(a,b){return b.prob-a.prob;});
+}
+/* ============================================================
+   TOURNEY PROPS — UI / INIT
+   ============================================================ */
+var _tpInit=false;
+async function initTourneyProps(){
+  // load seeding + team PRs + conferences
+  await tpLoadSeeding();
+  tpRenderOddsEditor();
+  if(!_tpInit){_tpInit=true;}
+}
+async function tpLoadSeeding(){
+  // pull ncaa seeding joined with team pr/conference
+  var sres=await sb.from('ncaa_seeding').select('*').eq('season',(typeof NCAA_SEASON!=='undefined'?NCAA_SEASON:2026));
+  var tres=await sb.from('teams').select('id,team,pr,conference').range(0,999);
+  var teamsById={};(tres.data||[]).forEach(function(t){teamsById[t.id]=t;teamsById[t.team]=t;});
+  _tpSeeding=[];
+  (sres.data||[]).forEach(function(row){
+    var tm=row.teams||row.team;var info=teamsById[tm]||{};
+    _tpSeeding.push({team:tm,seed:row.seed,ri:row.region_idx,pr:info.pr||30,conference:info.conference||'?',playin:(row.playin_slot||0)>0});
+  });
+  tpDevig();
+}
+function tpRenderOddsEditor(){
+  var box=document.getElementById('tp-odds-editor');
+  if(!box)return;
+  if(!_tpSeeding.length){box.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:14px">No seeded field found. Seed the bracket on the NCAA Tournament tab first, then reload this tab.</div>';return;}
+  var rows=_tpSeeding.filter(function(e){return !e.playin;}).sort(function(a,b){return a.seed-b.seed||a.ri-b.ri;});
+  var h='<table class="data" style="font-size:11px"><thead><tr><th>SEED</th><th>TEAM</th><th>REGION</th><th>CONF</th><th>TITLE ODDS</th><th>TRUE %</th></tr></thead><tbody>';
+  rows.forEach(function(e){
+    var odds=_tpTitleOdds[e.team]!==undefined?_tpTitleOdds[e.team]:'';
+    var tp=_tpTrueProb[e.team]!=null?(_tpTrueProb[e.team]*100).toFixed(1)+'%':'—';
+    h+='<tr><td>'+e.seed+'</td><td class="bold">'+e.team+'</td><td>'+(TP_REGIONS[e.ri]||'')+'</td><td>'+e.conference+'</td>'+
+       '<td><input type="text" value="'+odds+'" data-team="'+e.team+'" onchange="tpEditOdds(this)" placeholder="+500" style="width:76px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px;font-family:inherit"></td>'+
+       '<td class="tp-true" data-team="'+e.team+'">'+tp+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  box.innerHTML=h;
+}
+function tpEditOdds(inp){
+  var team=inp.getAttribute('data-team');var v=inp.value.trim();
+  if(v==='')delete _tpTitleOdds[team];else _tpTitleOdds[team]=v;
+  tpDevig();
+  // update the true% cells live
+  document.querySelectorAll('.tp-true').forEach(function(td){
+    var t=td.getAttribute('data-team');td.textContent=_tpTrueProb[t]!=null?(_tpTrueProb[t]*100).toFixed(1)+'%':'—';
+  });
+}
+/* bulk upload: paste "Team, Odds" lines or use xlsx */
+function tpUploadOdds(){
+  var ta=document.getElementById('tp-odds-paste');
+  var txt=ta?ta.value:'';
+  if(!txt.trim()){cbkToast&&cbkToast('Nothing to upload','Paste team,odds lines first','info');return;}
+  var lines=txt.split('\n');var n=0;
+  var byName={};_tpSeeding.forEach(function(e){byName[e.team.toLowerCase()]=e.team;});
+  lines.forEach(function(ln){
+    var parts=ln.split(/[,\t]/);if(parts.length<2)return;
+    var name=parts[0].trim();var odds=parts[1].trim();
+    var match=byName[name.toLowerCase()]||name;
+    if(name){_tpTitleOdds[match]=odds;n++;}
+  });
+  tpDevig();tpRenderOddsEditor();
+  cbkToast&&cbkToast('Odds loaded',n+' teams updated','success');
+}
+function tpGetOv(){var el=document.getElementById('tp-ov');var v=el?parseFloat(el.value):1.20;return(isNaN(v)||v<1.01)?1.20:v;}
+function tpGetFlat(){var el=document.getElementById('tp-flat');var v=el?parseFloat(el.value):1.0;return(isNaN(v)||v<=0)?1.0:v;}
+/* apply flatten to a set of {label,prob} then price */
+function tpFlattenSet(rows){
+  var flat=tpGetFlat();
+  var fl=rows.map(function(r){return Object.assign({},r,{fp:Math.pow(r.prob,flat)});});
+  var s=fl.reduce(function(a,b){return a+b.fp;},0)||1;
+  fl.forEach(function(r){r.prob=r.fp/s;});
+  return fl;
+}
+
+/* ---------- PRICE ALL MARKETS ---------- */
+async function tpPriceAll(){
+  var out=document.getElementById('tp-results');
+  if(!_tpSeeding.length){out.innerHTML='<div style="color:var(--txt3);padding:14px">No field seeded.</div>';return;}
+  out.innerHTML='<div class="cbk-loading"><span class="cbk-spin"></span> Simulating bracket & pricing all markets...</div>';
+  tpDevig();
+  // run sim (async-ish via timeout so spinner shows)
+  setTimeout(function(){
+    var sim=tpSimulate(40000);
+    if(!sim.full){out.innerHTML='<div style="color:var(--amb2);padding:14px">Field is incomplete — all 64 seeds (1–16 in all four regions) must be set on the NCAA Tournament tab to price sim-based markets. Odds-only markets still work.</div>';}
+    _tpSurvival=sim.surv;
+    tpRenderResults();
+  },30);
+}
+
+function tpRenderResults(){
+  var ov=tpGetOv();
+  var out=document.getElementById('tp-results');
+  var H='';
+  function priceRows(rows,labelKey){
+    var fl=tpFlattenSet(rows);fl.sort(function(a,b){return b.prob-a.prob;});
+    return fl.map(function(r){return{label:r[labelKey],prob:r.prob,odds:tpFmtOdds(tpAmericanFromProb(r.prob,ov))};});
+  }
+  function section(title,rows,cols){
+    var h='<div class="tp-market"><div class="tp-market-hdr">'+title+'</div><table class="data" style="font-size:11px"><tbody>';
+    rows.forEach(function(r){h+='<tr>'+cols.map(function(c){return '<td'+(c.cls?' class="'+c.cls+'"':'')+'>'+c.get(r)+'</td>';}).join('')+'</tr>';});
+    h+='</tbody></table></div>';return h;
+  }
+  // ODDS-DERIVED
+  H+='<div class="tp-group-hdr">PRODUCE THE CHAMPION (from title odds)</div>';
+  H+=section('Conference To Produce Winner',priceRows(tpConferenceToWin(),'label'),[
+    {get:function(r){return r.label;},cls:'bold'},{get:function(r){return(r.prob*100).toFixed(1)+'%';}},{get:function(r){return r.odds;},cls:'tp-odds'}]);
+  H+=section('Region To Produce Winner',priceRows(tpRegionToWin(),'label'),[
+    {get:function(r){return r.label;},cls:'bold'},{get:function(r){return(r.prob*100).toFixed(1)+'%';}},{get:function(r){return r.odds;},cls:'tp-odds'}]);
+  H+=section('Seed Of Tournament Winner',tpSeedToWin().map(function(r){return{label:r.label,prob:r.prob};}).map(function(r){return{label:r.label,prob:r.prob,odds:tpFmtOdds(tpAmericanFromProb(r.prob,ov))};}),[
+    {get:function(r){return r.label;},cls:'bold'},{get:function(r){return(r.prob*100).toFixed(1)+'%';}},{get:function(r){return r.odds;},cls:'tp-odds'}]);
+
+  // YES/NO seed win title
+  var titleRows=[1,2,3,4].map(function(s){var p=tpSeedWinsTitle(s);return{s:s,p:p};});
+  H+='<div class="tp-market"><div class="tp-market-hdr">Will A #Seed Win The Tournament</div><table class="data" style="font-size:11px"><thead><tr><th>SEED</th><th>YES</th><th>NO</th></tr></thead><tbody>';
+  titleRows.forEach(function(r){H+='<tr><td class="bold">#'+r.s+' Seed</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(r.p,ov))+'</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(1-r.p,ov))+'</td></tr>';});
+  H+='</tbody></table></div>';
+
+  // SIM-DERIVED
+  H+='<div class="tp-group-hdr">WIN TOTALS & ADVANCEMENT (from bracket sim)</div>';
+  // Total team wins (top 25)
+  var ttw=tpTotalTeamWins();
+  H+='<div class="tp-market"><div class="tp-market-hdr">Total Team Tournament Wins (O/U line = expected wins)</div><table class="data" style="font-size:11px"><thead><tr><th>TEAM</th><th>SEED</th><th>REGION</th><th>O/U</th></tr></thead><tbody>';
+  ttw.slice(0,25).forEach(function(r){H+='<tr><td class="bold">'+r.team+'</td><td>'+r.seed+'</td><td>'+r.region+'</td><td class="tp-odds">'+r.ew.toFixed(2)+'</td></tr>';});
+  H+='</tbody></table></div>';
+  // Total seed wins
+  H+='<div class="tp-market"><div class="tp-market-hdr">Total Seed Tournament Wins</div><table class="data" style="font-size:11px"><thead><tr><th>SEED</th><th>O/U</th></tr></thead><tbody>';
+  tpTotalSeedWins().forEach(function(r){H+='<tr><td class="bold">#'+r.seed+' Seeds</td><td class="tp-odds">'+r.ew.toFixed(2)+'</td></tr>';});
+  H+='</tbody></table></div>';
+  // Total conf wins
+  H+='<div class="tp-market"><div class="tp-market-hdr">Total Conference Tournament Wins</div><table class="data" style="font-size:11px"><thead><tr><th>CONF</th><th>O/U</th></tr></thead><tbody>';
+  tpTotalConfWins().forEach(function(r){H+='<tr><td class="bold">'+r.conf+'</td><td class="tp-odds">'+r.ew.toFixed(2)+'</td></tr>';});
+  H+='</tbody></table></div>';
+  // Will a seed win R1 (12-16)
+  H+='<div class="tp-market"><div class="tp-market-hdr">Will A #Seed Win A First Round Game</div><table class="data" style="font-size:11px"><thead><tr><th>SEED</th><th>YES</th><th>NO</th></tr></thead><tbody>';
+  [12,13,14,15,16].forEach(function(s){var p=tpSeedWinsR1(s);if(p==null){H+='<tr><td>#'+s+'</td><td colspan=2 style="color:var(--txt3)">—</td></tr>';return;}H+='<tr><td class="bold">#'+s+' Seed</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(p,ov))+'</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(1-p,ov))+'</td></tr>';});
+  H+='</tbody></table></div>';
+  // How many 1/2 seeds reach F4
+  [1,2].forEach(function(seed){
+    var d=tpPoissonBinomial(tpSeedReachF4Probs(seed));
+    H+='<div class="tp-market"><div class="tp-market-hdr">How Many #'+seed+' Seeds Reach The Final Four</div><table class="data" style="font-size:11px"><tbody>';
+    ['None','Exactly 1','Exactly 2','Exactly 3','All 4'].forEach(function(l,k){H+='<tr><td class="bold">'+l+'</td><td>'+((d[k]||0)*100).toFixed(1)+'%</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(d[k]||0,ov))+'</td></tr>';});
+    H+='</tbody></table></div>';
+  });
+  // Which 1-seed farthest
+  var far=tpFarthest(1,60000);
+  if(far.length){
+    H+='<div class="tp-market"><div class="tp-market-hdr">Which #1 Seed Will Progress Farthest</div><table class="data" style="font-size:11px"><tbody>';
+    far.forEach(function(r){H+='<tr><td class="bold">'+r.team+'</td><td>'+(r.prob*100).toFixed(1)+'%</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(r.prob,ov))+'</td></tr>';});
+    H+='</tbody></table></div>';
+  }
+  out.innerHTML=H;
+}
+
+/* CSV export of everything priced */
+function tpExportCSV(){
+  var ov=tpGetOv();var lines=['Market,Selection,Probability,Odds'];
+  function add(mkt,rows){rows.forEach(function(r){lines.push('"'+mkt+'","'+r.label+'",'+(r.prob*100).toFixed(2)+'%,'+tpFmtOdds(tpAmericanFromProb(r.prob,ov)));});}
+  add('Conference To Win',tpConferenceToWin());
+  add('Region To Win',tpRegionToWin());
+  add('Seed Of Winner',tpSeedToWin().map(function(r){return{label:r.label,prob:r.prob};}));
+  [1,2,3,4].forEach(function(s){var p=tpSeedWinsTitle(s);lines.push('"Will #Seed Win Title","#'+s+' Yes",'+(p*100).toFixed(2)+'%,'+tpFmtOdds(tpAmericanFromProb(p,ov)));});
+  tpTotalTeamWins().forEach(function(r){lines.push('"Total Team Wins","'+r.team+'",'+r.ew.toFixed(2)+',');});
+  tpTotalSeedWins().forEach(function(r){lines.push('"Total Seed Wins","#'+r.seed+' Seeds",'+r.ew.toFixed(2)+',');});
+  tpTotalConfWins().forEach(function(r){lines.push('"Total Conf Wins","'+r.conf+'",'+r.ew.toFixed(2)+',');});
+  [12,13,14,15,16].forEach(function(s){var p=tpSeedWinsR1(s);if(p!=null)lines.push('"Will #Seed Win R1","#'+s+' Yes",'+(p*100).toFixed(2)+'%,'+tpFmtOdds(tpAmericanFromProb(p,ov)));});
+  var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='tourney_props.csv';a.click();URL.revokeObjectURL(url);
+}
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
