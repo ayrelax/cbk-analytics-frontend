@@ -3480,12 +3480,14 @@ function tpUploadOdds(){
     var ri=tpNormRegion(parts[2]);
     var team=parts[3];
     var odds=parts[4];
+    try{console.log('[tp] parsed line:',JSON.stringify({raw:ln,parts:parts,seed:seed,state:state,region:parts[2],ri:ri,team:team,odds:odds}));}catch(e){}
     if(seed==null||ri<0||!team)return;
     var prKey=team.toLowerCase();
     var pr=(prBy[prKey]!=null)?prBy[prKey]:null;
     if(pr==null){warned.push(team);pr=30;}
     built.push({team:team,seed:seed,ri:ri,state:state,pr:pr,conference:confBy[prKey]||'?',playin:false});
     _tpTitleOdds[team]=odds;
+    try{console.log('[tp] STORED _tpTitleOdds["'+team+'"] =',odds);}catch(e){}
     n++;
   });
   if(built.length)_tpSeeding=built;
