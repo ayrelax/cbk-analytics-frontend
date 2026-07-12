@@ -399,7 +399,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 /* ===== CONF WINS tab — aligned/flush columns ===== */
 .cw-tbl{table-layout:fixed;width:100%;max-width:640px}
 .cw-tbl th,.cw-tbl td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cw-tbl th.cw-rank,.cw-tbl td.cw-rank{width:36px;text-align:left}
+.cw-tbl th.cw-rank,.cw-tbl td.cw-rank{width:48px;text-align:left;overflow:visible;text-overflow:clip}
 .cw-tbl th.cw-num,.cw-tbl td.cw-num{width:76px;text-align:right}
 .cw-tbl th.cw-ml,.cw-tbl td.cw-ml{width:72px;text-align:right;font-weight:800}
 /* conf wins 2-wide grid */
@@ -1718,12 +1718,26 @@ renderPRUpdateCards();
 function skipPR(gameId){var g=pruGames.find(function(x){return x.id===gameId;});if(g){g._skipped=true;}pruStats.skipped++;renderPRUpdateCards();}
 async function markGameFinal(gameId){var res=await sb.from('games').update({status:'final'}).eq('id',gameId);if(res.error){cbkToast('Error',res.error.message,'error');return;}var g=pruGames.find(function(x){return x.id===gameId;});if(g)g.status='final';renderPRUpdateCards();}
 async function markAllFinal(){var date=document.getElementById('pru-date').value;if(!date){cbkToast('Pick a date','Select a date first','info');return;}if(!confirm('Mark ALL remaining scheduled games on '+date+' as final?'))return;var res=await sb.from('games').update({status:'final'}).eq('game_date',date).eq('status','scheduled');if(res.error){cbkToast('Error',res.error.message,'error');return;}pruGames.forEach(function(g){if(g.status==='scheduled')g.status='final';});renderPRUpdateCards();}
-function loadConfWins(){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">Loading...</div>';sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){var games=res.data;if(!games||!games.length){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">No games found</div>';return;}var teamWins={};var teamConf={};games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=(sp>=0?fp:1-fp);teamWins[g.away.id]+=(sp<0?fp:1-fp);teamConf[g.home.id]={name:g.home.team,conf:g.home.conference};teamConf[g.away.id]={name:g.away.team,conf:g.away.conference};});confWinsData=Object.keys(teamWins).map(function(id){return{id:id,team:teamConf[id].name,conf:teamConf[id].conf,wins:teamWins[id]};});var sel=document.getElementById('confwins-filter');if(sel.options.length<=1){var confs=[...new Set(confWinsData.map(function(t){return t.conf;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}renderConfWins(confWinsData);});}
+function loadConfWins(){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">Loading...</div>';cwLoadSettings().then(function(){_cwLoadGames();});}
+function _cwLoadGames(){sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){var games=res.data;if(!games||!games.length){document.getElementById('confwins-body').innerHTML='<div style="color:var(--txt3);padding:20px">No games found</div>';return;}var teamWins={};var teamConf={};games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=(sp>=0?fp:1-fp);teamWins[g.away.id]+=(sp<0?fp:1-fp);teamConf[g.home.id]={name:g.home.team,conf:g.home.conference};teamConf[g.away.id]={name:g.away.team,conf:g.away.conference};});confWinsData=Object.keys(teamWins).map(function(id){return{id:id,team:teamConf[id].name,conf:teamConf[id].conf,wins:teamWins[id]};});var sel=document.getElementById('confwins-filter');if(sel.options.length<=1){var confs=[...new Set(confWinsData.map(function(t){return t.conf;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}renderConfWins(confWinsData);});}
 function filterConfWins(){var conf=document.getElementById('confwins-filter').value;renderConfWins(conf?confWinsData.filter(function(t){return t.conf===conf;}):confWinsData);}
 var _cwOv={}; /* conf -> {win:1.18, top2:1.18} */
-function cwGetOv(conf,which){var el=document.getElementById('cw-ov-'+which+'-'+conf.replace(/[^A-Za-z0-9]/g,''));var def=1.18;var v=el?parseFloat(el.value):(_cwOv[conf]&&_cwOv[conf][which]!=null?_cwOv[conf][which]:def);return(isNaN(v)||v<1.0)?def:v;}
-function cwGetSharp(conf){var el=document.getElementById('cw-sharp-'+conf.replace(/[^A-Za-z0-9]/g,''));var v=el?parseFloat(el.value):1.00;return(isNaN(v)||v<0.5||v>2.5)?1.00:v;}
-function cwRepriceConf(){ if(window._cwData)renderConfWins(window._cwData); }
+function cwGetOv(conf,which){var cid=conf.replace(/[^A-Za-z0-9]/g,'');var el=document.getElementById('cw-ov-'+which+'-'+cid);var def=1.18;var saved=(_cwSettings[cid]&&_cwSettings[cid][which]!=null)?_cwSettings[cid][which]:def;var v=el?parseFloat(el.value):saved;return(isNaN(v)||v<1.0)?def:v;}
+function cwGetSharp(conf){var cid=conf.replace(/[^A-Za-z0-9]/g,'');var el=document.getElementById('cw-sharp-'+cid);var saved=(_cwSettings[cid]&&_cwSettings[cid].sharp!=null)?_cwSettings[cid].sharp:1.00;var v=el?parseFloat(el.value):saved;return(isNaN(v)||v<0.5||v>2.5)?1.00:v;}
+var _cwSettings={}; /* conf -> {win, top2, sharp} loaded from DB */
+function cwRepriceConf(){
+  // capture current input values into settings, save, then re-render
+  cwCaptureSettings();
+  if(isAdmin)cwSaveSettings();
+  if(window._cwData)renderConfWins(window._cwData);
+}
+function cwCaptureSettings(){
+  document.querySelectorAll('[id^="cw-ov-win-"]').forEach(function(el){var c=el.id.replace('cw-ov-win-','');if(!_cwSettings[c])_cwSettings[c]={};_cwSettings[c].win=parseFloat(el.value);});
+  document.querySelectorAll('[id^="cw-ov-top2-"]').forEach(function(el){var c=el.id.replace('cw-ov-top2-','');if(!_cwSettings[c])_cwSettings[c]={};_cwSettings[c].top2=parseFloat(el.value);});
+  document.querySelectorAll('[id^="cw-sharp-"]').forEach(function(el){var c=el.id.replace('cw-sharp-','');if(!_cwSettings[c])_cwSettings[c]={};_cwSettings[c].sharp=parseFloat(el.value);});
+}
+async function cwSaveSettings(){try{await sb.from('cw_settings').upsert({id:1,settings:_cwSettings,updated_at:new Date().toISOString()});}catch(e){}}
+async function cwLoadSettings(){try{var r=await sb.from('cw_settings').select('settings').eq('id',1).single();if(r.data&&r.data.settings)_cwSettings=r.data.settings;}catch(e){}}
 function renderConfWins(data){
   window._cwData=data;
   var byConf={};data.forEach(function(t){if(!byConf[t.conf])byConf[t.conf]=[];byConf[t.conf].push(t);});
