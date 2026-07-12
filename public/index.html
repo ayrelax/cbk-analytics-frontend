@@ -576,6 +576,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
       </div>
     </div>
     <div style="flex:1;min-width:440px">
+      <div id="tp-validation" style="margin-bottom:10px"></div>
       <div id="tp-results"><div style="color:var(--txt3);font-size:12px;padding:14px">Enter title odds, then click <b>PRICE ALL MARKETS</b> to generate every prop.</div></div>
     </div>
   </div>
@@ -3412,6 +3413,7 @@ async function initTourneyProps(){
   await tpLoadSeeding();
   // load any saved priced results (so refresh keeps them, and view-only sees them)
   await tpLoadResults();
+  tpRenderValidation();
   // admin sees the odds editor; view-only does not
   tpApplyAdminGate();
   if(isAdmin)tpRenderOddsEditor();
@@ -3498,7 +3500,7 @@ function tpUploadOdds(){
     n++;
   });
   if(built.length)_tpSeeding=built;
-  tpDevig();tpRenderOddsEditor();
+  tpDevig();tpRenderOddsEditor();tpRenderValidation();
   if(warned.length){cbkToast&&cbkToast('Loaded with warnings',n+' teams; '+warned.length+' unmatched to PR (defaulted 30)','info',5000);}
   else{cbkToast&&cbkToast('Field loaded',n+' teams set from paste','success');}
 }
@@ -3647,6 +3649,57 @@ async function tpLoadResults(){
     }
   }catch(e){}
   return false;
+}
+
+/* ===== FIELD VALIDATION for sim markets ===== */
+function tpValidateField(){
+  var regionSeeds={0:{},1:{},2:{},3:{}}; // ri -> seed -> [teams]
+  var badRegion=[];
+  _tpSeeding.forEach(function(e){
+    if(e.playin)return;
+    if(e.ri<0||e.ri>3){badRegion.push(e.team);return;}
+    var bs=regionSeeds[e.ri];
+    if(!bs[e.seed])bs[e.seed]=[];
+    bs[e.seed].push(e.team);
+  });
+  var issues=[];var regionOK=[true,true,true,true];
+  for(var ri=0;ri<4;ri++){
+    var bs=regionSeeds[ri];
+    var missing=[];var dupes=[];
+    for(var s=1;s<=16;s++){
+      var arr=bs[s]||[];
+      if(arr.length===0){missing.push(s);regionOK[ri]=false;}
+      else if(arr.length>1){dupes.push({seed:s,teams:arr});regionOK[ri]=false;}
+    }
+    if(missing.length||dupes.length){
+      issues.push({region:TP_REGIONS[ri],ri:ri,missing:missing,dupes:dupes});
+    }
+  }
+  var valid=regionOK.every(function(x){return x;})&&badRegion.length===0;
+  return{valid:valid,issues:issues,badRegion:badRegion,regionOK:regionOK};
+}
+function tpRenderValidation(){
+  var box=document.getElementById('tp-validation');
+  if(!box)return;
+  if(!_tpSeeding.length){box.innerHTML='';return;}
+  var v=tpValidateField();
+  if(v.valid){
+    box.innerHTML='<div style="background:var(--bg2);border-left:3px solid var(--grn2);border-radius:4px;padding:8px 12px;font-size:11px;color:var(--grn2)"><b>\u2713 Valid bracket</b> \u2014 all four regions have seeds 1\u201316. Sim markets ready to price.</div>';
+    return;
+  }
+  var h='<div style="background:var(--bg2);border-left:3px solid var(--amb2);border-radius:4px;padding:10px 12px;font-size:11px;color:var(--txt2)">';
+  h+='<div style="font-weight:700;color:var(--amb2);margin-bottom:6px">\u26a0 Bracket incomplete \u2014 sim markets (win totals, seed props, Final Four counts, farthest) need one team per seed (1\u201316) in each region. Fix these, then re-load:</div>';
+  if(v.badRegion.length){h+='<div style="margin-bottom:4px"><b>Unrecognized region</b> for: '+v.badRegion.join(', ')+' (use East/West/South/Midwest)</div>';}
+  v.issues.forEach(function(iss){
+    h+='<div style="margin-top:6px"><b>'+iss.region+':</b> ';
+    var bits=[];
+    if(iss.missing.length)bits.push('<span style="color:var(--red2)">missing seed'+(iss.missing.length>1?'s':'')+' '+iss.missing.join(', ')+'</span>');
+    iss.dupes.forEach(function(d){bits.push('<span style="color:var(--red2)">two #'+d.seed+' seeds ('+d.teams.join(' & ')+')</span>');});
+    h+=bits.join('; ');
+    h+='</div>';
+  });
+  h+='</div>';
+  box.innerHTML=h;
 }
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
