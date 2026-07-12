@@ -2445,17 +2445,19 @@ function agClearForm(){
   document.getElementById('ag-preview').style.display='none';
   document.getElementById('ag-neutral').value='false';
 }
-function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';var _su=document.getElementById('nav-statsupload');if(_su)_su.style.display='block';try{localStorage.setItem('cbk_session','admin');}catch(e){}loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';try{localStorage.setItem('cbk_session','view');}catch(e){}var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';loadDashboard();cbkStartFinalPolling();}else{document.getElementById('login-err').style.display='block';}}
+function cbkSetSession(val){var rem=true;try{var r=document.getElementById('login-remember');rem=!r||r.checked;}catch(e){}var u='';try{u=document.getElementById('login-user').value||'';}catch(e){}try{if(rem){localStorage.setItem('cbk_session',val);try{sessionStorage.removeItem('cbk_session');}catch(_e){}if(u)localStorage.setItem('cbk_user',u);localStorage.setItem('cbk_remember','1');}else{try{sessionStorage.setItem('cbk_session',val);}catch(_e){}localStorage.removeItem('cbk_session');localStorage.removeItem('cbk_user');localStorage.removeItem('cbk_remember');}}catch(e){}}
+function doLogin(){var u=document.getElementById('login-user').value;var p=document.getElementById('login-pass').value;if(u==='CollegeHoops'&&p==='Nosfan99'){isAdmin=true;var ps=document.getElementById('prelogin-style');if(ps)ps.parentNode.removeChild(ps);document.getElementById('login-screen').style.display='none';document.getElementById('admin-badge').style.display='flex';document.getElementById('nav-prupdate').style.display='block';document.getElementById('nav-rosterload').style.display='block';var _su=document.getElementById('nav-statsupload');if(_su)_su.style.display='block';cbkSetSession('admin');loadDashboard();}else if(u==='CollegeHoops'&&p==='CollegeHoops'){isAdmin=false;var ps2=document.getElementById('prelogin-style');if(ps2)ps2.parentNode.removeChild(ps2);document.getElementById('login-screen').style.display='none';cbkSetSession('view');var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';loadDashboard();cbkStartFinalPolling();}else{document.getElementById('login-err').style.display='block';}}
 document.addEventListener('DOMContentLoaded',function(){
   var lu=document.getElementById('login-user');
   var lp=document.getElementById('login-pass');
+  try{var _cu=localStorage.getItem('cbk_user');if(_cu&&lu){lu.value=_cu;if(lp)setTimeout(function(){lp.focus();},50);}}catch(e){}
   if(lu)lu.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   if(lp)lp.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   try{cbkInitTheme();}catch(e){}
   try{restoreSession();}catch(e){}
 });
 function restoreSession(){
-  var s=null;try{s=localStorage.getItem('cbk_session');}catch(e){}
+  var s=null;try{s=localStorage.getItem('cbk_session')||sessionStorage.getItem('cbk_session');}catch(e){}
   if(s!=='admin'&&s!=='view')return;
   isAdmin=(s==='admin');
   var ps=document.getElementById('prelogin-style');if(ps&&ps.parentNode)ps.parentNode.removeChild(ps);
@@ -2476,7 +2478,7 @@ function cbkGoToPage(pg){
   for(var i=0;i<navs.length;i++){var oc=navs[i].getAttribute('onclick')||'';if(oc.indexOf("showPage('"+pg+"'")>=0){btn=navs[i];break;}}
   try{showPage(pg,btn||{classList:{add:function(){}}});}catch(e){}
 }
-function cbkLogout(){try{localStorage.removeItem('cbk_session');localStorage.removeItem('cbk_page');}catch(e){}location.reload();}
+function cbkLogout(){try{localStorage.removeItem('cbk_session');sessionStorage.removeItem('cbk_session');localStorage.removeItem('cbk_page');}catch(e){}location.reload();}
 function cbkLogoutConfirm(){if(confirm('Log out?')){cbkLogout();}}
 
 /* ================= TEAM PLAYS (public view, admin edit) — ADDITIVE ================= */
@@ -3423,7 +3425,7 @@ async function cbkPollFinals(){
   }catch(e){}
 }
 function cbkStartFinalPolling(){
-  var sess=null;try{sess=localStorage.getItem('cbk_session');}catch(e){}
+  var sess=null;try{sess=localStorage.getItem('cbk_session')||sessionStorage.getItem('cbk_session');}catch(e){}
   if(isAdmin||sess==='admin')return;   // view-only only
   if(_cbkPollTimer)return;              // already running
   cbkPollFinals();            // seed immediately
@@ -3970,6 +3972,7 @@ function tpRenderValidation(){
 <div style="width:40px;height:2px;background:var(--acc);margin:0 auto 28px"></div>
 <div style="text-align:left;margin-bottom:12px"><div style="font-size:10px;letter-spacing:2px;color:var(--txt3);margin-bottom:5px;text-transform:uppercase">Username</div><input id="login-user" class="field" type="text" placeholder="Enter username"></div>
 <div style="text-align:left;margin-bottom:22px"><div style="font-size:10px;letter-spacing:2px;color:var(--txt3);margin-bottom:5px;text-transform:uppercase">Password</div><input id="login-pass" class="field" type="password" placeholder="Enter password"></div>
+<label style="display:flex;align-items:center;gap:8px;margin-bottom:18px;cursor:pointer;font-size:11px;color:var(--txt2);letter-spacing:.5px"><input id="login-remember" type="checkbox" checked style="width:15px;height:15px;accent-color:var(--acc);cursor:pointer">Remember me on this device</label>
 <button class="btn primary" style="width:100%;padding:10px;font-size:11px;letter-spacing:2px" onclick="doLogin()">SIGN IN</button>
 <div id="login-err" style="color:var(--red2);font-size:11px;margin-top:12px;display:none">Invalid username or password</div>
 </div>
