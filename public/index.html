@@ -1722,6 +1722,7 @@ function loadConfWins(){document.getElementById('confwins-body').innerHTML='<div
 function filterConfWins(){var conf=document.getElementById('confwins-filter').value;renderConfWins(conf?confWinsData.filter(function(t){return t.conf===conf;}):confWinsData);}
 var _cwOv={}; /* conf -> {win:1.18, top2:1.18} */
 function cwGetOv(conf,which){var el=document.getElementById('cw-ov-'+which+'-'+conf.replace(/[^A-Za-z0-9]/g,''));var def=1.18;var v=el?parseFloat(el.value):(_cwOv[conf]&&_cwOv[conf][which]!=null?_cwOv[conf][which]:def);return(isNaN(v)||v<1.0)?def:v;}
+function cwGetSharp(conf){var el=document.getElementById('cw-sharp-'+conf.replace(/[^A-Za-z0-9]/g,''));var v=el?parseFloat(el.value):1.00;return(isNaN(v)||v<0.5||v>2.5)?1.00:v;}
 function cwRepriceConf(){ if(window._cwData)renderConfWins(window._cwData); }
 function renderConfWins(data){
   window._cwData=data;
@@ -1736,8 +1737,11 @@ function renderConfWins(data){
     var sum=rawProbs.reduce(function(s,p){return s+p;},0)||1;
     /* true win distribution (no vig) */
     var winP=rawProbs.map(function(p){return p/sum;});
-    /* per-conference overrounds */
+    /* favorite-longshot sharpen: raise to power then renormalize (>1 sharpens favorites) */
     var cid=conf.replace(/[^A-Za-z0-9]/g,'');
+    var sharp=cwGetSharp(conf);
+    if(sharp!==1){var sp=winP.map(function(x){return Math.pow(x,sharp);});var ssum=sp.reduce(function(a,b){return a+b;},0)||1;winP=sp.map(function(x){return x/ssum;});}
+    /* per-conference overrounds */
     var ovWin=cwGetOv(conf,'win');
     var ovTop2=cwGetOv(conf,'top2');
     /* finish-2nd via SUMPRODUCT on the true distribution */
@@ -1745,7 +1749,7 @@ function renderConfWins(data){
     html+='<div class="panel" style="margin-bottom:0"><div class="panel-hdr" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div class="panel-title">'+conf+'</div>'+
       '<div style="display:flex;gap:6px;align-items:center">'+
       '<span style="font-size:9px;color:var(--txt3)">WIN ov</span><input id="cw-ov-win-'+cid+'" type="number" step="0.01" min="1.00" max="1.60" value="'+ovWin.toFixed(2)+'" onchange="cwRepriceConf()" style="width:52px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt1);padding:2px 4px;font-size:10px">'+
-      '<span style="font-size:9px;color:var(--txt3)">TOP2 ov</span><input id="cw-ov-top2-'+cid+'" type="number" step="0.01" min="1.00" max="1.60" value="'+ovTop2.toFixed(2)+'" onchange="cwRepriceConf()" style="width:52px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt1);padding:2px 4px;font-size:10px">'+
+      '<span style="font-size:9px;color:var(--txt3)">TOP2 ov</span><input id="cw-ov-top2-'+cid+'" type="number" step="0.01" min="1.00" max="1.60" value="'+ovTop2.toFixed(2)+'" onchange="cwRepriceConf()" style="width:52px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt1);padding:2px 4px;font-size:10px"><span style="font-size:9px;color:var(--txt3)">Sharpen</span><input id="cw-sharp-'+cid+'" type="number" step="0.05" min="1.00" max="2.00" value="'+sharp.toFixed(2)+'" onchange="cwRepriceConf()" title="Above 1.00 boosts favorites, lowers longshots" style="width:52px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt1);padding:2px 4px;font-size:10px">'+
       '</div></div>'+
       '<table class="data cw-tbl"><thead><tr><th class="cw-rank">#</th><th>TEAM</th><th class="cw-num">EXP W</th><th class="cw-num">EXP L</th><th class="cw-num">WIN%</th><th class="cw-ml">ML</th><th class="cw-ml">TOP 2</th></tr></thead><tbody>';
     teams.forEach(function(t,i){
