@@ -1321,16 +1321,7 @@ function loadStandingsSidebar(){
     });
   });
 }
-function spreadToMLJuiced(sp){
-  var abs=Math.abs(Math.round(sp*2)/2);
-  var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;
-  var dp=1-fp;
-  if(fp>=0.995)return{fav:-99999,dog:99999};
-  var favML=fp>=0.5?-Math.round((fp/dp)*100):Math.round((dp/fp)*100);
-  var dogJuiced=dp*1.09;
-  var dogML=dogJuiced>=0.5?-Math.round((dogJuiced/(1-dogJuiced))*100):Math.round(((1-dogJuiced)/dogJuiced)*100);
-  return{fav:roundML(favML),dog:roundML(dogML)};
-}
+function spreadToMLJuiced(sp){return spreadToML(sp);}
 function loadSpreads(filter){
   var today=new Date().toISOString().split('T')[0];
   var label=document.getElementById('spreads-mode-label');
@@ -1450,6 +1441,7 @@ function buildGameCards(games,isFinal,isToday){
       html+='<div class="gc-fav-team">'+favTeam.team.substring(0,12).toUpperCase()+' FAV</div>';
       html+='<div class="gc-spread">'+fmtSp(-Math.abs(rsp))+'</div>';
       html+='<div class="gc-ml-row"><span class="gc-ml-fav">'+fmtOdds(ml.fav)+'</span><span class="gc-ml-sep">/</span><span class="gc-ml-dog">'+fmtOdds(ml.dog)+'</span></div>';
+      html+='<div style="font-size:9px;color:var(--txt3);letter-spacing:.3px;margin-top:2px">1H '+(firstHalfSpread(rsp)||'N/A')+'</div>';
       html+='<div class="gc-wpbar"><div class="gc-wpfill" style="width:'+favWPpct+'%"></div></div>';
       html+='<div class="gc-wplabel">'+favWPpct+'% win prob</div>';
       html+='</div>';
