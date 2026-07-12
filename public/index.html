@@ -1014,13 +1014,14 @@ sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:aw
 var games=res.data||[];var teamWins={};var teamConf={};var teamPR={};
 games.forEach(function(g){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var hp=sp>=0?fp:1-fp;if(!teamWins[g.home.id])teamWins[g.home.id]=0;if(!teamWins[g.away.id])teamWins[g.away.id]=0;teamWins[g.home.id]+=hp;teamWins[g.away.id]+=(1-hp);;teamConf[g.home.id]=g.home.conference;teamConf[g.away.id]=g.away.conference;teamPR[g.home.id]={name:g.home.team,pr:g.home.pr};teamPR[g.away.id]={name:g.away.team,pr:g.away.pr};});
 var allData=Object.keys(teamWins).map(function(id){return{id:id,team:teamPR[id]?teamPR[id].name:'?',conf:teamConf[id]||'',wins:teamWins[id],pr:teamPR[id]?teamPR[id].pr:0};});
-var p5confs=['SEC','B10','B12','ACC','BE'];var confData={};
+var p5confs=['SEC','B10','B12','ACC','BE'];
+function _dashConf(){var confData={};
 p5confs.forEach(function(c){
 var teams=allData.filter(function(t){return t.conf===c;}).sort(function(a,b){return b.wins-a.wins;});
 var leader=teams.length?teams[0].wins:0;
 var rawProbs=teams.map(function(t){return 1/(1+Math.exp(-0.4775*(-(leader-t.wins))));});
 var sum=rawProbs.reduce(function(s,p){return s+p;},0)||1;
-var mktProbs=rawProbs.map(function(p){return(p/sum)*1.18;});
+var winP=rawProbs.map(function(p){return p/sum;});var sharp=cwGetSharp(c);if(sharp!==1){var _sp=winP.map(function(x){return Math.pow(x,sharp);});var _ss=_sp.reduce(function(a,b){return a+b;},0)||1;winP=_sp.map(function(x){return x/_ss;});}var ovWin=cwGetOv(c,'win');var mktProbs=winP.map(function(p){return p*ovWin;});
 confData[c]=teams.slice(0,5).map(function(t,i){var mp=mktProbs[i];var rawML=mp>0.5?-(mp/(1-mp))*100:((1-mp)/mp)*100;var ml=roundML(rawML);return{team:t.team,wins:t.wins,ml:ml};});
 });
 var strip=document.getElementById('conf-strip');strip.innerHTML='';
@@ -1036,6 +1037,8 @@ if(!rows.length)html+='<tr><td colspan="4" style="color:var(--txt3);text-align:c
 html+='</tbody></table>';
 box.innerHTML=html;strip.appendChild(box);
 });
+}
+_dashConf();try{cwLoadSettings().then(_dashConf);}catch(e){}
 var _todayStr=new Date().toISOString().split('T')[0];var _dated=games.filter(function(g){return g.home&&g.away&&g.game_date;});var _futureDates=_dated.filter(function(g){return g.game_date>=_todayStr;}).map(function(g){return g.game_date;});var _targetDate=null;if(_dated.some(function(g){return g.game_date===_todayStr;})){_targetDate=_todayStr;}else if(_futureDates.length){_targetDate=_futureDates.sort()[0];}var _dayGames=_targetDate?_dated.filter(function(g){return g.game_date===_targetDate;}):games.slice();var _dayLabel=_targetDate?(_targetDate===_todayStr?'TODAY':new Date(_targetDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})):'ALL GAMES';var sortedGames=_dayGames.slice().sort(function(a,b){return(b.home.pr+b.away.pr)-(a.home.pr+a.away.pr);}).slice(0,10);var _thdr=document.getElementById('dash-topgames-day');if(_thdr)_thdr.textContent=_dayLabel;
 var lhtml='';
 sortedGames.forEach(function(g,i){if(!g.home||!g.away)return;var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);var ml=spreadToML(sp);var hf=sp>=0;var combPR=(g.home.pr+g.away.pr).toFixed(1);var favTeam=hf?g.home.team:g.away.team;var heatClass=getGameHeat(i,10);lhtml+='<tr class="'+heatClass+'"><td class="bold">'+TL(g.away.team)+' @ '+TL(g.home.team)+' <span onclick="openGamePreview('+g.away.id+','+g.home.id+','+(g.neutral_site?'true':'false')+')" style="cursor:pointer;color:var(--acc);font-size:9px;font-weight:700;border:1px solid var(--acc);border-radius:3px;padding:1px 5px;margin-left:6px" title="Game preview">PREVIEW</span></td><td><span class="comb-badge">'+combPR+'</span></td><td style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(Math.round(sp*2)/2))+'</td><td class="odds-fav">'+fmtOdds(ml.fav)+'</td><td class="odds-dog">'+fmtOdds(ml.dog)+'</td></tr>';});
