@@ -367,6 +367,35 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 .tp-odds{font-weight:800;color:var(--acc3)}
 /* ===== end tourney props ===== */
 
+
+/* ===== TOURNEY PROPS LAYOUT — tight, aligned, two-column ===== */
+/* market cards in a responsive 2-column grid */
+#tp-results .tp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+#tp-results .tp-group-hdr{grid-column:1/-1}
+/* each market card: constrain width, fixed table layout so columns align flush */
+.tp-market{background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(90,60,10,.05)}
+.tp-market table{width:100%;table-layout:fixed;border-collapse:collapse}
+.tp-market table td,.tp-market table th{padding:5px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* column widths: selection flexible, %/odds fixed and right-aligned for flush columns */
+.tp-market table th:first-child,.tp-market table td:first-child{text-align:left;width:auto}
+.tp-market table th.tp-col-pct,.tp-market table td.tp-col-pct{width:64px;text-align:right;color:var(--txt3)}
+.tp-market table th.tp-col-odds,.tp-market table td.tp-col-odds{width:78px;text-align:right}
+.tp-market table th.tp-col-yes,.tp-market table td.tp-col-yes,
+.tp-market table th.tp-col-no,.tp-market table td.tp-col-no{width:70px;text-align:right}
+.tp-market table th.tp-col-ou,.tp-market table td.tp-col-ou{width:64px;text-align:right}
+.tp-odds{font-weight:800;color:var(--acc3)}
+/* full-width markets (long team-wins list) span both columns */
+.tp-market.tp-wide{grid-column:1/-1}
+.tp-market.tp-wide table{table-layout:auto}
+/* on narrow screens, single column */
+@media (max-width:900px){#tp-results .tp-grid{grid-template-columns:1fr}}
+/* editor table: align odds + true% flush */
+.tp-editor-tbl{table-layout:fixed;width:100%}
+.tp-editor-tbl th,.tp-editor-tbl td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-editor-tbl th.tp-ed-odds,.tp-editor-tbl td:nth-child(6){width:92px;text-align:right}
+.tp-editor-tbl th.tp-ed-true,.tp-editor-tbl td.tp-ed-true{width:64px;text-align:right;color:var(--txt3)}
+/* ===== end tourney props layout ===== */
+
 </style>
 </head>
 <body>
@@ -564,7 +593,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
     <button class="btn" onclick="tpExportCSV()">EXPORT CSV</button>
   </div>
   <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
-    <div id="tp-admin-panel" style="flex:0 0 560px;min-width:340px">
+    <div id="tp-admin-panel" style="flex:0 0 680px;min-width:340px">
       <div class="panel">
         <div class="panel-hdr">TITLE ODDS — UPLOAD &amp; EDIT</div>
         <div style="padding:12px">
@@ -3448,13 +3477,13 @@ function tpRenderOddsEditor(){
   if(!box)return;
   if(!_tpSeeding.length){box.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:14px">No seeded field found. Seed the bracket on the NCAA Tournament tab first, then reload this tab.</div>';return;}
   var rows=_tpSeeding.filter(function(e){return !e.playin;}).sort(function(a,b){return a.seed-b.seed||a.ri-b.ri;});
-  var h='<table class="data" style="font-size:11px"><thead><tr><th>SEED</th><th>TEAM</th><th>STATE</th><th>REGION</th><th>CONF</th><th>TITLE ODDS</th><th>TRUE %</th></tr></thead><tbody>';
+  var h='<table class="data tp-editor-tbl" style="font-size:11px"><thead><tr><th>SEED</th><th>TEAM</th><th>STATE</th><th>REGION</th><th>CONF</th><th class="tp-ed-odds">TITLE ODDS</th><th class="tp-ed-true">TRUE %</th></tr></thead><tbody>';
   rows.forEach(function(e){
     var odds=_tpTitleOdds[e.team]!==undefined?_tpTitleOdds[e.team]:'';
     var tp=_tpTrueProb[e.team]!=null?(_tpTrueProb[e.team]*100).toFixed(1)+'%':'—';
     h+='<tr><td>'+e.seed+'</td><td class="bold">'+e.team+'</td><td>'+(e.state||'')+'</td><td>'+(TP_REGIONS[e.ri]||'')+'</td><td>'+e.conference+'</td>'+
        '<td><input type="text" value="'+odds+'" data-team="'+e.team+'" onchange="tpEditOdds(this)" placeholder="+500" style="width:76px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:3px 6px;font-size:11px;font-family:inherit"></td>'+
-       '<td class="tp-true" data-team="'+e.team+'">'+tp+'</td></tr>';
+       '<td class="tp-true tp-ed-true" data-team="'+e.team+'">'+tp+'</td></tr>';
   });
   h+='</tbody></table>';
   box.innerHTML=h;
@@ -3569,42 +3598,42 @@ function tpConferenceToWinFiltered(){
 }
 
 /* Render one market as its own card with an overround input that reprices just it */
-function tpMarketCard(key,title,rows,valueMode){
-  // rows: [{label,prob}] or [{label,ew}] for totals
+function tpMarketCard(key,title,rows,valueMode,wide){
   var ov=tpMktOv(key);
   var flat=tpGetFlat();
   var body='';
   if(valueMode==='ou'){
-    // totals: show expected-wins line, no overround pricing
-    rows.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td class="tp-odds">'+r.ew.toFixed(2)+'</td></tr>';});
+    rows.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td class="tp-odds tp-col-ou">'+r.ew.toFixed(2)+'</td></tr>';});
   }else if(valueMode==='yesno'){
-    rows.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(r.p,ov))+'</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(1-r.p,ov))+'</td></tr>';});
+    rows.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td class="tp-odds tp-col-yes">'+tpFmtOdds(tpAmericanFromProb(r.p,ov))+'</td><td class="tp-odds tp-col-no">'+tpFmtOdds(tpAmericanFromProb(1-r.p,ov))+'</td></tr>';});
   }else{
-    // probability markets: apply flatten within the market then price with this market's overround
     var fl=rows.map(function(r){return{label:r.label,fp:Math.pow(r.prob,flat)};});
     var s=fl.reduce(function(a,b){return a+b.fp;},0)||1;fl.forEach(function(r){r.prob=r.fp/s;});
     fl.sort(function(a,b){return b.prob-a.prob;});
-    fl.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td>'+(r.prob*100).toFixed(1)+'%</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(r.prob,ov))+'</td></tr>';});
+    fl.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td class="tp-col-pct">'+(r.prob*100).toFixed(1)+'%</td><td class="tp-odds tp-col-odds">'+tpFmtOdds(tpAmericanFromProb(r.prob,ov))+'</td></tr>';});
   }
   var ovCtrl=(valueMode==='ou')?'':'<span style="font-size:9px;color:var(--txt3)">OV</span><input id="tp-ov-'+key+'" type="number" step="0.01" min="1.01" max="1.80" value="'+ov+'" onchange="tpReprice()" style="width:58px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt1);padding:2px 4px;font-size:10px;margin-left:6px">';
-  var thead=(valueMode==='yesno')?'<thead><tr><th>SELECTION</th><th>YES</th><th>NO</th></tr></thead>':(valueMode==='ou'?'<thead><tr><th>SELECTION</th><th>O/U</th></tr></thead>':'<thead><tr><th>SELECTION</th><th>%</th><th>ODDS</th></tr></thead>');
-  return '<div class="tp-market"><div class="tp-market-hdr" style="display:flex;justify-content:space-between;align-items:center"><span>'+title+'</span><span>'+ovCtrl+'</span></div><table class="data" style="font-size:11px">'+thead+'<tbody>'+body+'</tbody></table></div>';
+  var thead=(valueMode==='yesno')?'<thead><tr><th>SELECTION</th><th class="tp-col-yes">YES</th><th class="tp-col-no">NO</th></tr></thead>':(valueMode==='ou'?'<thead><tr><th>SELECTION</th><th class="tp-col-ou">O/U</th></tr></thead>':'<thead><tr><th>SELECTION</th><th class="tp-col-pct">%</th><th class="tp-col-odds">ODDS</th></tr></thead>');
+  return '<div class="tp-market'+(wide?' tp-wide':'')+'"><div class="tp-market-hdr" style="display:flex;justify-content:space-between;align-items:center"><span>'+title+'</span><span>'+ovCtrl+'</span></div><table class="data" style="font-size:11px">'+thead+'<tbody>'+body+'</tbody></table></div>';
 }
 
 /* Full render using per-market cards */
 function tpRenderResults(){
   var out=document.getElementById('tp-results');
   var H='';
+  H+='<div class="tp-grid">';
   H+='<div class="tp-group-hdr">PRODUCE THE CHAMPION (de-vigged title odds)</div>';
   H+=tpMarketCard('conf','Conference To Produce Champion',tpConferenceToWinFiltered());
   H+=tpMarketCard('region','Region To Produce Champion',tpRegionToWin());
   H+=tpMarketCard('state','State To Produce Champion',tpStateToWin());
   H+=tpMarketCard('seedwin','Seed Of Tournament Winner',tpSeedToWin().map(function(r){return{label:r.label,prob:r.prob};}));
   H+=tpMarketCard('titleseed','Will A #Seed Win The Tournament',[1,2,3,4].map(function(s){return{label:'#'+s+' Seed',p:tpSeedWinsTitle(s)};}),'yesno');
+  H+='</div>';
 
+  H+='<div class="tp-grid">';
   H+='<div class="tp-group-hdr">WIN TOTALS & ADVANCEMENT (bracket sim)</div>';
   var ttw=tpTotalTeamWins().slice(0,25).map(function(r){return{label:r.team+' ('+r.seed+' '+r.region.charAt(0)+')',ew:r.ew};});
-  H+=tpMarketCard('teamwins','Total Team Tournament Wins (O/U)',ttw,'ou');
+  H+=tpMarketCard('teamwins','Total Team Tournament Wins (O/U)',ttw,'ou',true);
   H+=tpMarketCard('seedwins','Total Seed Tournament Wins (O/U)',tpTotalSeedWins().map(function(r){return{label:'#'+r.seed+' Seeds',ew:r.ew};}),'ou');
   H+=tpMarketCard('confwins','Total Conference Tournament Wins (O/U)',tpTotalConfWins().filter(function(r){return TP_CONF_ALLOW[r.conf];}).map(function(r){return{label:TP_CONF_ALLOW[r.conf],ew:r.ew};}),'ou');
   H+=tpMarketCard('r1seed','Will A #Seed Win A First Round Game',[12,13,14,15,16].map(function(s){return{label:'#'+s+' Seed',p:tpSeedWinsR1(s)||0};}),'yesno');
@@ -3615,6 +3644,7 @@ function tpRenderResults(){
   });
   var far=tpFarthest(1,60000);
   if(far.length){H+=tpMarketCard('farthest','Which #1 Seed Will Progress Farthest',far.map(function(r){return{label:r.team,prob:r.prob};}));}
+  H+='</div>';
   out.innerHTML=H;
 }
 /* Reprice when any per-market overround changes (re-render from cached sim/probs, no re-sim) */
