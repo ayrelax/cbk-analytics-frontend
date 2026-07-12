@@ -568,8 +568,8 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
       <div class="panel">
         <div class="panel-hdr">TITLE ODDS — UPLOAD &amp; EDIT</div>
         <div style="padding:12px">
-          <div style="font-size:10px;color:var(--txt3);margin-bottom:6px">Paste one line per team: <b>Seed, State, Region, Team, Odds</b> (raw odds). This sets the whole field. Or edit any team's odds directly below.</div>
-          <textarea id="tp-odds-paste" placeholder="1 Seed, Florida, East, Florida, +625&#10;1 Seed, North Carolina, West, Duke, +625&#10;2 Seed, Connecticut, Midwest, Connecticut, +1000" style="width:100%;height:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:8px;font-size:11px;font-family:inherit;box-sizing:border-box"></textarea>
+          <div style="font-size:10px;color:var(--txt3);margin-bottom:6px">Paste one line per team: <b>Seed, Team, Region, State, Odds</b> (raw odds). This sets the whole field. Or edit any team's odds directly below.</div>
+          <textarea id="tp-odds-paste" placeholder="1 Seed, Florida, East, Florida, +625&#10;1 Seed, Duke, West, North Carolina, +625&#10;2 Seed, Connecticut, Midwest, Connecticut, +1000" style="width:100%;height:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:8px;font-size:11px;font-family:inherit;box-sizing:border-box"></textarea>
           <div style="margin-top:8px"><button class="btn" onclick="tpUploadOdds()">LOAD PASTED ODDS</button></div>
         </div>
         <div id="tp-odds-editor" style="max-height:520px;overflow-y:auto;padding:0 4px 4px"></div>
@@ -3476,18 +3476,16 @@ function tpUploadOdds(){
     var parts=ln.split(/[,\t]/).map(function(x){return x.trim();});
     if(parts.length<5)return;
     var seed=tpParseSeed(parts[0]);
-    var state=parts[1];
+    var team=parts[1];
     var ri=tpNormRegion(parts[2]);
-    var team=parts[3];
+    var state=parts[3];
     var odds=parts[4];
-    try{console.log('[tp] parsed line:',JSON.stringify({raw:ln,parts:parts,seed:seed,state:state,region:parts[2],ri:ri,team:team,odds:odds}));}catch(e){}
     if(seed==null||ri<0||!team)return;
     var prKey=team.toLowerCase();
     var pr=(prBy[prKey]!=null)?prBy[prKey]:null;
     if(pr==null){warned.push(team);pr=30;}
     built.push({team:team,seed:seed,ri:ri,state:state,pr:pr,conference:confBy[prKey]||'?',playin:false});
     _tpTitleOdds[team]=odds;
-    try{console.log('[tp] STORED _tpTitleOdds["'+team+'"] =',odds);}catch(e){}
     n++;
   });
   if(built.length)_tpSeeding=built;
