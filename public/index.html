@@ -459,6 +459,12 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 <style id="prelogin-style">body{overflow:hidden!important}#login-screen{display:flex!important;position:fixed!important;top:0!important;left:0!important;width:100%!important;height:100%!important;background:#f8f4ef!important;z-index:999999!important}</style>
 <div class="top-bar">
   <div class="logo">BERBERT'S FULL COURT PRESS <span>/ </span>CBK ANALYTICS</div>
+  <div id="tipoff" title="Season Tip-Off: Notre Dame vs Villanova" style="display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:7px;padding:4px 11px">
+    <span style="font-size:8px;font-weight:800;letter-spacing:1.5px;color:var(--acc);text-transform:uppercase;white-space:nowrap">&#127936; Tip-Off</span>
+    <span style="font-weight:700;color:var(--txt1);font-size:11px;white-space:nowrap">Notre Dame vs Villanova</span>
+    <span style="color:var(--txt3);font-size:10px;white-space:nowrap">Nov 1 &middot; 6:30 PST</span>
+    <span id="tipoff-cd" style="font-weight:800;color:var(--acc);font-size:11px;white-space:nowrap;min-width:92px;text-align:right;font-variant-numeric:tabular-nums">--</span>
+  </div>
   <div class="top-right">
     <div class="fresh-badge"><div class="fresh-dot"></div>DATA LIVE</div>
     <div class="live-badge"><div class="dot"></div>LIVE</div>
@@ -975,6 +981,9 @@ return{ha:ha,aa:aa,r:r};
 }
 function updateClock(){var n=new Date();var parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(n);var o={};parts.forEach(function(p){o[p.type]=p.value;});var hh=o.hour==='24'?'00':o.hour;document.getElementById('clock').textContent=hh+':'+o.minute+':'+o.second+' PT';}
 setInterval(updateClock,1000);updateClock();
+var TIPOFF_TS=new Date('2026-11-01T06:30:00-08:00').getTime();
+function updateTipoff(){var el=document.getElementById('tipoff-cd');if(!el)return;var diff=TIPOFF_TS-Date.now();if(diff<=0){el.textContent='LIVE / DONE';el.style.color='var(--red2)';return;}var s=Math.floor(diff/1000),d=Math.floor(s/86400);s-=d*86400;var h=Math.floor(s/3600);s-=h*3600;var m=Math.floor(s/60);s-=m*60;function p(n){return (n<10?'0':'')+n;}el.textContent=(d>0?d+'d ':'')+p(h)+':'+p(m)+':'+p(s);}
+setInterval(updateTipoff,1000);updateTipoff();
 var TEAM_ID_BY_NAME={};
 function registerTeamNames(arr){if(!arr)return;arr.forEach(function(t){if(t&&t.team!=null&&t.id!=null)TEAM_ID_BY_NAME[String(t.team).toLowerCase().trim()]=t.id;});}
 function TL(name){if(name==null||name==='')return name;var s=String(name);var safe=s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');return'<span class="team-link" data-team-name="'+safe+'">'+s+'</span>';}
@@ -982,7 +991,7 @@ function goToTeam(teamId){if(teamId==null)return;document.querySelectorAll('[id^
 function goToTeamByName(name){if(!name)return;var key=String(name).toLowerCase().trim();var id=TEAM_ID_BY_NAME[key];if(id!=null){goToTeam(id);return;}sb.from('teams').select('id,team').ilike('team',name).limit(1).then(function(res){if(res.data&&res.data.length){TEAM_ID_BY_NAME[key]=res.data[0].id;goToTeam(res.data[0].id);}});}
 document.addEventListener('click',function(e){var el=e.target&&e.target.closest?e.target.closest('.team-link[data-team-name]'):null;if(el){e.preventDefault();goToTeamByName(el.getAttribute('data-team-name'));}});
 sb.from('teams').select('id,team').range(0,9999).then(function(res){registerTeamNames(res.data);});
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads('today');if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile')initTeamProfileDropdown();if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='marketodds')loadMarketOdds();if(page==='plays')loadPlays();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -1324,6 +1333,7 @@ function loadStandingsSidebar(){
 }
 function spreadToMLJuiced(sp){return spreadToML(sp);}
 function loadSpreads(filter){
+  try{localStorage.setItem('cbk_spreads_filter',filter);}catch(e){}
   var today=new Date().toISOString().split('T')[0];
   var label=document.getElementById('spreads-mode-label');
   var splitLayout=document.getElementById('spreads-layout-split');
