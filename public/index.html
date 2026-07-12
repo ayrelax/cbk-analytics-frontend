@@ -560,11 +560,11 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
     <input id="tp-ov" type="number" step="0.01" min="1.03" max="1.80" value="1.20" style="width:70px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:4px 6px;font-size:11px">
     <span style="font-size:10px;color:var(--txt3)">Flatten</span>
     <input id="tp-flat" type="number" step="0.01" min="0.50" max="1.00" value="1.00" style="width:64px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;color:var(--txt1);padding:4px 6px;font-size:11px">
-    <button class="btn primary" onclick="tpPriceAll()">PRICE ALL MARKETS</button>
+    <button id="tp-price-btn" class="btn primary" onclick="tpPriceAll()">PRICE ALL MARKETS</button>
     <button class="btn" onclick="tpExportCSV()">EXPORT CSV</button>
   </div>
   <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
-    <div style="flex:0 0 560px;min-width:340px">
+    <div id="tp-admin-panel" style="flex:0 0 560px;min-width:340px">
       <div class="panel">
         <div class="panel-hdr">TITLE ODDS — UPLOAD &amp; EDIT</div>
         <div style="padding:12px">
@@ -3409,10 +3409,19 @@ function tpFarthest(seed,nSims){
    ============================================================ */
 var _tpInit=false;
 async function initTourneyProps(){
-  // load seeding + team PRs + conferences
   await tpLoadSeeding();
-  tpRenderOddsEditor();
+  // load any saved priced results (so refresh keeps them, and view-only sees them)
+  await tpLoadResults();
+  // admin sees the odds editor; view-only does not
+  tpApplyAdminGate();
+  if(isAdmin)tpRenderOddsEditor();
   if(!_tpInit){_tpInit=true;}
+}
+function tpApplyAdminGate(){
+  var panel=document.getElementById('tp-admin-panel');
+  var priceBtn=document.getElementById('tp-price-btn');
+  if(panel)panel.style.display=isAdmin?'':'none';
+  if(priceBtn)priceBtn.style.display=isAdmin?'':'none';
 }
 async function tpLoadSeeding(){
   // load team PRs + conferences for name matching (paste defines the field)
@@ -3516,74 +3525,11 @@ async function tpPriceAll(){
     if(!sim.full){out.innerHTML='<div style="color:var(--amb2);padding:14px">Field is incomplete — all 64 seeds (1–16 in all four regions) must be set on the NCAA Tournament tab to price sim-based markets. Odds-only markets still work.</div>';}
     _tpSurvival=sim.surv;
     tpRenderResults();
+    if(isAdmin)tpSaveResults();
   },30);
 }
 
-function tpRenderResults(){
-  var ov=tpGetOv();
-  var out=document.getElementById('tp-results');
-  var H='';
-  function priceRows(rows,labelKey){
-    var fl=tpFlattenSet(rows);fl.sort(function(a,b){return b.prob-a.prob;});
-    return fl.map(function(r){return{label:r[labelKey],prob:r.prob,odds:tpFmtOdds(tpAmericanFromProb(r.prob,ov))};});
-  }
-  function section(title,rows,cols){
-    var h='<div class="tp-market"><div class="tp-market-hdr">'+title+'</div><table class="data" style="font-size:11px"><tbody>';
-    rows.forEach(function(r){h+='<tr>'+cols.map(function(c){return '<td'+(c.cls?' class="'+c.cls+'"':'')+'>'+c.get(r)+'</td>';}).join('')+'</tr>';});
-    h+='</tbody></table></div>';return h;
-  }
-  // ODDS-DERIVED
-  H+='<div class="tp-group-hdr">PRODUCE THE CHAMPION (from title odds)</div>';
-  H+=section('Conference To Produce Winner',priceRows(tpConferenceToWin(),'label'),[
-    {get:function(r){return r.label;},cls:'bold'},{get:function(r){return(r.prob*100).toFixed(1)+'%';}},{get:function(r){return r.odds;},cls:'tp-odds'}]);
-  H+=section('State To Produce Winner',priceRows(tpStateToWin(),'label'),[
-    {get:function(r){return r.label;},cls:'bold'},{get:function(r){return(r.prob*100).toFixed(1)+'%';}},{get:function(r){return r.odds;},cls:'tp-odds'}]);
-  H+=section('Region To Produce Winner',priceRows(tpRegionToWin(),'label'),[
-    {get:function(r){return r.label;},cls:'bold'},{get:function(r){return(r.prob*100).toFixed(1)+'%';}},{get:function(r){return r.odds;},cls:'tp-odds'}]);
-  H+=section('Seed Of Tournament Winner',tpSeedToWin().map(function(r){return{label:r.label,prob:r.prob};}).map(function(r){return{label:r.label,prob:r.prob,odds:tpFmtOdds(tpAmericanFromProb(r.prob,ov))};}),[
-    {get:function(r){return r.label;},cls:'bold'},{get:function(r){return(r.prob*100).toFixed(1)+'%';}},{get:function(r){return r.odds;},cls:'tp-odds'}]);
-
-  // YES/NO seed win title
-  var titleRows=[1,2,3,4].map(function(s){var p=tpSeedWinsTitle(s);return{s:s,p:p};});
-  H+='<div class="tp-market"><div class="tp-market-hdr">Will A #Seed Win The Tournament</div><table class="data" style="font-size:11px"><thead><tr><th>SEED</th><th>YES</th><th>NO</th></tr></thead><tbody>';
-  titleRows.forEach(function(r){H+='<tr><td class="bold">#'+r.s+' Seed</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(r.p,ov))+'</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(1-r.p,ov))+'</td></tr>';});
-  H+='</tbody></table></div>';
-
-  // SIM-DERIVED
-  H+='<div class="tp-group-hdr">WIN TOTALS & ADVANCEMENT (from bracket sim)</div>';
-  // Total team wins (top 25)
-  var ttw=tpTotalTeamWins();
-  H+='<div class="tp-market"><div class="tp-market-hdr">Total Team Tournament Wins (O/U line = expected wins)</div><table class="data" style="font-size:11px"><thead><tr><th>TEAM</th><th>SEED</th><th>REGION</th><th>O/U</th></tr></thead><tbody>';
-  ttw.slice(0,25).forEach(function(r){H+='<tr><td class="bold">'+r.team+'</td><td>'+r.seed+'</td><td>'+r.region+'</td><td class="tp-odds">'+r.ew.toFixed(2)+'</td></tr>';});
-  H+='</tbody></table></div>';
-  // Total seed wins
-  H+='<div class="tp-market"><div class="tp-market-hdr">Total Seed Tournament Wins</div><table class="data" style="font-size:11px"><thead><tr><th>SEED</th><th>O/U</th></tr></thead><tbody>';
-  tpTotalSeedWins().forEach(function(r){H+='<tr><td class="bold">#'+r.seed+' Seeds</td><td class="tp-odds">'+r.ew.toFixed(2)+'</td></tr>';});
-  H+='</tbody></table></div>';
-  // Total conf wins
-  H+='<div class="tp-market"><div class="tp-market-hdr">Total Conference Tournament Wins</div><table class="data" style="font-size:11px"><thead><tr><th>CONF</th><th>O/U</th></tr></thead><tbody>';
-  tpTotalConfWins().forEach(function(r){H+='<tr><td class="bold">'+r.conf+'</td><td class="tp-odds">'+r.ew.toFixed(2)+'</td></tr>';});
-  H+='</tbody></table></div>';
-  // Will a seed win R1 (12-16)
-  H+='<div class="tp-market"><div class="tp-market-hdr">Will A #Seed Win A First Round Game</div><table class="data" style="font-size:11px"><thead><tr><th>SEED</th><th>YES</th><th>NO</th></tr></thead><tbody>';
-  [12,13,14,15,16].forEach(function(s){var p=tpSeedWinsR1(s);if(p==null){H+='<tr><td>#'+s+'</td><td colspan=2 style="color:var(--txt3)">—</td></tr>';return;}H+='<tr><td class="bold">#'+s+' Seed</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(p,ov))+'</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(1-p,ov))+'</td></tr>';});
-  H+='</tbody></table></div>';
-  // How many 1/2 seeds reach F4
-  [1,2].forEach(function(seed){
-    var d=tpPoissonBinomial(tpSeedReachF4Probs(seed));
-    H+='<div class="tp-market"><div class="tp-market-hdr">How Many #'+seed+' Seeds Reach The Final Four</div><table class="data" style="font-size:11px"><tbody>';
-    ['None','Exactly 1','Exactly 2','Exactly 3','All 4'].forEach(function(l,k){H+='<tr><td class="bold">'+l+'</td><td>'+((d[k]||0)*100).toFixed(1)+'%</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(d[k]||0,ov))+'</td></tr>';});
-    H+='</tbody></table></div>';
-  });
-  // Which 1-seed farthest
-  var far=tpFarthest(1,60000);
-  if(far.length){
-    H+='<div class="tp-market"><div class="tp-market-hdr">Which #1 Seed Will Progress Farthest</div><table class="data" style="font-size:11px"><tbody>';
-    far.forEach(function(r){H+='<tr><td class="bold">'+r.team+'</td><td>'+(r.prob*100).toFixed(1)+'%</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(r.prob,ov))+'</td></tr>';});
-    H+='</tbody></table></div>';
-  }
-  out.innerHTML=H;
-}
+/* tpRenderResults replaced by v2 */
 
 /* CSV export of everything priced */
 function tpExportCSV(){
@@ -3599,6 +3545,108 @@ function tpExportCSV(){
   tpTotalConfWins().forEach(function(r){lines.push('"Total Conf Wins","'+r.conf+'",'+r.ew.toFixed(2)+',');});
   [12,13,14,15,16].forEach(function(s){var p=tpSeedWinsR1(s);if(p!=null)lines.push('"Will #Seed Win R1","#'+s+' Yes",'+(p*100).toFixed(2)+'%,'+tpFmtOdds(tpAmericanFromProb(p,ov)));});
   var blob=new Blob([lines.join('\n')],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='tourney_props.csv';a.click();URL.revokeObjectURL(url);
+}
+
+/* ===== TOURNEY PROPS v2: per-market overround, conf filter, persistence ===== */
+/* Allowed conferences for "Conference To Produce Champion" (code -> display) */
+var TP_CONF_ALLOW={'SEC':'SEC','B10':'Big Ten','ACC':'ACC','B12':'Big 12','BE':'Big East','P12':'Pac-12','A10':'Atlantic 10','WCC':'West Coast','MWC':'Mountain West','AAC':'American'};
+/* per-market overround store (market key -> overround value) */
+var _tpMktOv={};
+function tpMktOv(key){var el=document.getElementById('tp-ov-'+key);var v=el?parseFloat(el.value):(_tpMktOv[key]||1.20);return(isNaN(v)||v<1.01)?1.20:v;}
+
+/* Conference market filtered to the allowed 10 */
+function tpConferenceToWinFiltered(){
+  var byConf={};
+  _tpSeeding.forEach(function(e){
+    var code=e.conference||'?';
+    if(!TP_CONF_ALLOW[code])return; // ignore others entirely
+    var p=_tpTrueProb[e.team]||0;
+    byConf[code]=(byConf[code]||0)+p;
+  });
+  return Object.keys(byConf).map(function(c){return{label:TP_CONF_ALLOW[c],code:c,prob:byConf[c]};}).sort(function(a,b){return b.prob-a.prob;});
+}
+
+/* Render one market as its own card with an overround input that reprices just it */
+function tpMarketCard(key,title,rows,valueMode){
+  // rows: [{label,prob}] or [{label,ew}] for totals
+  var ov=tpMktOv(key);
+  var flat=tpGetFlat();
+  var body='';
+  if(valueMode==='ou'){
+    // totals: show expected-wins line, no overround pricing
+    rows.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td class="tp-odds">'+r.ew.toFixed(2)+'</td></tr>';});
+  }else if(valueMode==='yesno'){
+    rows.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(r.p,ov))+'</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(1-r.p,ov))+'</td></tr>';});
+  }else{
+    // probability markets: apply flatten within the market then price with this market's overround
+    var fl=rows.map(function(r){return{label:r.label,fp:Math.pow(r.prob,flat)};});
+    var s=fl.reduce(function(a,b){return a+b.fp;},0)||1;fl.forEach(function(r){r.prob=r.fp/s;});
+    fl.sort(function(a,b){return b.prob-a.prob;});
+    fl.forEach(function(r){body+='<tr><td class="bold">'+r.label+'</td><td>'+(r.prob*100).toFixed(1)+'%</td><td class="tp-odds">'+tpFmtOdds(tpAmericanFromProb(r.prob,ov))+'</td></tr>';});
+  }
+  var ovCtrl=(valueMode==='ou')?'':'<span style="font-size:9px;color:var(--txt3)">OV</span><input id="tp-ov-'+key+'" type="number" step="0.01" min="1.01" max="1.80" value="'+ov+'" onchange="tpReprice()" style="width:58px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt1);padding:2px 4px;font-size:10px;margin-left:6px">';
+  var thead=(valueMode==='yesno')?'<thead><tr><th>SELECTION</th><th>YES</th><th>NO</th></tr></thead>':(valueMode==='ou'?'<thead><tr><th>SELECTION</th><th>O/U</th></tr></thead>':'<thead><tr><th>SELECTION</th><th>%</th><th>ODDS</th></tr></thead>');
+  return '<div class="tp-market"><div class="tp-market-hdr" style="display:flex;justify-content:space-between;align-items:center"><span>'+title+'</span><span>'+ovCtrl+'</span></div><table class="data" style="font-size:11px">'+thead+'<tbody>'+body+'</tbody></table></div>';
+}
+
+/* Full render using per-market cards */
+function tpRenderResults(){
+  var out=document.getElementById('tp-results');
+  var H='';
+  H+='<div class="tp-group-hdr">PRODUCE THE CHAMPION (de-vigged title odds)</div>';
+  H+=tpMarketCard('conf','Conference To Produce Champion',tpConferenceToWinFiltered());
+  H+=tpMarketCard('region','Region To Produce Champion',tpRegionToWin());
+  H+=tpMarketCard('state','State To Produce Champion',tpStateToWin());
+  H+=tpMarketCard('seedwin','Seed Of Tournament Winner',tpSeedToWin().map(function(r){return{label:r.label,prob:r.prob};}));
+  H+=tpMarketCard('titleseed','Will A #Seed Win The Tournament',[1,2,3,4].map(function(s){return{label:'#'+s+' Seed',p:tpSeedWinsTitle(s)};}),'yesno');
+
+  H+='<div class="tp-group-hdr">WIN TOTALS & ADVANCEMENT (bracket sim)</div>';
+  var ttw=tpTotalTeamWins().slice(0,25).map(function(r){return{label:r.team+' ('+r.seed+' '+r.region.charAt(0)+')',ew:r.ew};});
+  H+=tpMarketCard('teamwins','Total Team Tournament Wins (O/U)',ttw,'ou');
+  H+=tpMarketCard('seedwins','Total Seed Tournament Wins (O/U)',tpTotalSeedWins().map(function(r){return{label:'#'+r.seed+' Seeds',ew:r.ew};}),'ou');
+  H+=tpMarketCard('confwins','Total Conference Tournament Wins (O/U)',tpTotalConfWins().filter(function(r){return TP_CONF_ALLOW[r.conf];}).map(function(r){return{label:TP_CONF_ALLOW[r.conf],ew:r.ew};}),'ou');
+  H+=tpMarketCard('r1seed','Will A #Seed Win A First Round Game',[12,13,14,15,16].map(function(s){return{label:'#'+s+' Seed',p:tpSeedWinsR1(s)||0};}),'yesno');
+  [1,2].forEach(function(seed){
+    var d=tpPoissonBinomial(tpSeedReachF4Probs(seed));
+    var rows=['None','Exactly 1','Exactly 2','Exactly 3','All 4'].map(function(l,k){return{label:l,prob:d[k]||0};});
+    H+=tpMarketCard('f4_'+seed,'How Many #'+seed+' Seeds Reach The Final Four',rows);
+  });
+  var far=tpFarthest(1,60000);
+  if(far.length){H+=tpMarketCard('farthest','Which #1 Seed Will Progress Farthest',far.map(function(r){return{label:r.team,prob:r.prob};}));}
+  out.innerHTML=H;
+}
+/* Reprice when any per-market overround changes (re-render from cached sim/probs, no re-sim) */
+function tpReprice(){tpRenderResults();tpMaybeSave();}
+
+/* ===== PERSISTENCE ===== */
+var _tpLoadedFromDB=false;
+async function tpSaveResults(){
+  // snapshot everything needed to re-render without re-simulating
+  var snap={
+    seeding:_tpSeeding,titleOdds:_tpTitleOdds,trueProb:_tpTrueProb,survival:_tpSurvival,
+    ov:{},flat:tpGetFlat(),ts:new Date().toISOString()
+  };
+  // capture each market overround
+  document.querySelectorAll('[id^="tp-ov-"]').forEach(function(el){snap.ov[el.id.replace('tp-ov-','')]=el.value;});
+  try{await sb.from('tourney_props').upsert({id:1,results:snap,updated_at:new Date().toISOString()});}catch(e){}
+}
+function tpMaybeSave(){ if(isAdmin){tpSaveResults();} }
+async function tpLoadResults(){
+  try{
+    var res=await sb.from('tourney_props').select('results').eq('id',1).single();
+    if(res.data&&res.data.results){
+      var snap=res.data.results;
+      _tpSeeding=snap.seeding||[];_tpTitleOdds=snap.titleOdds||{};_tpTrueProb=snap.trueProb||{};_tpSurvival=snap.survival||{};
+      _tpLoadedFromDB=true;
+      // render results
+      if(document.getElementById('tp-results'))tpRenderResults();
+      // restore per-market overrounds after render
+      if(snap.ov){Object.keys(snap.ov).forEach(function(k){var el=document.getElementById('tp-ov-'+k);if(el)el.value=snap.ov[k];});tpRenderResults();}
+      if(snap.flat!=null){var fe=document.getElementById('tp-flat');if(fe)fe.value=snap.flat;}
+      return true;
+    }
+  }catch(e){}
+  return false;
 }
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
