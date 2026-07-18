@@ -566,8 +566,12 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 </div>
 <div id="team-profile-content"><div style="text-align:center;color:var(--txt3);padding:40px 40px 8px;font-size:13px">Select a team above to view their profile</div><div style="max-width:540px;margin:0 auto 46px;text-align:center"><div style="font-size:11px;color:var(--txt3);line-height:1.7">Pick any team to see its power rating and efficiency-adjusted PR, full schedule with model spreads and clickable game previews, projected conference and overall win totals, active roster, injuries, and a complete player-stats breakdown with scouting radars.</div><div style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:16px"><span style="font-size:9px;letter-spacing:1px;color:var(--txt3);border:1px solid var(--bdr);border-radius:10px;padding:3px 10px;text-transform:uppercase">Power Rating</span><span style="font-size:9px;letter-spacing:1px;color:var(--txt3);border:1px solid var(--bdr);border-radius:10px;padding:3px 10px;text-transform:uppercase">Schedule &amp; Spreads</span><span style="font-size:9px;letter-spacing:1px;color:var(--txt3);border:1px solid var(--bdr);border-radius:10px;padding:3px 10px;text-transform:uppercase">Win Totals</span><span style="font-size:9px;letter-spacing:1px;color:var(--txt3);border:1px solid var(--bdr);border-radius:10px;padding:3px 10px;text-transform:uppercase">Roster &amp; Injuries</span><span style="font-size:9px;letter-spacing:1px;color:var(--txt3);border:1px solid var(--bdr);border-radius:10px;padding:3px 10px;text-transform:uppercase">Player Stats</span><span style="font-size:9px;letter-spacing:1px;color:var(--txt3);border:1px solid var(--bdr);border-radius:10px;padding:3px 10px;text-transform:uppercase">Scouting Radar</span></div></div></div>
 </div>
+<style id="tv-read">#page-travel{color:var(--txt1);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums;line-height:1.5}#page-travel .data{border-collapse:separate;border-spacing:0;width:100%}#page-travel .data th{position:sticky;top:0;z-index:2;background:#f2ebe1;color:var(--txt2);font-weight:700;font-size:10.5px;letter-spacing:.3px;text-transform:uppercase;padding:10px 11px;border-bottom:2px solid var(--bdr2);white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}#page-travel .data td{font-size:12.5px !important;color:var(--txt1);padding:9px 11px;border-bottom:1px solid var(--bdr);white-space:nowrap;font-family:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}#page-travel .data td.bold,#page-travel .data .bold{font-weight:700;color:var(--txt1);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}#page-travel .data tbody tr:nth-child(even){background:rgba(139,105,20,.045)}#page-travel .data tbody tr:hover{background:rgba(139,105,20,.10)}#page-travel .data .muted{color:var(--txt3)}#page-travel .data td[style*="--acc"]{color:#6f5310 !important;font-weight:700}#page-travel .data td[style*="--amb2"]{color:#c75300 !important}#page-travel .data td[style*="#00897b"]{color:#00695c !important;font-weight:600}#page-travel .data td[style*="#6d4c41"]{color:#5d4037 !important;font-weight:600}#page-travel [style*="font-size:9px"][style*="--txt3"]{font-size:10.5px !important;color:var(--txt2) !important;font-style:normal}</style>
 <div id="page-travel" style="display:none">
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn primary" id="tv-view-season" onclick="tvView('season')" style="font-size:10px;padding:4px 11px">THIS SEASON</button>
+    <button class="btn" id="tv-view-hist" onclick="tvView('hist')" style="font-size:10px;padding:4px 11px">HISTORICAL</button>
+    <span style="width:1px;height:20px;background:var(--bdr2);margin:0 2px"></span>
     <button class="btn primary" id="tv-mode-sched" onclick="travelMode('sched')" style="font-size:10px;padding:4px 11px">SCHEDULE</button>
     <button class="btn" id="tv-mode-rec" onclick="travelMode('rec')" style="font-size:10px;padding:4px 11px">SU / ATS RECORDS</button>
     <select class="field" id="tv-conf" onchange="travelRender()" style="width:150px"><option value="">ALL CONFS</option></select>
@@ -1609,16 +1613,84 @@ function loadTravel(){var body=document.getElementById('travel-body');if(_tvRows
    if(sel&&sel.options.length<=1){_cwSortConfs(Array.from(new Set(rows.map(function(r){return r.conf;}))).filter(function(c){return !!c;})).forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}
    travelRender();
   });});}
-function travelRender(){var body=document.getElementById('travel-body');if(!body||!_tvRows)return;
+var _tvView='season',_tvHistTeamId='',_tvHistCCSeason='ALL';
+function tvView(v){_tvView=v;var a=document.getElementById('tv-view-season'),b=document.getElementById('tv-view-hist');if(a)a.className='btn'+(v==='season'?' primary':'');if(b)b.className='btn'+(v==='hist'?' primary':'');['tv-mode-sched','tv-mode-rec','tv-conf','tv-sort'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display=(v==='hist'?'none':'');});travelRender();}
+var _TVHCATS=[['ALL','OVERALL'],['H','HOME'],['A','AWAY'],['N','NEUTRAL'],['R1','\u22641D REST'],['R2','2D REST'],['R34','3-4D REST'],['R5','5D+ REST'],['C23','2-IN-3'],['C34','3-IN-4'],['I35','3-IN-5'],['REDGE','REST EDGE'],['RDIS','REST DISADV'],['T1','TRIP \u2264300'],['T2','301-800'],['T3','801-1500'],['T4','1501-1999'],['T5','2000+'],['TZ2','2+ TZ'],['ALT','ALTITUDE'],['KILL','KILLER']];
+var _TVMAJORS=['ACC','SEC','B10','B12','BE','A10','MWC','WCC','AAC','MVC','CUSA','SBC'];
+function _tvHpc(aw,al){var d=aw+al;return d?Math.round(1000*aw/d)/10:null;}
+function _tvHcol(p){return p==null?'var(--txt2)':(p>=52.4?'var(--grn2)':(p<47.6?'var(--red2)':'var(--txt1)'));}
+function travelRenderHist(body){
+ var note=document.getElementById('tv-note');if(note)note.textContent='year over year \u00b7 ATS cover% by situation \u00b7 overall, per team, and by conference';
+ body.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:16px">Loading historical\u2026</div>';
+ sb.from('travel_history').select('*').is('team_id',null).order('season',{ascending:false}).then(function(res){
+  var ov=res.data||[];
+  function cell(o){if(!o)return '<td class="muted">--</td>';var p=_tvHpc(o.aw,o.al);if(p==null)return '<td class="muted">--</td>';var rec=o.aw+'-'+o.al+(o.ap?'-'+o.ap:'');return '<td style="text-align:center"><span style="font-weight:800;color:'+_tvHcol(p)+'">'+p.toFixed(1)+'%</span><br><span class="muted" style="font-size:9px">'+rec+'</span></td>';}
+  var h='<div class="panel"><div style="padding:12px 14px 4px"><div class="panel-title" style="color:var(--acc)">OVERALL \u2014 YEAR OVER YEAR</div><div style="font-size:11px;color:var(--txt2);margin-top:4px">All-teams ATS cover% in every situation, by season. Green = teams cover &gt;52.4% (beat \u2212110).</div></div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>SEASON</th>';
+  _TVHCATS.forEach(function(c){h+='<th style="text-align:center">'+c[1]+'</th>';});h+='</tr></thead><tbody>';
+  ov.forEach(function(r){h+='<tr><td class="bold">'+r.season+'</td>';_TVHCATS.forEach(function(c){h+=cell(r.cats[c[0]]);});h+='</tr>';});
+  h+='</tbody></table></div></div>';
+  // by team
+  h+='<div class="panel" style="margin-top:14px"><div style="padding:12px 14px"><div class="panel-title" style="color:var(--acc)">BY TEAM \u2014 YEAR OVER YEAR</div><div style="margin-top:8px"><select class="field" id="tv-hist-team" onchange="tvHistTeam(this.value)" style="width:220px"><option value="">Select a team\u2026</option></select></div><div id="tv-hist-team-body" style="margin-top:10px"></div></div></div>';
+  // conf vs conf
+  h+='<div class="panel" style="margin-top:14px"><div style="padding:12px 14px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="panel-title" style="color:var(--acc)">CONFERENCE vs CONFERENCE \u2014 ATS</div><select class="field" id="tv-cc-season" onchange="tvHistConf(this.value)" style="width:150px"></select></div><div style="font-size:11px;color:var(--txt2);margin-top:4px">Row conference\u2019s ATS cover% when playing the column conference. Green = row covers &gt;52.4%.</div><div id="tv-cc-body" style="margin-top:10px;overflow-x:auto"></div></div></div>';
+  body.innerHTML=h;
+  // populate team dropdown
+  sb.from('travel_history').select('team_id,team').not('team_id','is',null).order('team',{ascending:true}).then(function(tr){
+   var seen={},sel=document.getElementById('tv-hist-team');if(sel){(tr.data||[]).forEach(function(x){if(x.team_id!=null&&!seen[x.team_id]){seen[x.team_id]=1;var o=document.createElement('option');o.value=x.team_id;o.textContent=x.team;sel.appendChild(o);}});if(_tvHistTeamId){sel.value=_tvHistTeamId;tvHistTeam(_tvHistTeamId);}}
+  });
+  // season selector for conf matrix
+  var ss=document.getElementById('tv-cc-season');
+  if(ss){var opts=['ALL'].concat(ov.map(function(r){return r.season;}));opts.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=(s==='ALL'?'All seasons':s);ss.appendChild(o);});ss.value=_tvHistCCSeason;}
+  tvHistConf(_tvHistCCSeason);
+ });
+}
+function tvHistTeam(id){_tvHistTeamId=id;var box=document.getElementById('tv-hist-team-body');if(!box)return;if(!id){box.innerHTML='';return;}
+ box.innerHTML='<div class="muted" style="font-size:12px">Loading\u2026</div>';
+ sb.from('travel_history').select('*').eq('team_id',id).order('season',{ascending:false}).then(function(res){
+  var rows=res.data||[];
+  function cell(a){if(!a)return '<td class="muted">--</td>';var p=_tvHpc(a[0],a[1]);if(p==null)return '<td class="muted">--</td>';return '<td style="text-align:center"><span style="font-weight:800;color:'+_tvHcol(p)+'">'+p.toFixed(0)+'%</span><br><span class="muted" style="font-size:9px">'+a[0]+'-'+a[1]+(a[2]?'-'+a[2]:'')+'</span></td>';}
+  var h='<div style="font-size:11px;color:var(--txt2);font-weight:700;margin-bottom:4px">Situational ATS by season</div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>SEASON</th>';_TVHCATS.forEach(function(c){h+='<th style="text-align:center">'+c[1]+'</th>';});h+='</tr></thead><tbody>';
+  rows.forEach(function(r){h+='<tr><td class="bold">'+r.season+'</td>';_TVHCATS.forEach(function(c){h+=cell(r.cats[c[0]]);});h+='</tr>';});
+  h+='</tbody></table></div>';
+  box.innerHTML=h;
+  // team vs each conference (career)
+  sb.from('team_vs_conf').select('*').eq('team_id',id).then(function(cr){
+   var rows2=(cr.data||[]).slice().sort(function(a,b){return (_tvHpc(b.aw,b.al)||0)-(_tvHpc(a.aw,a.al)||0);});
+   if(!rows2.length)return;
+   var g='<div style="font-size:11px;color:var(--txt2);font-weight:700;margin:14px 0 4px">vs each conference (all seasons)</div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>CONFERENCE</th><th style="text-align:center">ATS REC</th><th style="text-align:center">COVER%</th></tr></thead><tbody>';
+   rows2.forEach(function(r){var p=_tvHpc(r.aw,r.al);g+='<tr><td class="bold">'+r.conf+'</td><td style="text-align:center">'+r.aw+'-'+r.al+(r.ap?'-'+r.ap:'')+'</td><td style="text-align:center;font-weight:800;color:'+_tvHcol(p)+'">'+(p==null?'--':p.toFixed(1)+'%')+'</td></tr>';});
+   g+='</tbody></table></div>';
+   box.innerHTML+=g;
+  });
+ });
+}
+function tvHistConf(season){_tvHistCCSeason=season;var box=document.getElementById('tv-cc-body');if(!box)return;
+ box.innerHTML='<div class="muted" style="font-size:12px">Loading\u2026</div>';
+ sb.from('conf_vs_conf').select('*').eq('season',season).then(function(res){
+  var m={};(res.data||[]).forEach(function(x){m[x.conf_a+'|'+x.conf_b]=x;});
+  var h='<table class="data" style="font-size:11px"><thead><tr><th>vs \u2192</th>';
+  _TVMAJORS.forEach(function(c){h+='<th style="text-align:center">'+c+'</th>';});h+='</tr></thead><tbody>';
+  _TVMAJORS.forEach(function(a){h+='<tr><td class="bold">'+a+'</td>';_TVMAJORS.forEach(function(b){if(a===b){h+='<td style="text-align:center;color:var(--bdr2)">\u2014</td>';return;}var x=m[a+'|'+b];if(!x){h+='<td class="muted" style="text-align:center">\u00b7</td>';return;}var p=_tvHpc(x.aw,x.al);h+='<td style="text-align:center"><span style="font-weight:700;color:'+_tvHcol(p)+'">'+(p==null?'--':p.toFixed(0)+'%')+'</span><br><span class="muted" style="font-size:9px">'+x.aw+'-'+x.al+'</span></td>';});h+='</tr>';});
+  h+='</tbody></table>';box.innerHTML=h;
+ });
+}
+function travelRender(){var body=document.getElementById('travel-body');if(!body)return;
+ if(_tvView==='hist'){travelRenderHist(body);return;}
+ if(!_tvRows)return;
  var conf=document.getElementById('tv-conf').value;var sort=document.getElementById('tv-sort').value||'miles';
  var rows=_tvRows.filter(function(r){return !conf||r.conf===conf;});
  rows.sort(function(x,y){var a=x[sort],b=y[sort];if(a==null)a=-1;if(b==null)b=-1;return b-a;});
  var note=document.getElementById('tv-note');
  var h;
  if(_tvMode==='rec'){
-  if(note)note.textContent=rows.length+' teams \u00b7 SU / ATS per situation \u00b7 fills in as results post';
-  function cell(r,cat){var x=r.R[cat];if(!x||!x.n)return '<td class="muted">--</td>';var dec=x.w+x.l;var su=dec?(x.w+'-'+x.l):'0-0';var adec=x.aw+x.al+x.ap;var ats=adec?(x.aw+'-'+x.al+(x.ap?'-'+x.ap:'')):'--';return '<td style="white-space:nowrap"><span style="font-weight:700">'+su+'</span><span class="muted" style="font-size:10px"> / '+ats+'</span></td>';}
+  if(note)note.textContent=rows.length+' teams \u00b7 SU / ATS per situation \u00b7 ATS bold \u00b7 \u03a3 top row = all-teams overall (green if teams cover >52.4%)';
+  function cell(r,cat){var x=r.R[cat];if(!x||!x.n)return '<td class="muted">--</td>';var dec=x.w+x.l;var su=dec?(x.w+'-'+x.l):'0-0';var adec=x.aw+x.al+x.ap;var ats=adec?(x.aw+'-'+x.al+(x.ap?'-'+x.ap:'')):'--';return '<td style="white-space:nowrap"><span class="muted" style="font-size:9.5px">'+su+' / </span><span style="font-weight:700">'+ats+'</span></td>';}
   h='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>#</th><th>TEAM</th><th>CONF</th><th>OVERALL</th><th>HOME</th><th>AWAY</th><th>NEUTRAL</th><th>\u22641D REST</th><th>2D REST</th><th>3-4D REST</th><th>5D+ REST</th><th>2-IN-3</th><th>3-IN-4</th><th>3-IN-5</th><th>REST EDGE</th><th>REST DISADV</th><th>TRIP \u2264300</th><th>301-800</th><th>801-1500</th><th>1501-1999</th><th>2000+</th><th>2+ TZ</th><th>ALTITUDE</th><th>KILLER</th></tr></thead><tbody>';
+  var _TVC=['ALL','H','A','N','R1','R2','R34','R5','C23','C34','I35','REDGE','RDIS','T1','T2','T3','T4','T5','TZ2','ALT','KILL'];
+  var _agg={};_TVC.forEach(function(c){_agg[c]={n:0,w:0,l:0,aw:0,al:0,ap:0};});
+  rows.forEach(function(r){_TVC.forEach(function(c){var x=r.R[c];if(x){var a=_agg[c];a.n+=x.n||0;a.w+=x.w||0;a.l+=x.l||0;a.aw+=x.aw||0;a.al+=x.al||0;a.ap+=x.ap||0;}});});
+  function ocell(c){var x=_agg[c];if(!x||!x.n)return '<td class="muted">--</td>';var su=x.w+'-'+x.l;var adec=x.aw+x.al;var ats=x.aw+'-'+x.al+(x.ap?'-'+x.ap:'');var pct=adec?Math.round(1000*x.aw/adec)/10:null;var col=pct==null?'var(--txt2)':(pct>=52.4?'var(--grn2)':(pct<47.6?'var(--red2)':'var(--txt1)'));return '<td style="white-space:nowrap;text-align:center"><span class="muted" style="font-size:9px">'+su+'</span><br><span style="font-weight:800;color:'+col+'">'+ats+'</span>'+(pct!=null?'<span style="font-size:9px;font-weight:700;color:'+col+'"> '+pct.toFixed(1)+'%</span>':'')+'</td>';}
+  h+='<tr style="background:#f2ebe1;border-bottom:2px solid var(--acc2)"><td class="muted" style="font-weight:800">\u03a3</td><td class="bold" style="color:var(--acc)">ALL TEAMS</td><td class="muted">'+rows.length+'</td>'+ocell('ALL')+ocell('H')+ocell('A')+ocell('N')+ocell('R1')+ocell('R2')+ocell('R34')+ocell('R5')+ocell('C23')+ocell('C34')+ocell('I35')+ocell('REDGE')+ocell('RDIS')+ocell('T1')+ocell('T2')+ocell('T3')+ocell('T4')+ocell('T5')+ocell('TZ2')+ocell('ALT')+ocell('KILL')+'</tr>';
   rows.forEach(function(r,i){h+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+TL(r.team)+'</td><td class="muted">'+(r.conf||'')+'</td>'+cell(r,'ALL')+cell(r,'H')+cell(r,'A')+cell(r,'N')+cell(r,'R1')+cell(r,'R2')+cell(r,'R34')+cell(r,'R5')+cell(r,'C23')+cell(r,'C34')+cell(r,'I35')+cell(r,'REDGE')+cell(r,'RDIS')+cell(r,'T1')+cell(r,'T2')+cell(r,'T3')+cell(r,'T4')+cell(r,'T5')+cell(r,'TZ2')+cell(r,'ALT')+cell(r,'KILL')+'</tr>';});
   h+='</tbody></table></div><div style="font-size:9px;color:var(--txt3);font-style:italic;padding:8px 12px">Each cell: straight-up W-L / ATS W-L-P in that situation. TRIP buckets = miles traveled into the game (\u2264300 / 301-800 / 801-1500 / 1501-1999 / 2000+). 2-IN-3 / 3-IN-4 / 3-IN-5 = games within 3-, 4-, and 5-day windows. KILLER = 800+ mile trip on \u22642 days rest. ALTITUDE = road game at a 4,000+ ft venue for a low-elevation team. \u201c--\u201d = no finished games in that spot yet.</div></div>';
  }else{
@@ -4328,26 +4400,35 @@ function matsBuildShell(){
     '</div>';
   document.getElementById('page-modelats').innerHTML=
     '<style>'+
-    '#page-modelats{line-height:1.45;font-variant-numeric:tabular-nums;color:var(--txt1)}'+
-    '#page-modelats .data{border-collapse:collapse;width:100%}'+
-    '#page-modelats .data th{padding:9px 12px !important;letter-spacing:.4px;color:var(--txt2);border-bottom:1px solid var(--bdr2);white-space:nowrap;text-align:center}'+
+    '#page-modelats{color:var(--txt1);line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}'+
+    '#page-modelats .data{border-collapse:separate;border-spacing:0;width:100%}'+
+    '#page-modelats .data th{position:sticky;top:0;z-index:2;background:#f2ebe1;color:var(--txt2);font-weight:700;font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;padding:10px 12px !important;border-bottom:2px solid var(--bdr2);white-space:nowrap;text-align:center;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif}'+
     '#page-modelats .data th:first-child{text-align:left}'+
-    '#page-modelats .data td{padding:9px 12px !important;line-height:1.4}'+
-    '#page-modelats .data tbody tr{border-bottom:1px solid var(--bdr)}'+
-    '#page-modelats .data tbody tr:nth-child(even){background:rgba(0,0,0,.022)}'+
+    '#page-modelats .data td{font-size:12.5px;color:var(--txt1);padding:9px 12px !important;line-height:1.45;border-bottom:1px solid var(--bdr);font-family:ui-monospace,\"SF Mono\",\"Cascadia Mono\",\"Roboto Mono\",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}'+
+    '#page-modelats .data td.bold,#page-modelats .data .bold{font-weight:700;color:var(--txt1);font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif}'+
+    '#page-modelats .data tbody tr:nth-child(even){background:rgba(139,105,20,.045)}'+
+    '#page-modelats .data tbody tr:hover{background:rgba(139,105,20,.10)}'+
+    '#page-modelats .muted{color:var(--txt3)}'+
     '#page-modelats [style*="font-size:8px"]{font-size:10px !important}'+
     '#page-modelats [style*="font-size:9px"]{font-size:11px !important}'+
     '#page-modelats [style*="font-size:10px"]{font-size:12px !important}'+
-    '#page-modelats [style*="font-size:11px"]{font-size:13px !important}'+
-    '#page-modelats [style*="font-size:12px"]{font-size:14px !important}'+
-    '#page-modelats [style*="font-size:16px"]{font-size:19px !important}'+
+    '#page-modelats [style*="font-size:11px"]{font-size:12.5px !important}'+
+    '#page-modelats [style*="font-size:12px"]{font-size:13.5px !important}'+
+    '#page-modelats [style*="font-size:16px"]{font-size:18px !important}'+
     '#page-modelats [style*="letter-spacing:1px"]{letter-spacing:.4px !important}'+
+    '#page-modelats [style*="color:var(--acc)"]{color:#6f5310 !important;font-weight:700}'+
+    '#page-modelats [style*="--amb2"]{color:#c75300 !important}'+
     '#page-modelats .pl-lbl{font-size:11px !important;letter-spacing:.4px;color:var(--txt2)}'+
-    '#page-modelats .panel-title{font-size:13px !important;letter-spacing:.4px}'+
+    '#page-modelats .panel-title{font-size:13px !important;letter-spacing:.5px}'+
     '#page-modelats .field{font-size:13px !important;padding:6px 8px}'+
     '</style>'+
     '<div class="panel" style="padding:14px">'+
     '<div class="panel-hdr" style="padding:0;margin-bottom:12px"><div class="panel-title"><div class="panel-title-dot"></div>MODEL ATS <span style="font-weight:400;color:var(--txt3);font-size:10px">\u00b7 my number graded vs the actual result, every game</span></div></div>'+
+    '<div style="display:flex;gap:6px;margin-bottom:12px">'+
+    '<button class="btn primary" id="mats-view-season" style="font-size:10px;padding:5px 14px" onclick="matsView(\'season\')">THIS SEASON</button>'+
+    '<button class="btn" id="mats-view-hist" style="font-size:10px;padding:5px 14px" onclick="matsView(\'hist\')">HISTORICAL</button>'+
+    '</div>'+
+    '<div id="mats-season">'+
     puller+filters+
     '<div id="mats-summary"></div>'+
     '<div id="mats-flags"></div>'+
@@ -4362,6 +4443,8 @@ function matsBuildShell(){
     '<div id="mats-clv"></div>'+
     '</div>'+
     '<div style="font-size:9px;color:var(--txt3);font-style:italic;margin-top:10px">ATS = did my number cover the real result (my \u22128 needs a 9+ win; exactly 8 is a push). SPREAD RANGE is the range my own number falls in; DIFFERENCE is how far my number sat from the opener. Cells under MIN N are muted. Team Plays stays your tracked picks.</div>'+
+    '</div>'+
+    '<div id="mats-hist" style="display:none"></div>'+
     '</div>';
 }
 
@@ -4404,8 +4487,60 @@ function matsSplitTable(title,buckets,dataT,dataA,minN){
 
 function matsNewGrid(){var G={};MATS_SPREAD_BUCKETS.forEach(function(s){G[s]={};MATS_EDGE_BUCKETS.forEach(function(d){G[s][d]=matsAgg();});});return G;}
 
+var _matsView='season',_matsHistTeamId='',_matsMCSeason='ALL';
+function matsView(v){_matsView=v;var a=document.getElementById('mats-view-season'),b=document.getElementById('mats-view-hist');if(a)a.className='btn'+(v==='season'?' primary':'');if(b)b.className='btn'+(v==='hist'?' primary':'');matsRender();}
+function _mhCol(p,be){be=be||52.4;return p==null?'var(--txt2)':(p>=be?'var(--grn2)':(p<47.6?'var(--red2)':'var(--txt1)'));}
+function _mhEdge(w,l){var d=w+l;if(!d)return '<td class="muted">--</td>';var p=Math.round(1000*w/d)/10;return '<td style="text-align:center"><span style="font-weight:700;color:'+_mhCol(p)+'">'+p.toFixed(0)+'%</span><br><span class="muted" style="font-size:9px">'+w+'-'+l+'</span></td>';}
+function matsRenderHist(box){
+ box.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:16px">Loading historical\u2026</div>';
+ sb.from('model_history').select('*').is('team_id',null).order('season',{ascending:false}).then(function(res){
+  var ov=res.data||[];
+  var h='<div class="panel" style="padding:14px"><div class="panel-title" style="color:var(--acc)">MODEL PERFORMANCE \u2014 YEAR OVER YEAR</div><div style="font-size:11px;color:var(--txt2);margin:4px 0 10px">My number graded vs the actual result, by season. CLV = how often my number beat the closing line. Green = beats \u2212110 break-even (52.4%).</div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>SEASON</th><th style="text-align:center">PLAYS</th><th style="text-align:center">ATS REC</th><th style="text-align:center">COVER%</th><th style="text-align:center">CLV%</th><th style="text-align:center">ROI</th><th style="text-align:center">SMALL EDGE</th><th style="text-align:center">MED EDGE</th><th style="text-align:center">BIG EDGE</th></tr></thead><tbody>';
+  ov.forEach(function(r){var rec=r.w+'-'+r.l+(r.p?'-'+r.p:'');var roicol=r.roi>0?'var(--grn2)':(r.roi<0?'var(--red2)':'var(--txt1)');h+='<tr><td class="bold">'+r.season+'</td><td style="text-align:center">'+r.plays+'</td><td style="text-align:center;font-weight:700">'+rec+'</td><td style="text-align:center;font-weight:800;color:'+_mhCol(r.cover_pct)+'">'+r.cover_pct.toFixed(1)+'%</td><td style="text-align:center;font-weight:800;color:'+_mhCol(r.clv_pct,55)+'">'+r.clv_pct.toFixed(1)+'%</td><td style="text-align:center;font-weight:800;color:'+roicol+'">'+(r.roi>0?'+':'')+r.roi+'%</td>'+_mhEdge(r.e_small_w,r.e_small_l)+_mhEdge(r.e_med_w,r.e_med_l)+_mhEdge(r.e_large_w,r.e_large_l)+'</tr>';});
+  h+='</tbody></table></div>';
+  h+='<div style="margin-top:18px"><div class="panel-title" style="color:var(--acc)">BY SPREAD RANGE (my #) \u2014 YEAR OVER YEAR</div><div style="font-size:11px;color:var(--txt2);margin:4px 0 8px">Cover% of my number split by how big the spread is.</div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>SEASON</th>'+MATS_SPREAD_BUCKETS.map(function(b){return '<th style="text-align:center">'+b+'</th>';}).join('')+'</tr></thead><tbody>';
+  ov.forEach(function(r){h+='<tr><td class="bold">'+r.season+'</td>';var mp={};(r.spread_buckets||[]).forEach(function(x){mp[x.b]=x;});MATS_SPREAD_BUCKETS.forEach(function(b){var x=mp[b];h+=x?_mhEdge(x.w,x.l):'<td class="muted">--</td>';});h+='</tr>';});
+  h+='</tbody></table></div></div>';
+  h+='<div style="margin-top:18px"><div class="panel-title" style="color:var(--acc)">BY EDGE RANGE (|my # \u2212 open|) \u2014 YEAR OVER YEAR</div><div style="font-size:11px;color:var(--txt2);margin:4px 0 8px">Cover% and CLV split by how far my number sat off the opener \u2014 bigger edges should cover better.</div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>SEASON</th>'+MATS_EDGE_BUCKETS.map(function(b){return '<th style="text-align:center">'+b+'</th>';}).join('')+'</tr></thead><tbody>';
+  ov.forEach(function(r){h+='<tr><td class="bold">'+r.season+'</td>';var mp={};(r.edge_buckets||[]).forEach(function(x){mp[x.b]=x;});MATS_EDGE_BUCKETS.forEach(function(b){var x=mp[b];if(!x){h+='<td class="muted">--</td>';return;}var d=x.w+x.l;var p=d?Math.round(1000*x.w/d)/10:null;h+='<td style="text-align:center"><span style="font-weight:800;color:'+_mhCol(p)+'">'+(p==null?'--':p.toFixed(0)+'%')+'</span><br><span class="muted" style="font-size:9px">'+x.w+'-'+x.l+' \u00b7 CLV '+(x.clv!=null?x.clv+'%':'--')+'</span></td>';});h+='</tr>';});
+  h+='</tbody></table></div></div>';
+  h+='<div style="margin-top:16px"><div class="panel-title" style="color:var(--acc)">BY TEAM \u2014 YEAR OVER YEAR</div><div style="font-size:11px;color:var(--txt2);margin:4px 0 8px">How my number graded on games involving a given team, by season.</div><select class="field" id="mats-hist-team" onchange="matsHistTeam(this.value)" style="width:220px"><option value="">Select a team\u2026</option></select><div id="mats-hist-team-body" style="margin-top:10px"></div></div></div>';
+  h+='<div class="panel" style="margin-top:14px;padding:14px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="panel-title" style="color:var(--acc)">MY MODEL vs CONFERENCE \u2014 ATS</div><select class="field" id="mats-mc-season" onchange="matsHistConf(this.value)" style="width:150px"></select></div><div style="font-size:11px;color:var(--txt2);margin-top:4px">How my number graded on games against each conference.</div><div id="mats-mc-body" style="margin-top:10px;overflow-x:auto"></div></div>';
+  box.innerHTML=h;
+  var mcs=document.getElementById('mats-mc-season');
+  if(mcs){['ALL'].concat(ov.map(function(r){return r.season;})).forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=(s==='ALL'?'All seasons':s);mcs.appendChild(o);});mcs.value=_matsMCSeason;}
+  matsHistConf(_matsMCSeason);
+  var sel=document.getElementById('mats-hist-team');
+  sb.from('model_history').select('team_id,team').not('team_id','is',null).order('team',{ascending:true}).then(function(tr){
+   var seen={};if(!sel)return;(tr.data||[]).forEach(function(x){if(x.team_id!=null&&!seen[x.team_id]){seen[x.team_id]=1;var o=document.createElement('option');o.value=x.team_id;o.textContent=x.team;sel.appendChild(o);}});
+   if(_matsHistTeamId){sel.value=_matsHistTeamId;matsHistTeam(_matsHistTeamId);}
+  });
+ });
+}
+function matsHistTeam(id){_matsHistTeamId=id;var box=document.getElementById('mats-hist-team-body');if(!box)return;if(!id){box.innerHTML='';return;}
+ box.innerHTML='<div class="muted" style="font-size:12px">Loading\u2026</div>';
+ sb.from('model_history').select('*').eq('team_id',id).order('season',{ascending:false}).then(function(res){
+  var rows=res.data||[];
+  if(!rows.length){box.innerHTML='<div class="muted" style="font-size:12px;padding:8px">No graded plays on this team yet.</div>';return;}
+  var h='<div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>SEASON</th><th style="text-align:center">PLAYS</th><th style="text-align:center">ATS REC</th><th style="text-align:center">COVER%</th><th style="text-align:center">CLV%</th><th style="text-align:center">ROI</th></tr></thead><tbody>';
+  rows.forEach(function(r){var rec=r.w+'-'+r.l+(r.p?'-'+r.p:'');var roicol=r.roi>0?'var(--grn2)':(r.roi<0?'var(--red2)':'var(--txt1)');h+='<tr><td class="bold">'+r.season+'</td><td style="text-align:center">'+r.plays+'</td><td style="text-align:center;font-weight:700">'+rec+'</td><td style="text-align:center;font-weight:800;color:'+_mhCol(r.cover_pct)+'">'+r.cover_pct.toFixed(0)+'%</td><td style="text-align:center;color:'+_mhCol(r.clv_pct,55)+'">'+r.clv_pct.toFixed(0)+'%</td><td style="text-align:center;font-weight:700;color:'+roicol+'">'+(r.roi>0?'+':'')+r.roi+'%</td></tr>';});
+  h+='</tbody></table></div>';box.innerHTML=h;
+ });
+}
+function matsHistConf(season){_matsMCSeason=season;var box=document.getElementById('mats-mc-body');if(!box)return;box.innerHTML='<div class="muted" style="font-size:12px">Loading\u2026</div>';
+ sb.from('model_vs_conf').select('*').eq('season',season).then(function(res){
+  var rows=(res.data||[]).slice().sort(function(a,b){var pa=(a.w+a.l)?a.w/(a.w+a.l):0,pb=(b.w+b.l)?b.w/(b.w+b.l):0;return pb-pa;});
+  if(!rows.length){box.innerHTML='<div class="muted" style="font-size:12px">No plays vs conferences in this span.</div>';return;}
+  var h='<table class="data" style="font-size:11px"><thead><tr><th>CONFERENCE</th><th style="text-align:center">ATS REC</th><th style="text-align:center">COVER%</th><th style="text-align:center">CLV%</th></tr></thead><tbody>';
+  rows.forEach(function(r){var d=r.w+r.l;var p=d?Math.round(1000*r.w/d)/10:null;h+='<tr><td class="bold">'+r.conf+'</td><td style="text-align:center">'+r.w+'-'+r.l+(r.p?'-'+r.p:'')+'</td><td style="text-align:center;font-weight:800;color:'+_mhCol(p)+'">'+(p==null?'--':p.toFixed(0)+'%')+'</td><td style="text-align:center;color:'+_mhCol(r.clv_pct,55)+'">'+(r.clv_pct!=null?r.clv_pct.toFixed(0)+'%':'--')+'</td></tr>';});
+  h+='</tbody></table>';box.innerHTML=h;
+ });
+}
 function matsRender(){
   if(!_matsBuilt)return;
+  var _msea=document.getElementById('mats-season'),_mhis=document.getElementById('mats-hist');
+  if(_matsView==='hist'){if(_msea)_msea.style.display='none';if(_mhis){_mhis.style.display='';matsRenderHist(_mhis);}return;}
+  if(_msea)_msea.style.display='';if(_mhis)_mhis.style.display='none';
   var confVal=document.getElementById('mats-conf').value;
   var favdog=document.getElementById('mats-favdog').value;
   var clvGradeAt=(document.getElementById('mats-clv-gradeat')||{}).value||'close';
