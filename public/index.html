@@ -480,8 +480,10 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   <button class="nav-btn" onclick="showPage('ratings',this)">POWER RATINGS</button>
   <button class="nav-btn" onclick="showPage('spreads',this)">GAME SPREADS</button>
   <button class="nav-btn" onclick="showPage('travel',this)">TRAVEL</button>
+  <button class="nav-btn" onclick="showPage('modelats',this)">MODEL ATS</button>
   <button class="nav-btn" onclick="showPage('teamprofile',this)">TEAM PROFILES</button>
   <button class="nav-btn" onclick="showPage('players',this)">PLAYER STATS</button>
+  <button class="nav-btn" onclick="showPage('specials',this)">PLAYER SPECIALS</button>
   <button class="nav-btn" onclick="showPage('markets',this)">PLAYER MARKETS</button>
   <button class="nav-btn" onclick="showPage('confwins',this)">CONF WINS</button>
   <button class="nav-btn" onclick="showPage('mte',this)">MTEs</button>
@@ -491,7 +493,6 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   <button class="nav-btn" onclick="showPage('powerindex',this)">POWER INDEX</button>
   <button class="nav-btn" onclick="showPage('marketodds',this)">MARKET ODDS</button>
   <button class="nav-btn" onclick="showPage('plays',this)">TEAM PLAYS</button>
-  <button class="nav-btn" onclick="showPage('specials',this)">PLAYER SPECIALS</button>
   <button class="nav-btn" id="nav-prupdate" onclick="showPage('prupdate',this)" style="display:none">PR UPDATE</button>
   <button class="nav-btn" id="nav-rosterload" onclick="showPage('rosterload',this)" style="display:none">ROSTER LOADER</button>
   <button class="nav-btn" id="nav-statsupload" onclick="showPage('statsupload',this)" style="display:none">STATS UPLOAD</button>
@@ -909,6 +910,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   <div id="players-controls" style="margin-bottom:12px"></div>
   <div id="players-board"></div>
 </div>
+<div id="page-modelats" style="display:none"></div>
 <div id="page-plays" style="display:none">
   <div id="plays-leaderboard" style="margin-bottom:14px"></div>
   <div class="search-bar" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
@@ -1040,7 +1042,7 @@ function goToTeam(teamId){if(teamId==null)return;document.querySelectorAll('[id^
 function goToTeamByName(name){if(!name)return;var key=String(name).toLowerCase().trim();var id=TEAM_ID_BY_NAME[key];if(id!=null){goToTeam(id);return;}sb.from('teams').select('id,team').ilike('team',name).limit(1).then(function(res){if(res.data&&res.data.length){TEAM_ID_BY_NAME[key]=res.data[0].id;goToTeam(res.data[0].id);}});}
 document.addEventListener('click',function(e){var el=e.target&&e.target.closest?e.target.closest('.team-link[data-team-name]'):null;if(el){e.preventDefault();goToTeamByName(el.getAttribute('data-team-name'));}});
 sb.from('teams').select('id,team').range(0,9999).then(function(res){registerTeamNames(res.data);});
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -2743,8 +2745,8 @@ function playsCLV(r){var o=parseFloat(r.our_number),m=parseFloat(r.market_number
 function playsSetClose(id,val){var v=parseFloat(val);sb.from('plays').update({closing_number:isNaN(v)?null:v}).eq('id',id).then(function(){var row=_playsData.filter(function(r){return r.id===id;})[0];if(row)row.closing_number=isNaN(v)?null:v;playsRender();});}
 function playsSetOpen(id,val){var v=parseFloat(val);sb.from('plays').update({opening_number:isNaN(v)?null:v}).eq('id',id).then(function(){var row=_playsData.filter(function(r){return r.id===id;})[0];if(row)row.opening_number=isNaN(v)?null:v;playsRender();});}
 async function playsAutoGrade(){var st=document.getElementById('plays-ag-status');function say(t){if(st)st.textContent=t;}function nrm(s){return String(s||'').toLowerCase().replace(/[-+]?[0-9.]+/g,'').replace(/[^a-z]/g,'');}var cand=_playsData.filter(function(r){var bt=String(r.bet_type||'').toLowerCase();return r.game_id&&r.our_number!=null&&r.market_number!=null&&bt.indexOf('total')<0&&bt.indexOf('over')<0&&bt.indexOf('under')<0&&bt.indexOf('ml')<0&&bt.indexOf('money')<0&&bt.indexOf('prop')<0;});if(!cand.length){say('No gradable spread plays (need game link + OUR# + BOL#).');return;}say('Grading '+cand.length+'\u2026');var ids=Array.from(new Set(cand.map(function(r){return r.game_id;})));var res=await sb.from('games').select('id,home_score,away_score,home:home_team_id(team),away:away_team_id(team)').in('id',ids);var G={};(res.data||[]).forEach(function(g){G[g.id]=g;});var graded=0,noscore=0,nomatch=0,flat=0;for(var i=0;i<cand.length;i++){var r=cand[i];var g=G[r.game_id];if(!g||g.home_score==null||g.away_score==null){noscore++;continue;}var sn=nrm(r.side);if(!sn){nomatch++;continue;}var hn=nrm(g.home?g.home.team:''),an=nrm(g.away?g.away.team:'');var team=null;if(hn&&sn.indexOf(hn)>=0)team='H';else if(an&&sn.indexOf(an)>=0)team='A';if(!team){nomatch++;continue;}var margin=team==='H'?(g.home_score-g.away_score):(g.away_score-g.home_score);var O=parseFloat(r.our_number),B=parseFloat(r.market_number);if(isNaN(O)||isNaN(B)){nomatch++;continue;}if(O===B){flat++;continue;}var v=(O<B)?(margin+B):(-(margin+B));var result=v>0?'W':(v<0?'L':'P');await sb.from('plays').update({result:result}).eq('id',r.id);var row=_playsData.filter(function(x){return x.id===r.id;})[0];if(row)row.result=result;graded++;}say('Graded '+graded+(flat?' \u00b7 '+flat+' flat (our#=BOL#, no edge)':'')+(noscore?' \u00b7 '+noscore+' awaiting final':'')+(nomatch?' \u00b7 '+nomatch+' side didn\u2019t match a team':''));playsRender();}
-function playsMoveStats(r){var o=parseFloat(r.our_number),op=parseFloat(r.opening_number),c=parseFloat(r.closing_number);if(isNaN(o)||isNaN(op)||isNaN(c))return null;var d0=Math.abs(op-o),d1=Math.abs(c-o);var mv=d0-d1;var dir=mv>0.01?'T':(mv<-0.01?'A':'F');var b;if(d0<1)b='0\u20130.5';else if(d0<=2)b='1\u20132';else if(d0<=3)b='2.5\u20133';else if(d0<=5)b='3.5\u20135';else b='5.5+';return{dir:dir,bucket:b,mv:mv,dist:d0};}
-function playsLineReport(rows){var tracked=[];rows.forEach(function(r){var m=playsMoveStats(r);if(m)tracked.push({r:r,m:m});});if(!tracked.length)return '<div class="panel" style="margin-top:14px"><div class="panel-hdr"><div class="panel-title">LINE MOVEMENT REPORT</div></div><div style="padding:14px;font-size:11px;color:var(--txt3)">Enter OPEN and CLOSE numbers on plays to build this report \u2014 it grades where your numbers land vs the opener, which lines moved toward or away from you, and where you win most.</div></div>';function agg(list){var w=0,l=0,p=0,mv=0;list.forEach(function(x){if(x.r.result==='W')w++;else if(x.r.result==='L')l++;else if(x.r.result==='P')p++;mv+=x.m.mv;});var dec=w+l;return{n:list.length,w:w,l:l,p:p,pct:dec?w/dec*100:null,avgmv:list.length?mv/list.length:0};}function rec(a){return a.w+'-'+a.l+(a.p?'-'+a.p:'');}function pcts(a){return a.pct!=null?a.pct.toFixed(0)+'%':'--';}var tw=agg(tracked.filter(function(x){return x.m.dir==='T';})),aw=agg(tracked.filter(function(x){return x.m.dir==='A';})),fl=agg(tracked.filter(function(x){return x.m.dir==='F';}));var h='<div class="panel" style="margin-top:14px"><div class="panel-hdr"><div class="panel-title">LINE MOVEMENT REPORT <span style="font-weight:400;color:var(--txt3);font-size:10px">open \u2192 close vs our number \u00b7 '+tracked.length+' tracked</span></div></div><div style="padding:12px 14px">';h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'+playsStat('MOVED TOWARD US',tw.n+' ('+rec(tw)+', '+pcts(tw)+')','var(--grn2)')+playsStat('MOVED AWAY',aw.n+' ('+rec(aw)+', '+pcts(aw)+')','var(--red2)')+playsStat('FLAT',fl.n+' ('+rec(fl)+')','var(--txt1)')+playsStat('AVG MOVE TOWARD US',((tracked.reduce(function(s,x){return s+x.m.mv;},0)/tracked.length)>=0?'+':'')+(tracked.reduce(function(s,x){return s+x.m.mv;},0)/tracked.length).toFixed(2)+' pts','var(--txt1)')+'</div>';var buckets=['0\u20130.5','1\u20132','2.5\u20133','3.5\u20135','5.5+'];h+='<div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>VS OPENER</th><th>N</th><th>REC</th><th>WIN%</th><th>AVG MOVE</th><th>TOWARD N</th><th>TOWARD REC</th><th>AWAY N</th><th>AWAY REC</th></tr></thead><tbody>';buckets.forEach(function(b){var list=tracked.filter(function(x){return x.m.bucket===b;});if(!list.length){h+='<tr><td class="bold">'+b+' pts</td><td class="muted" colspan="8">no plays</td></tr>';return;}var a=agg(list);var t=agg(list.filter(function(x){return x.m.dir==='T';}));var aa=agg(list.filter(function(x){return x.m.dir==='A';}));h+='<tr><td class="bold">'+b+' pts</td><td>'+a.n+'</td><td>'+rec(a)+'</td><td style="font-weight:700;color:'+(a.pct!=null&&a.pct>=52.4?'var(--grn2)':(a.pct!=null&&a.pct<50?'var(--red2)':'var(--txt1)'))+'">'+pcts(a)+'</td><td style="color:'+(a.avgmv>0?'var(--grn2)':(a.avgmv<0?'var(--red2)':'var(--txt3)'))+'">'+(a.avgmv>=0?'+':'')+a.avgmv.toFixed(2)+'</td><td>'+t.n+'</td><td>'+(t.n?rec(t)+' ('+pcts(t)+')':'--')+'</td><td>'+aa.n+'</td><td>'+(aa.n?rec(aa)+' ('+pcts(aa)+')':'--')+'</td></tr>';});h+='</tbody></table></div><div style="font-size:9px;color:var(--txt3);font-style:italic;margin-top:8px">VS OPENER = how far our posted number sat from the market opener. TOWARD = the close landed nearer our number than the opener did (we beat the move); AWAY = the market closed further from us. AVG MOVE = points the close moved toward (+) or away (\u2212) from our number.</div></div></div>';return h;}
+function playsMoveStats(r){var o=parseFloat(r.our_number),op=parseFloat(r.opening_number),c=parseFloat(r.closing_number);if(isNaN(o)||isNaN(op)||isNaN(c))return null;var d0=Math.abs(op-o),d1=Math.abs(c-o);var mv=d0-d1;var dir=mv>0.01?'T':(mv<-0.01?'A':'F');var b;if(d0<=1.5)b='0\u20131.5';else if(d0<=3)b='2\u20133';else if(d0<=5)b='3.5\u20135';else b='5.5+';return{dir:dir,bucket:b,mv:mv,dist:d0};}
+function playsLineReport(rows){var tracked=[];rows.forEach(function(r){var m=playsMoveStats(r);if(m)tracked.push({r:r,m:m});});if(!tracked.length)return '<div class="panel" style="margin-top:14px"><div class="panel-hdr"><div class="panel-title">LINE MOVEMENT REPORT</div></div><div style="padding:14px;font-size:11px;color:var(--txt3)">Enter OPEN and CLOSE numbers on plays to build this report \u2014 it grades where your numbers land vs the opener, which lines moved toward or away from you, and where you win most.</div></div>';function agg(list){var w=0,l=0,p=0,mv=0;list.forEach(function(x){if(x.r.result==='W')w++;else if(x.r.result==='L')l++;else if(x.r.result==='P')p++;mv+=x.m.mv;});var dec=w+l;return{n:list.length,w:w,l:l,p:p,pct:dec?w/dec*100:null,avgmv:list.length?mv/list.length:0};}function rec(a){return a.w+'-'+a.l+(a.p?'-'+a.p:'');}function pcts(a){return a.pct!=null?a.pct.toFixed(0)+'%':'--';}var tw=agg(tracked.filter(function(x){return x.m.dir==='T';})),aw=agg(tracked.filter(function(x){return x.m.dir==='A';})),fl=agg(tracked.filter(function(x){return x.m.dir==='F';}));var h='<div class="panel" style="margin-top:14px"><div class="panel-hdr"><div class="panel-title">LINE MOVEMENT REPORT <span style="font-weight:400;color:var(--txt3);font-size:10px">open \u2192 close vs our number \u00b7 '+tracked.length+' tracked</span></div></div><div style="padding:12px 14px">';h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'+playsStat('MOVED TOWARD US',tw.n+' ('+rec(tw)+', '+pcts(tw)+')','var(--grn2)')+playsStat('MOVED AWAY',aw.n+' ('+rec(aw)+', '+pcts(aw)+')','var(--red2)')+playsStat('FLAT',fl.n+' ('+rec(fl)+')','var(--txt1)')+playsStat('AVG MOVE TOWARD US',((tracked.reduce(function(s,x){return s+x.m.mv;},0)/tracked.length)>=0?'+':'')+(tracked.reduce(function(s,x){return s+x.m.mv;},0)/tracked.length).toFixed(2)+' pts','var(--txt1)')+'</div>';var buckets=['0\u20131.5','2\u20133','3.5\u20135','5.5+'];h+='<div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>VS OPENER</th><th>N</th><th>REC</th><th>WIN%</th><th>AVG MOVE</th><th>TOWARD N</th><th>TOWARD REC</th><th>AWAY N</th><th>AWAY REC</th></tr></thead><tbody>';buckets.forEach(function(b){var list=tracked.filter(function(x){return x.m.bucket===b;});if(!list.length){h+='<tr><td class="bold">'+b+' pts</td><td class="muted" colspan="8">no plays</td></tr>';return;}var a=agg(list);var t=agg(list.filter(function(x){return x.m.dir==='T';}));var aa=agg(list.filter(function(x){return x.m.dir==='A';}));h+='<tr><td class="bold">'+b+' pts</td><td>'+a.n+'</td><td>'+rec(a)+'</td><td style="font-weight:700;color:'+(a.pct!=null&&a.pct>=52.4?'var(--grn2)':(a.pct!=null&&a.pct<50?'var(--red2)':'var(--txt1)'))+'">'+pcts(a)+'</td><td style="color:'+(a.avgmv>0?'var(--grn2)':(a.avgmv<0?'var(--red2)':'var(--txt3)'))+'">'+(a.avgmv>=0?'+':'')+a.avgmv.toFixed(2)+'</td><td>'+t.n+'</td><td>'+(t.n?rec(t)+' ('+pcts(t)+')':'--')+'</td><td>'+aa.n+'</td><td>'+(aa.n?rec(aa)+' ('+pcts(aa)+')':'--')+'</td></tr>';});h+='</tbody></table></div><div style="font-size:9px;color:var(--txt3);font-style:italic;margin-top:8px">VS OPENER = how far our posted number sat from the market opener. TOWARD = the close landed nearer our number than the opener did (we beat the move); AWAY = the market closed further from us. AVG MOVE = points the close moved toward (+) or away (\u2212) from our number.</div></div></div>';return h;}
 function playsRender(){
   var person=document.getElementById('plays-person').value;
   document.getElementById('plays-range-label').textContent=playsRangeLabel();
@@ -4208,6 +4210,363 @@ function tpRenderValidation(){
   h+='</div>';
   box.innerHTML=h;
 }
+
+/* ===== MODEL ATS TAB (v4) ================================================
+   Grades MY number vs the ACTUAL result on every game (separate from Team Plays).
+   Basis (all home-margin, + = home favored, matches calcSpread):
+     model_spread   = my number, frozen at first pull  (graded against reality)
+     opening_spread = -(BOL home point) at first contact
+     closing_spread = -(BOL home point) on the last pull before tip
+   Buckets:  SPREAD RANGE = |my #|   ·   DIFFERENCE = |my # - opener|
+   ATS grade = did my number cover the real result.  Split by market movement
+   (open->close) toward / away, with full spread x difference combo grids.
+   ========================================================================= */
+var _matsGames=[], _matsTeams={}, _matsBuilt=false;
+
+var MATS_REG=[['AAC','American'],['A10','Atlantic 10'],['ACC','ACC'],['BE','Big East'],['BSky','Big Sky'],['B12','Big 12'],['B10','Big Ten'],['BW','Big West'],['CAA','CAA (Coastal)'],['CUSA','Conf USA'],['Hor','Horizon'],['Ivy','Ivy'],['MAAC','MAAC'],['MAC','MAC'],['MVC','MVC'],['MWC','MWC'],['OVC','OVC'],['SBC','Sun Belt'],['SoCon','SoCon'],['SEC','SEC'],['Sum','Summit'],['P12','Pac-12'],['WCC','WCC']];
+var MATS_EXTRA=[['UAC','UAC'],['SL','Southland'],['SWAC','SWAC'],['Pat','Patriot'],['NEC','NEC'],['MEAC','MEAC'],['BSouth','Big South'],['AE','America East'],['ASUN','ASUN']];
+var MATS_BOARDS={
+  '__ALL__':null,
+  '__P5__':['SEC','B10','B12','ACC','BE'],
+  '__P5MM__':['SEC','B10','B12','ACC','BE','MWC','P12','A10','AAC'],
+  '__REG__':MATS_REG.map(function(x){return x[0];}),
+  '__EXTRA__':MATS_EXTRA.map(function(x){return x[0];})
+};
+
+function matsNrm(s){return String(s||'').toLowerCase().replace(/[-+]?[0-9.]+/g,'').replace(/[^a-z]/g,'');}
+
+function matsEdgeBucket(d){if(d<=1.5)return '0\u20131.5';if(d<=3)return '2\u20133';if(d<=5)return '3.5\u20135';return '5.5+';}
+var MATS_EDGE_BUCKETS=['0\u20131.5','2\u20133','3.5\u20135','5.5+'];
+function matsSpreadBucket(a){if(a<=3)return '0\u20133';if(a<=5.5)return '3.5\u20135.5';if(a<=9.5)return '6\u20139.5';if(a<=14.5)return '10\u201314.5';return '15+';}
+var MATS_SPREAD_BUCKETS=['0\u20133','3.5\u20135.5','6\u20139.5','10\u201314.5','15+'];
+
+/* grade MY number against the actual result. fav = my side is the market (open) favorite */
+function matsGradeSelf(g){
+  var M=g.model_spread; if(M==null||g.status!=='final'||g.home_score==null||g.away_score==null)return null;
+  M=parseFloat(M); if(isNaN(M))return null;
+  var hm=g.home_score-g.away_score;                  // actual home margin
+  var cv=M>=0?(hm-M):(M-hm);                          // did my favored side cover MY number
+  var res=cv>0?'W':(cv<0?'L':'P');
+  var fav=null;
+  if(g.opening_spread!=null){var op=parseFloat(g.opening_spread); if(!isNaN(op)&&op!==0){var mySide=M>=0?'H':'A', mktFav=op>0?'H':'A'; fav=(mySide===mktFav);}}
+  return {res:res,fav:fav};
+}
+
+/* CLV grade: my number only picks the SIDE, the market line is what it's graded at */
+function matsGradeAt(g,lineHome){
+  var M=g.model_spread; if(M==null||lineHome==null)return null;
+  M=parseFloat(M); lineHome=parseFloat(lineHome); if(isNaN(M)||isNaN(lineHome))return null;
+  if(g.status!=='final'||g.home_score==null||g.away_score==null)return null;
+  if(M===lineHome)return null;                        // flat = no edge vs the market, skip
+  var side=M>lineHome?'H':'A';
+  var am=g.home_score-g.away_score;
+  var v=side==='H'?(am-lineHome):(lineHome-am);
+  return {res:v>0?'W':(v<0?'L':'P')};
+}
+
+/* classify open->close movement relative to my number: T=toward, A=away, NO=no move; mv=+toward */
+function matsMove(g){
+  if(g.model_spread==null||g.opening_spread==null||g.closing_spread==null)return null;
+  var M=parseFloat(g.model_spread),o=parseFloat(g.opening_spread),c=parseFloat(g.closing_spread);
+  if(isNaN(M)||isNaN(o)||isNaN(c))return null;
+  var d0=Math.abs(o-M),d1=Math.abs(c-M),mv=d0-d1,dir;
+  if(Math.abs(c-o)<0.01)dir='NO';
+  else if(mv>0.01)dir='T';
+  else if(mv<-0.01)dir='A';
+  else dir='NO';
+  return {dir:dir,mv:mv};
+}
+
+/* my side vs the market opener (fav = I'm on the market favorite), independent of final */
+function matsFav(g){
+  if(g.model_spread==null||g.opening_spread==null)return null;
+  var M=parseFloat(g.model_spread),op=parseFloat(g.opening_spread);
+  if(isNaN(M)||isNaN(op)||op===0)return null;
+  return (M>=0?'H':'A')===(op>0?'H':'A');
+}
+function matsDateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+function matsAgg(){return {n:0,w:0,l:0,p:0};}
+function matsAdd(o,res){o.n++;if(res==='W')o.w++;else if(res==='L')o.l++;else if(res==='P')o.p++;}
+function matsSum(list){var o=matsAgg();list.forEach(function(x){o.n+=x.n;o.w+=x.w;o.l+=x.l;o.p+=x.p;});return o;}
+function matsRec(o){return o.w+'-'+o.l+(o.p?'-'+o.p:'');}
+function matsPct(o){var d=o.w+o.l;return d?(o.w/d*100):null;}
+function matsPctStr(o){var p=matsPct(o);return p==null?'--':p.toFixed(0)+'%';}
+function matsPctColor(o){var p=matsPct(o);if(p==null)return 'var(--txt3)';return p>=52.4?'var(--grn2)':(p<50?'var(--red2)':'var(--txt1)');}
+function matsCell(o,minN){if(!o.n)return '<td class="muted" style="text-align:center">\u2014</td>';
+  if(o.n<minN)return '<td style="text-align:center;color:var(--txt3)"><span style="font-size:10px">'+matsRec(o)+'</span><div style="font-size:8px;color:var(--txt3)">n='+o.n+'</div></td>';
+  return '<td style="text-align:center"><span style="font-weight:800;color:'+matsPctColor(o)+'">'+matsPctStr(o)+'</span><div style="font-size:9px;color:var(--txt3)">'+matsRec(o)+'</div></td>';}
+
+function loadModelATS(){
+  sb.from('teams').select('id,team,conference,pr,hc').range(0,4999).then(function(tres){
+    _matsTeams={}; (tres.data||[]).forEach(function(t){_matsTeams[t.id]=t;});
+    sb.from('games').select('id,game_date,status,neutral_site,home_score,away_score,home_team_id,away_team_id,model_spread,opening_spread,closing_spread').range(0,99999).then(function(gres){
+      _matsGames=gres.data||[];
+      if(!_matsBuilt){matsBuildShell();_matsBuilt=true;}
+      matsRender();
+    });
+  });
+}
+
+function matsBuildShell(){
+  var reg=MATS_REG.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>';}).join('');
+  var extra=MATS_EXTRA.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>';}).join('');
+  var confSelect='<select id="mats-conf" class="field" style="max-width:200px" onchange="matsRender()">'+
+    '<optgroup label="Boards"><option value="__ALL__">All conferences</option><option value="__P5__">Power 5 only</option><option value="__P5MM__">P5 + MM</option><option value="__REG__">Regular Board</option><option value="__EXTRA__">Extra Board</option></optgroup>'+
+    '<optgroup label="Regular Board \u2014 single conf">'+reg+'</optgroup>'+
+    '<optgroup label="Extra Board \u2014 single conf">'+extra+'</optgroup>'+
+    '</select>';
+  var puller=isAdmin?('<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--bg1);border:1px solid var(--bdr);border-radius:8px">'+
+    '<button class="btn primary" style="font-size:10px;padding:6px 14px" onclick="matsPullBOL()">PULL BOL SPREADS</button>'+
+    '<span id="mats-pull-status" style="font-size:10px;color:var(--txt3)">First pull on a game freezes my number + stores the opener; every later pull overwrites the closer. Run one final pull near tip for a true closing line.</span>'+
+    '</div>'):'';
+  var filters='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">'+
+    '<div><div class="pl-lbl">CONFERENCE / BOARD</div>'+confSelect+'</div>'+
+    '<div><div class="pl-lbl">MY SIDE vs MARKET</div><select id="mats-favdog" class="field" style="max-width:150px" onchange="matsRender()"><option value="all">All</option><option value="fav">I\u2019m on the fav</option><option value="dog">I\u2019m on the dog</option></select></div>'+
+    '<div><div class="pl-lbl">MIN N / CELL</div><input type="number" id="mats-minn" class="field" value="10" min="0" step="1" style="max-width:90px" onchange="matsRender()"></div>'+
+    '<div><div class="pl-lbl">FLAG \u2265 %</div><input type="number" id="mats-flag" class="field" value="55" min="50" max="100" step="1" style="max-width:80px" onchange="matsRender()"></div>'+
+    '</div>';
+  document.getElementById('page-modelats').innerHTML=
+    '<div class="panel" style="padding:14px">'+
+    '<div class="panel-hdr" style="padding:0;margin-bottom:12px"><div class="panel-title"><div class="panel-title-dot"></div>MODEL ATS <span style="font-weight:400;color:var(--txt3);font-size:10px">\u00b7 my number graded vs the actual result, every game</span></div></div>'+
+    puller+filters+
+    '<div id="mats-summary"></div>'+
+    '<div id="mats-flags"></div>'+
+    '<div style="font-size:11px;color:var(--txt2);font-weight:700;letter-spacing:1px;margin-top:14px">ALL GAMES \u2014 SPREAD RANGE (my #) \u00d7 OPENING DIFFERENCE (|my # \u2212 open|)</div>'+
+    '<div id="mats-crosstab" style="margin-top:6px"></div>'+
+    '<div id="mats-movement" style="margin-top:14px"></div>'+
+    '<div style="border-top:2px solid var(--bdr2);margin-top:20px;padding-top:14px">'+
+    '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px">'+
+    '<div style="font-size:11px;color:var(--txt2);font-weight:700;letter-spacing:1px">vs MARKET LINE \u2014 MY SIDE GRADED AT THE OPENER / CLOSER (beat-the-number \u00b7 CLV)</div>'+
+    '<div><span class="pl-lbl" style="display:inline;margin-right:4px">GRADE AT</span><select id="mats-clv-gradeat" class="field" style="max-width:120px;display:inline-block" onchange="matsRender()"><option value="close">Closer</option><option value="opener">Opener</option></select></div>'+
+    '</div>'+
+    '<div id="mats-clv"></div>'+
+    '</div>'+
+    '<div style="font-size:9px;color:var(--txt3);font-style:italic;margin-top:10px">ATS = did my number cover the real result (my \u22128 needs a 9+ win; exactly 8 is a push). SPREAD RANGE is the range my own number falls in; DIFFERENCE is how far my number sat from the opener. Cells under MIN N are muted. Team Plays stays your tracked picks.</div>'+
+    '</div>';
+}
+
+function matsChip(label,val,color){return '<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:8px 14px;min-width:110px"><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;font-weight:700">'+label+'</div><div style="font-size:16px;font-weight:800;color:'+(color||'var(--txt1)')+';margin-top:2px">'+val+'</div></div>';}
+
+/* render a spread x difference grid with OVERALL row + column */
+function matsGridTable(G,minN){
+  var h='<div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>SPREAD \\ DIFF</th>';
+  MATS_EDGE_BUCKETS.forEach(function(d){h+='<th style="text-align:center">'+d+'</th>';});
+  h+='<th style="text-align:center;color:var(--acc)">OVERALL</th></tr></thead><tbody>';
+  MATS_SPREAD_BUCKETS.forEach(function(s){
+    h+='<tr><td class="bold">'+s+'</td>';
+    MATS_EDGE_BUCKETS.forEach(function(d){h+=matsCell(G[s][d],minN);});
+    var rt=matsSum(MATS_EDGE_BUCKETS.map(function(d){return G[s][d];}));
+    h+=matsCell(rt,minN).replace('<td','<td style="background:var(--bg2)"')+'</tr>';
+  });
+  h+='<tr style="border-top:2px solid var(--bdr2)"><td class="bold" style="color:var(--acc)">OVERALL</td>';
+  MATS_EDGE_BUCKETS.forEach(function(d){h+=matsCell(matsSum(MATS_SPREAD_BUCKETS.map(function(s){return G[s][d];})),minN).replace('<td','<td style="background:var(--bg2)"');});
+  var grand=matsSum(MATS_SPREAD_BUCKETS.reduce(function(a,s){return a.concat(MATS_EDGE_BUCKETS.map(function(d){return G[s][d];}));},[]));
+  h+=matsCell(grand,minN).replace('<td','<td style="background:var(--bg3);font-weight:800"');
+  h+='</tr></tbody></table></div>';
+  return h;
+}
+
+/* toward/away split across one set of buckets */
+function matsSplitTable(title,buckets,dataT,dataA,minN){
+  var ovT=matsSum(buckets.map(function(b){return dataT[b];})), ovA=matsSum(buckets.map(function(b){return dataA[b];}));
+  var h='<div class="panel" style="padding:12px 14px;margin-top:12px"><div class="panel-title" style="margin-bottom:8px">'+title+'</div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>MOVEMENT</th>';
+  buckets.forEach(function(b){h+='<th style="text-align:center">'+b+'</th>';});
+  h+='<th style="text-align:center;color:var(--acc)">OVERALL</th></tr></thead><tbody>';
+  h+='<tr><td class="bold" style="color:var(--grn2)">MOVED TOWARD</td>';
+  buckets.forEach(function(b){h+=matsCell(dataT[b],minN);});
+  h+=matsCell(ovT,minN).replace('<td','<td style="background:var(--bg2)"')+'</tr>';
+  h+='<tr><td class="bold" style="color:var(--red2)">MOVED AWAY</td>';
+  buckets.forEach(function(b){h+=matsCell(dataA[b],minN);});
+  h+=matsCell(ovA,minN).replace('<td','<td style="background:var(--bg2)"')+'</tr>';
+  h+='</tbody></table></div></div>';
+  return h;
+}
+
+function matsNewGrid(){var G={};MATS_SPREAD_BUCKETS.forEach(function(s){G[s]={};MATS_EDGE_BUCKETS.forEach(function(d){G[s][d]=matsAgg();});});return G;}
+
+function matsRender(){
+  if(!_matsBuilt)return;
+  var confVal=document.getElementById('mats-conf').value;
+  var favdog=document.getElementById('mats-favdog').value;
+  var clvGradeAt=(document.getElementById('mats-clv-gradeat')||{}).value||'close';
+  var minN=parseInt(document.getElementById('mats-minn').value,10); if(isNaN(minN))minN=0;
+  var flagPct=parseFloat((document.getElementById('mats-flag')||{}).value); if(isNaN(flagPct))flagPct=55;
+  var confSet=(confVal in MATS_BOARDS)?MATS_BOARDS[confVal]:[confVal];
+  function confOk(g){if(!confSet)return true;var h=_matsTeams[g.home_team_id],a=_matsTeams[g.away_team_id];return (h&&confSet.indexOf(h.conference)>=0)||(a&&confSet.indexOf(a.conference)>=0);}
+
+  var pending=0,captured=0,diffSum=0,diffN=0,overall=matsAgg();
+  var grid=matsNewGrid(), comboT=matsNewGrid(), comboA=matsNewGrid();
+  var mdT={},mdA={},msT={},msA={};
+  MATS_EDGE_BUCKETS.forEach(function(d){mdT[d]=matsAgg();mdA[d]=matsAgg();});
+  MATS_SPREAD_BUCKETS.forEach(function(s){msT[s]=matsAgg();msA[s]=matsAgg();});
+  var ovClvOpen=matsAgg(),ovClvClose=matsAgg(),clvGrid=matsNewGrid();
+  var mmTot=0,mmHit=0,clvTot=0,clvSum=0,clvToward=0;
+
+  _matsGames.forEach(function(g){
+    if(g.model_spread==null)return;
+    if(!confOk(g))return;
+    var fav=matsFav(g);
+    if(favdog==='fav'&&fav!==true)return;
+    if(favdog==='dog'&&fav!==false)return;
+    // opener-based metrics (any status)
+    if(g.opening_spread!=null){
+      captured++;
+      var mmd=Math.abs(parseFloat(g.model_spread)-parseFloat(g.opening_spread));
+      mmTot++; if(mmd<=2)mmHit++;
+      if(g.closing_spread!=null){var mvi=matsMove(g); if(mvi){clvTot++; clvSum+=mvi.mv; if(mvi.dir==='T')clvToward++;}}
+    }
+    // result-graded metrics (final only)
+    if(g.status!=='final'){pending++;return;}
+    var gr=matsGradeSelf(g); if(!gr)return;
+    matsAdd(overall,gr.res);
+    var gO=matsGradeAt(g,g.opening_spread); if(gO)matsAdd(ovClvOpen,gO.res);
+    var gC=matsGradeAt(g,g.closing_spread); if(gC)matsAdd(ovClvClose,gC.res);
+    if(g.opening_spread==null)return;                 // need opener to bucket difference
+    var M=parseFloat(g.model_spread), op=parseFloat(g.opening_spread);
+    var diff=Math.abs(M-op); diffSum+=diff; diffN++;
+    var db=matsEdgeBucket(diff), sb2=matsSpreadBucket(Math.abs(M));
+    matsAdd(grid[sb2][db],gr.res);
+    var clvLine=clvGradeAt==='close'?g.closing_spread:g.opening_spread;
+    var gGrid=matsGradeAt(g,clvLine); if(gGrid)matsAdd(clvGrid[sb2][db],gGrid.res);
+    var mv=matsMove(g);                                // needs a closer too
+    if(mv&&(mv.dir==='T'||mv.dir==='A')){
+      var T=mv.dir==='T';
+      matsAdd((T?comboT:comboA)[sb2][db],gr.res);
+      matsAdd((T?mdT:mdA)[db],gr.res);
+      matsAdd((T?msT:msA)[sb2],gr.res);
+    }
+  });
+
+  var avgDiff=diffN?(diffSum/diffN):null;
+  var avgClv=clvTot?(clvSum/clvTot):null;
+  var clvRate=clvTot?(clvToward/clvTot*100):null;
+  var mmPct=mmTot?(mmHit/mmTot*100):null;
+  document.getElementById('mats-summary').innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+    matsChip('ATS (my #)',matsRec(overall)+' \u00b7 '+matsPctStr(overall),matsPctColor(overall))+
+    matsChip('CLV RATE',clvRate==null?'--':clvRate.toFixed(0)+'% ('+clvToward+'/'+clvTot+')',clvRate==null?'var(--txt1)':(clvRate>=50?'var(--grn2)':'var(--red2)'))+
+    matsChip('AVG CLV',avgClv==null?'--':((avgClv>=0?'+':'')+avgClv.toFixed(2)+' pts'),avgClv==null?'var(--txt1)':(avgClv>0?'var(--grn2)':(avgClv<0?'var(--red2)':'var(--txt1)')))+
+    matsChip('MARKET MAKER',mmPct==null?'--':mmPct.toFixed(0)+'% ('+mmHit+'/'+mmTot+')','var(--txt1)')+
+    matsChip('AVG DIFF',avgDiff==null?'--':avgDiff.toFixed(2)+' pts','var(--txt1)')+
+    matsChip('GRADED',String(overall.n),'var(--txt1)')+
+    matsChip('CAPTURED',String(captured),'var(--txt1)')+
+    matsChip('PENDING',String(pending),'var(--amb2)')+
+    '</div>'+
+    '<div style="font-size:9px;color:var(--txt3);font-style:italic;margin-top:6px">CLV RATE = share of two-pull games whose close moved toward my number \u00b7 AVG CLV = avg points the close moved toward (+) / away (\u2212) \u00b7 MARKET MAKER = share of games whose opener landed within 2 pts of my number \u00b7 AVG DIFF = avg gap between my number and the opener.</div>';
+
+  // ---- angle aggregates (for flagging), derived from the same filtered final games ----
+  var spreadTot={}, diffTot={};
+  MATS_SPREAD_BUCKETS.forEach(function(s){spreadTot[s]=matsSum(MATS_EDGE_BUCKETS.map(function(d){return grid[s][d];}));});
+  MATS_EDGE_BUCKETS.forEach(function(d){diffTot[d]=matsSum(MATS_SPREAD_BUCKETS.map(function(s){return grid[s][d];}));});
+  var moveOvT=matsSum(MATS_EDGE_BUCKETS.map(function(d){return mdT[d];})), moveOvA=matsSum(MATS_EDGE_BUCKETS.map(function(d){return mdA[d];}));
+
+  // ---- flag today's & tomorrow's games sitting in a >= flagPct angle ----
+  var todayStr=matsDateStr(new Date()), tmrStr=matsDateStr(new Date(Date.now()+86400000));
+  var flagged=[];
+  _matsGames.forEach(function(g){
+    if(g.model_spread==null||g.status==='final')return;
+    if(g.game_date!==todayStr&&g.game_date!==tmrStr)return;
+    if(!confOk(g))return;
+    var fav=matsFav(g); if(favdog==='fav'&&fav!==true)return; if(favdog==='dog'&&fav!==false)return;
+    if(g.opening_spread==null)return;
+    var M=parseFloat(g.model_spread), op=parseFloat(g.opening_spread);
+    var sb=matsSpreadBucket(Math.abs(M)), db=matsEdgeBucket(Math.abs(M-op)), mv=matsMove(g);
+    var angles=[];
+    function tryA(name,agg){if(agg&&agg.n>=minN){var p=matsPct(agg); if(p!=null&&p>=flagPct)angles.push({name:name,pct:p,agg:agg});}}
+    tryA('Spread '+sb,spreadTot[sb]);
+    tryA('Open diff '+db,diffTot[db]);
+    tryA('Spread '+sb+' \u00d7 diff '+db,grid[sb][db]);
+    if(mv&&(mv.dir==='T'||mv.dir==='A')){var T=mv.dir==='T', lbl=T?'Toward':'Away';
+      tryA(lbl+' move',T?moveOvT:moveOvA);
+      tryA(lbl+' \u00d7 spread '+sb,(T?msT:msA)[sb]);
+      tryA(lbl+' \u00d7 diff '+db,(T?mdT:mdA)[db]);
+      tryA(lbl+' \u00d7 '+sb+' \u00d7 '+db,(T?comboT:comboA)[sb][db]);}
+    if(angles.length){angles.sort(function(a,b){return b.pct-a.pct;}); flagged.push({g:g,M:M,mv:mv,angles:angles});}
+  });
+  flagged.sort(function(a,b){return b.angles[0].pct-a.angles[0].pct;});
+  var fh='<div class="panel" style="padding:12px 14px;margin-top:12px;border:1px solid var(--acc)"><div class="panel-title" style="margin-bottom:8px">\u2691 FLAGGED \u2014 TODAY & TOMORROW <span style="font-weight:400;color:var(--txt3);font-size:10px">\u00b7 games sitting in an angle \u2265'+flagPct+'% (min '+minN+' games)</span></div>';
+  if(!flagged.length){fh+='<div style="font-size:11px;color:var(--txt3);padding:4px 2px">No games today or tomorrow clear '+flagPct+'% at the current filters. (Needs upcoming games with a frozen number + opener, and angle cells with enough history.)</div>';}
+  else{fh+='<div style="display:flex;flex-direction:column;gap:8px">';
+    flagged.forEach(function(f){var g=f.g;var home=_matsTeams[g.home_team_id],away=_matsTeams[g.away_team_id];
+      var homeN=home?home.team:('#'+g.home_team_id), awayN=away?away.team:('#'+g.away_team_id);
+      var favN=f.M>0?homeN:(f.M<0?awayN:homeN), mag=Math.abs(Math.round(f.M*2)/2);
+      var myline=f.M===0?'PK':(favN+' -'+mag);
+      var chips=f.angles.slice(0,5).map(function(a){return '<span style="display:inline-block;background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:2px 8px;margin:2px 4px 2px 0;font-size:10px"><b style="color:'+matsPctColor(a.agg)+'">'+a.pct.toFixed(0)+'%</b> <span style="color:var(--txt2)">'+a.name+'</span> <span style="color:var(--txt3)">('+matsRec(a.agg)+')</span></span>';}).join('');
+      fh+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-left:3px solid var(--acc);border-radius:8px;padding:9px 11px">'+
+        '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-size:12px;font-weight:800;color:var(--txt1)">'+awayN+' @ '+homeN+'</span>'+
+        '<span style="font-size:10px;color:var(--txt3)">'+g.game_date+(g.game_date===todayStr?' \u00b7 TODAY':' \u00b7 TMR')+' \u00b7 my #: <b style="color:var(--acc)">'+myline+'</b>'+(f.mv&&f.mv.dir==='T'?' \u00b7 \u2197 toward':(f.mv&&f.mv.dir==='A'?' \u00b7 \u2198 away':''))+'</span></div>'+
+        '<div style="margin-top:5px">'+chips+'</div></div>';});
+    fh+='</div>';}
+  fh+='</div>';
+  document.getElementById('mats-flags').innerHTML=fh;
+
+  document.getElementById('mats-crosstab').innerHTML=matsGridTable(grid,minN);
+
+  document.getElementById('mats-movement').innerHTML=
+    '<div style="font-size:11px;color:var(--txt2);font-weight:700;letter-spacing:1px;margin-top:4px">ATS BY LINE MOVEMENT (open \u2192 close)</div>'+
+    matsSplitTable('BY OPENING DIFFERENCE (|my # \u2212 open|)',MATS_EDGE_BUCKETS,mdT,mdA,minN)+
+    matsSplitTable('BY SPREAD RANGE (my #)',MATS_SPREAD_BUCKETS,msT,msA,minN)+
+    '<div style="font-size:11px;color:var(--txt2);font-weight:700;letter-spacing:1px;margin-top:16px">COMBOS \u2014 SPREAD RANGE \u00d7 OPENING DIFFERENCE</div>'+
+    '<div style="font-size:10px;color:var(--grn2);font-weight:800;letter-spacing:1px;margin-top:8px">MOVED TOWARD MY #</div><div style="margin-top:4px">'+matsGridTable(comboT,minN)+'</div>'+
+    '<div style="font-size:10px;color:var(--red2);font-weight:800;letter-spacing:1px;margin-top:12px">MOVED AWAY FROM MY #</div><div style="margin-top:4px">'+matsGridTable(comboA,minN)+'</div>'+
+    '<div style="font-size:9px;color:var(--txt3);font-style:italic;margin-top:10px">TOWARD = the close landed nearer my number than the opener; AWAY = farther. Same ATS-at-my-number grade as everywhere else, filed by SPREAD RANGE (my #) and OPENING DIFFERENCE. Needs both an opener and a closer, so only games pulled at least twice appear in these; no-move games are excluded.</div>';
+
+  document.getElementById('mats-clv').innerHTML=
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">'+
+    matsChip('vs OPENER',matsRec(ovClvOpen)+' \u00b7 '+matsPctStr(ovClvOpen),matsPctColor(ovClvOpen))+
+    matsChip('vs CLOSER',matsRec(ovClvClose)+' \u00b7 '+matsPctStr(ovClvClose),matsPctColor(ovClvClose))+
+    '</div>'+
+    '<div style="font-size:10px;color:var(--txt3);margin-bottom:4px">Grid graded at the '+(clvGradeAt==='close'?'closer':'opener')+' \u00b7 same SPREAD RANGE (my #) \u00d7 OPENING DIFFERENCE buckets as above</div>'+
+    matsGridTable(clvGrid,minN)+
+    '<div style="font-size:9px;color:var(--txt3);font-style:italic;margin-top:8px">Here my number only picks the SIDE; the market number is what it\u2019s graded at (my \u22128 vs a \u22125 line grades as \u22125). Beat-the-number / CLV view, distinct from the ATS-vs-reality grids above. Flat games (my # = the line) are skipped as no-edge.</div>';
+}
+
+/* ---- BOL spread puller: captures opener + freezes model, then overwrites closer ---- */
+async function matsPullBOL(){
+  var st=document.getElementById('mats-pull-status'); function say(t){if(st)st.textContent=t;}
+  say('Fetching BetOnline spreads\u2026');
+  var url='https://api.the-odds-api.com/v4/sports/basketball_ncaab/odds?apiKey='+ODDS_API_KEY+'&regions=us&markets=spreads&oddsFormat=american&bookmakers=betonlineag';
+  var events;
+  try{var r=await fetch(url); if(!r.ok){say('Odds API error '+r.status+' \u2014 check credits/key.');return;} events=await r.json();}
+  catch(e){say('Network error reaching the odds API.');return;}
+  if(!Array.isArray(events)||!events.length){say('No BOL spreads returned right now.');return;}
+  var tRes=await sb.from('teams').select('id,team,pr,hc'); var teams=tRes.data||[];
+  var byNrm={}; teams.forEach(function(t){byNrm[matsNrm(t.team)]=t.id;});
+  var aRes=await sb.from('team_aliases').select('api_name,team_id').range(0,3999);
+  var byAlias={}; (aRes.data||[]).forEach(function(a){byAlias[matsNrm(a.api_name)]=a.team_id; byAlias[String(a.api_name).toLowerCase().trim()]=a.team_id;});
+  var teamById={}; teams.forEach(function(t){teamById[t.id]=t;});
+  function resolve(name){var raw=String(name||'').toLowerCase().trim(); if(byAlias[raw]!=null)return byAlias[raw]; var n=matsNrm(name); if(byAlias[n]!=null)return byAlias[n]; if(byNrm[n]!=null)return byNrm[n];
+    var hit=null; Object.keys(byNrm).forEach(function(k){if(!hit&&k&&n&&(n.indexOf(k)>=0||k.indexOf(n)>=0))hit=byNrm[k];}); return hit;}
+
+  var opened=0, closed=0, unmatched=0, nogame=0, noline=0;
+  for(var i=0;i<events.length;i++){
+    var ev=events[i];
+    var hid=resolve(ev.home_team), aid=resolve(ev.away_team);
+    if(hid==null||aid==null){unmatched++; continue;}
+    var bk=(ev.bookmakers||[]).filter(function(b){return b.key==='betonlineag';})[0]; if(!bk){noline++; continue;}
+    var mk=(bk.markets||[]).filter(function(m){return m.key==='spreads';})[0]; if(!mk){noline++; continue;}
+    var ho=(mk.outcomes||[]).filter(function(o){return resolve(o.name)===hid;})[0]; if(!ho||ho.point==null){noline++; continue;}
+    var lineHome=-parseFloat(ho.point);
+    var cdate=(ev.commence_time||'').slice(0,10);
+    var gRes=await sb.from('games').select('id,game_date,neutral_site,opening_spread').eq('home_team_id',hid).eq('away_team_id',aid).order('game_date',{ascending:true});
+    var cands=gRes.data||[]; if(!cands.length){nogame++; continue;}
+    var game=cands[0];
+    if(cdate){var best=null,bestd=1e9; cands.forEach(function(c){var dd=Math.abs((new Date(c.game_date)-new Date(cdate))/86400000); if(dd<bestd){bestd=dd;best=c;}}); if(best&&bestd<=3)game=best;}
+    var now=new Date().toISOString();
+    if(game.opening_spread==null){
+      var H=teamById[hid], A=teamById[aid];
+      var model=(H&&A)?calcSpread(H.pr,game.neutral_site?0:H.hc,A.pr,game.neutral_site):null;
+      await sb.from('games').update({opening_spread:lineHome,opening_spread_at:now,model_spread:(model==null?null:Math.round(model*10)/10),model_spread_at:now}).eq('id',game.id);
+      opened++;
+    } else {
+      await sb.from('games').update({closing_spread:lineHome,closing_spread_at:now}).eq('id',game.id);
+      closed++;
+    }
+  }
+  say('Done \u00b7 '+opened+' opened+frozen \u00b7 '+closed+' closes updated'+(unmatched?' \u00b7 '+unmatched+' team unmatched':'')+(nogame?' \u00b7 '+nogame+' no game':'')+(noline?' \u00b7 '+noline+' no BOL line':''));
+  loadModelATS();
+}
+
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
