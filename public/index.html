@@ -4327,6 +4327,25 @@ function matsBuildShell(){
     '<div><div class="pl-lbl">FLAG \u2265 %</div><input type="number" id="mats-flag" class="field" value="55" min="50" max="100" step="1" style="max-width:80px" onchange="matsRender()"></div>'+
     '</div>';
   document.getElementById('page-modelats').innerHTML=
+    '<style>'+
+    '#page-modelats{line-height:1.45;font-variant-numeric:tabular-nums;color:var(--txt1)}'+
+    '#page-modelats .data{border-collapse:collapse;width:100%}'+
+    '#page-modelats .data th{padding:9px 12px !important;letter-spacing:.4px;color:var(--txt2);border-bottom:1px solid var(--bdr2);white-space:nowrap;text-align:center}'+
+    '#page-modelats .data th:first-child{text-align:left}'+
+    '#page-modelats .data td{padding:9px 12px !important;line-height:1.4}'+
+    '#page-modelats .data tbody tr{border-bottom:1px solid var(--bdr)}'+
+    '#page-modelats .data tbody tr:nth-child(even){background:rgba(0,0,0,.022)}'+
+    '#page-modelats [style*="font-size:8px"]{font-size:10px !important}'+
+    '#page-modelats [style*="font-size:9px"]{font-size:11px !important}'+
+    '#page-modelats [style*="font-size:10px"]{font-size:12px !important}'+
+    '#page-modelats [style*="font-size:11px"]{font-size:13px !important}'+
+    '#page-modelats [style*="font-size:12px"]{font-size:14px !important}'+
+    '#page-modelats [style*="font-size:16px"]{font-size:19px !important}'+
+    '#page-modelats [style*="letter-spacing:1px"]{letter-spacing:.4px !important}'+
+    '#page-modelats .pl-lbl{font-size:11px !important;letter-spacing:.4px;color:var(--txt2)}'+
+    '#page-modelats .panel-title{font-size:13px !important;letter-spacing:.4px}'+
+    '#page-modelats .field{font-size:13px !important;padding:6px 8px}'+
+    '</style>'+
     '<div class="panel" style="padding:14px">'+
     '<div class="panel-hdr" style="padding:0;margin-bottom:12px"><div class="panel-title"><div class="panel-title-dot"></div>MODEL ATS <span style="font-weight:400;color:var(--txt3);font-size:10px">\u00b7 my number graded vs the actual result, every game</span></div></div>'+
     puller+filters+
