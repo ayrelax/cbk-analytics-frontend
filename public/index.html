@@ -5245,6 +5245,38 @@ async function matsPullBOL(){
   loadModelATS();
 }
 
+
+/* ============ BROWSER BACK / FORWARD NAV (tab + subtab history) ============ */
+(function(){
+  var _sup=false,_ready=false,_cur='dashboard',_lastT=0;
+  var SUBS=['travelMode','plSetView','pmSetView','mxSetMode','loadSpreads','matsView','spSwitchMode','ncaaShowView','ctShowTab','mteShowEvent','mteShowSubTab','ctChangeConf'];
+  function same(a,b){if(!a||!b)return false;if(a.page!==b.page)return false;var x=a.sub,y=b.sub;if(!x&&!y)return true;if(!x||!y)return false;return x.fn===y.fn&&x.arg===y.arg;}
+  function record(st){
+    var cs=history.state;
+    if(!_ready){history.replaceState(st,'');_ready=true;_lastT=Date.now();return;}
+    if(cs&&cs.cbk&&same(cs,st)){history.replaceState(st,'');_lastT=Date.now();return;}
+    if(Date.now()-_lastT<70){history.replaceState(st,'');_lastT=Date.now();return;}
+    history.pushState(st,'');_lastT=Date.now();
+  }
+  var _oShow=window.showPage;
+  if(typeof _oShow==='function'){
+    window.showPage=function(page,btn){var r=_oShow.apply(this,arguments);_cur=page;
+      if(!_sup){try{record({cbk:1,page:page,sub:null});}catch(e){}}return r;};
+  }
+  SUBS.forEach(function(fn){var o=window[fn];if(typeof o!=='function')return;
+    window[fn]=function(){var r=o.apply(this,arguments);
+      if(!_sup&&_ready){try{record({cbk:1,page:_cur,sub:{fn:fn,arg:arguments[0]}});}catch(e){}}return r;};});
+  function restore(st){_sup=true;
+    try{if(typeof cbkGoToPage==='function')cbkGoToPage(st.page);else if(window.showPage)window.showPage(st.page);}catch(e){}
+    var sub=st.sub;
+    if(sub&&sub.fn&&typeof window[sub.fn]==='function'){var f=window[sub.fn],a=sub.arg;
+      setTimeout(function(){try{f(a);}catch(e){}},170);
+      setTimeout(function(){try{f(a);}catch(e){}_sup=false;},470);
+    }else{setTimeout(function(){_sup=false;},150);}}
+  window.addEventListener('popstate',function(e){var st=e.state;if(!st||!st.cbk)return;restore(st);});
+  window.addEventListener('load',function(){if(!_ready){try{history.replaceState({cbk:1,page:_cur,sub:null},'');}catch(e){}_ready=true;}});
+})();
+
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
