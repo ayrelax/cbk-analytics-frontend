@@ -22,6 +22,13 @@ body{background:var(--bg0);color:var(--txt1);font-family:-apple-system,BlinkMacS
 .fresh-dot{width:6px;height:6px;border-radius:50%;background:var(--grn2);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
 .clock{font-size:12px;color:var(--txt3);letter-spacing:1px}
+.fav-team-wrap{display:flex;align-items:center;gap:6px}
+.fav-team-link{cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:var(--acc);color:#fff;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:4px 11px;border-radius:5px;white-space:nowrap}
+.fav-team-link:hover{filter:brightness(1.09)}
+.fav-team-edit{cursor:pointer;font-size:11px;color:var(--txt3);padding:2px 5px;border-radius:4px;line-height:1}
+.fav-team-edit:hover{color:var(--acc);background:var(--bg2)}
+.fav-team-sel{background:var(--bg2);border:1px solid var(--bdr2);color:var(--txt1);font-family:inherit;font-size:10px;letter-spacing:.5px;padding:4px 8px;border-radius:5px;max-width:200px}
+.fav-team-sel:focus{outline:none;border-color:var(--acc)}
 .nav{background:var(--bg1);border-bottom:2px solid var(--bdr2);display:flex;overflow-x:auto}
 .nav-btn{padding:12px 18px;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--txt3);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;white-space:nowrap;font-family:inherit}
 .nav-btn:hover{color:var(--txt1);background:var(--bg2)}
@@ -508,8 +515,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
     <span id="tipoff-cd" style="font-weight:800;color:var(--acc);font-size:11px;white-space:nowrap;min-width:92px;text-align:right;font-variant-numeric:tabular-nums">--</span>
   </div>
   <div class="top-right">
-    <div class="fresh-badge"><div class="fresh-dot"></div>DATA LIVE</div>
-    <div class="live-badge"><div class="dot"></div>LIVE</div>
+    <div id="fav-team-wrap" class="fav-team-wrap"></div>
     <div id="cbk-theme-toggle" onclick="cbkCycleTheme()" title="Toggle light / warm dark / true dark">☀ LIGHT</div>
     <div class="clock" id="clock"></div>
   </div>
@@ -1091,6 +1097,14 @@ function goToTeam(teamId){if(teamId==null)return;document.querySelectorAll('[id^
 function goToTeamByName(name){if(!name)return;var key=String(name).toLowerCase().trim();var id=TEAM_ID_BY_NAME[key];if(id!=null){goToTeam(id);return;}sb.from('teams').select('id,team').ilike('team',name).limit(1).then(function(res){if(res.data&&res.data.length){TEAM_ID_BY_NAME[key]=res.data[0].id;goToTeam(res.data[0].id);}});}
 document.addEventListener('click',function(e){var el=e.target&&e.target.closest?e.target.closest('.team-link[data-team-name]'):null;if(el){e.preventDefault();goToTeamByName(el.getAttribute('data-team-name'));}});
 sb.from('teams').select('id,team').range(0,9999).then(function(res){registerTeamNames(res.data);});
+var _favTeams=[],_favEdit=false;
+function _favLoadTeams(cb){if(_favTeams.length){if(cb)cb();return;}try{sb.from('teams').select('id,team,conference').order('team',{ascending:true}).then(function(r){_favTeams=(r&&r.data)||[];if(cb)cb();});}catch(e){if(cb)cb();}}
+function _favGet(){try{return localStorage.getItem('cbk_fav_team')||'';}catch(e){return '';}}
+function _favName(id){for(var i=0;i<_favTeams.length;i++){if(String(_favTeams[i].id)===String(id))return _favTeams[i].team;}return '';}
+function _favSet(id){_favEdit=false;try{localStorage.setItem('cbk_fav_team',id||'');}catch(e){}_favRender();}
+function _favPick(){_favEdit=true;_favRender();}
+function _favOpen(){var id=_favGet();if(id&&typeof goToTeam==='function')goToTeam(id);}
+function _favRender(){var box=document.getElementById('fav-team-wrap');if(!box)return;_favLoadTeams(function(){var fav=_favGet();var nm=fav?_favName(fav):'';if(fav&&nm&&!_favEdit){box.innerHTML='<span class="fav-team-link" onclick="_favOpen()" title="Open '+nm+' hub \u2014 schedule, roster, stats, indicators">\u2605 '+nm+'</span><span class="fav-team-edit" onclick="_favPick()" title="Change favorite team">\u25be</span>';}else{var opts='<option value="">\u2605 Favorite team\u2026</option>';_favTeams.forEach(function(t){opts+='<option value="'+t.id+'"'+(String(t.id)===String(fav)?' selected':'')+'>'+t.team+'</option>';});box.innerHTML='<select class="fav-team-sel" onchange="_favSet(this.value)">'+opts+'</select>';}});}
 function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='matchups')loadMatchups();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
@@ -1098,7 +1112,7 @@ function buildTicker(teams){var track=document.getElementById('ticker-track');va
 function getHeatClass(idx,total){var pct=idx/total;if(pct<0.2)return'pr-row-1';if(pct<0.4)return'pr-row-2';if(pct<0.6)return'pr-row-3';if(pct<0.8)return'pr-row-4';return'pr-row-5';}
 function getGameHeat(idx,total){var pct=idx/total;if(pct<0.2)return'game-heat-1';if(pct<0.4)return'game-heat-2';if(pct<0.6)return'game-heat-3';if(pct<0.8)return'game-heat-4';return'game-heat-5';}
 function renderDashPlays(){var el=document.getElementById('dash-plays');if(!el)return;var today=new Date().toISOString().split('T')[0];sb.from('plays').select('*').eq('play_date',today).order('id',{ascending:true}).then(function(res){var rows=res.data||[];var h='<div class="panel-hdr" style="margin-bottom:8px;padding:0"><div class="panel-title"><div class="panel-title-dot"></div>TODAY\u2019S PLAYS'+(rows.length?' <span style="color:var(--acc2);font-size:10px">\u00b7 '+rows.length+'</span>':'')+'</div><div onclick="cbkGoToPage(\'plays\')" style="cursor:pointer;font-size:9px;color:var(--acc);letter-spacing:1px">ALL PLAYS \u2192</div></div>';if(!rows.length){h+='<div style="color:var(--txt3);font-size:12px;padding:12px 4px">No plays posted today.</div>';el.innerHTML=h;return;}rows.forEach(function(r){var rs=String(r.result||'').toUpperCase();var rc=rs==='W'?'var(--grn2)':(rs==='L'?'var(--red2)':((rs==='P'||rs==='PUSH')?'var(--txt3)':'var(--amb2)'));var rlabel=rs==='W'?'WON':(rs==='L'?'LOST':((rs==='P'||rs==='PUSH')?'PUSH':'PENDING'));var pick=String(r.side||'').trim()||String(r.bet_type||'').trim()||'\u2014';var nums='';if(r.our_number!=null&&r.our_number!=='')nums+='our '+r.our_number;if(r.market_number!=null&&r.market_number!=='')nums+=(nums?'  \u00b7  ':'')+'mkt '+r.market_number;h+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-left:3px solid '+rc+';border-radius:8px;padding:9px 11px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:11px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.event_name||'')+'</span>'+(r.person?'<span style="font-size:9px;color:var(--txt3);letter-spacing:1px;white-space:nowrap;flex-shrink:0">'+String(r.person).toUpperCase()+'</span>':'')+'</div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:3px"><span style="font-size:14px;font-weight:800;color:var(--txt1)">'+pick+(r.bet_type&&String(r.bet_type).toLowerCase().indexOf(String(r.side||"").toLowerCase())<0?' <span style=\"font-size:9px;color:var(--txt3);font-weight:700;letter-spacing:1px\">'+String(r.bet_type).toUpperCase()+'</span>':'')+'</span><span style="font-size:9px;font-weight:800;color:'+rc+';letter-spacing:.5px;flex-shrink:0">'+rlabel+'</span></div>'+(nums?'<div style="font-size:10px;color:var(--txt3);margin-top:3px">'+nums+'</div>':'')+(r.notes?'<div style="font-size:10px;color:var(--txt2);margin-top:4px;font-style:italic">'+r.notes+'</div>':'')+'</div>';});el.innerHTML=h;});}
-function loadDashboard(){
+function loadDashboard(){try{_favRender();}catch(e){}
   renderDashPlays();
 sb.from('teams').select('*').order('pr',{ascending:false}).limit(25).then(function(res){
 var teams=res.data;if(!teams||!teams.length)return;allTeams=teams;buildTicker(teams);populateQCDropdowns();
@@ -2863,6 +2877,7 @@ document.addEventListener('DOMContentLoaded',function(){
   if(lp)lp.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   try{cbkInitTheme();}catch(e){}
   try{restoreSession();}catch(e){}
+  try{_favRender();}catch(e){}
 });
 function restoreSession(){
   var s=null;try{s=localStorage.getItem('cbk_session')||sessionStorage.getItem('cbk_session');}catch(e){}
