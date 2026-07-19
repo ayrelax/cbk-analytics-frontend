@@ -1762,7 +1762,7 @@ function travelRender(){var body=document.getElementById('travel-body');if(!body
  if(_tvMode==='rec'){
   if(note)note.textContent=_periodLabel(_tvPeriod)+' \u00b7 '+rows.length+' teams \u00b7 ATS bold \u00b7 \u03a3 = all-teams overall (green if teams cover >52.4%)';
   function cell(r,cat){var x=r.R[cat];if(!x||!x.n)return '<td class="muted">--</td>';var dec=x.w+x.l;var su=dec?(x.w+'-'+x.l):'0-0';var adec=x.aw+x.al+x.ap;var ats=adec?(x.aw+'-'+x.al+(x.ap?'-'+x.ap:'')):'--';var idx=_tvRows.indexOf(r);var clk=(idx>=0&&x.games&&x.games.length)?(' onclick="tvDrill('+idx+',\''+cat+'\')" title="click for game log" style="white-space:nowrap;cursor:pointer"'):' style="white-space:nowrap"';return '<td'+clk+'><span class="muted" style="font-size:9.5px">'+su+' / </span><span style="font-weight:700">'+ats+'</span></td>';}
-  h='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>#</th><th>TEAM</th><th>CONF</th><th>OVERALL</th><th>HOME</th><th>AWAY</th><th>NEUTRAL</th><th>\u22641D REST</th><th>2D REST</th><th>3-4D REST</th><th>5D+ REST</th><th>2-IN-3</th><th>3-IN-4</th><th>3-IN-5</th><th>REST EDGE</th><th>REST DISADV</th><th>TRIP \u2264300</th><th>301-800</th><th>801-1500</th><th>1501-1999</th><th>2000+</th><th>2+ TZ</th><th>ALTITUDE</th><th>KILLER</th><th>OPP TRIP</th><th>OPP RST</th><th>LOW PACE \u2264135</th><th>AVG PACE 136-155</th><th>HIGH PACE 156+</th><th>OFF ROAD TRIP</th><th>ALT 6000+</th><th>LETDOWN</th><th>LOOKAHEAD</th><th>REVENGE</th></tr></thead><tbody>';
+  h='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>#</th><th>TEAM</th><th>CONF</th><th>OVERALL</th><th>HOME</th><th>AWAY</th><th>NEUTRAL</th><th>\u22641D REST</th><th>2D REST</th><th>3-4D REST</th><th>5D+ REST</th><th>2-IN-3</th><th>3-IN-4</th><th>3-IN-5</th><th>REST EDGE</th><th>REST DISADV</th><th>TRIP \u2264300</th><th>301-800</th><th>801-1500</th><th>1501-1999</th><th>2000+</th><th>2+ TZ</th><th>ALTITUDE</th><th>KILLER</th><th>OPP TRIP</th><th>OPP RST</th><th>LOW PACE \u2264144</th><th>AVG PACE 145-157</th><th>HIGH PACE 158+</th><th>OFF ROAD TRIP</th><th>ALT 6000+</th><th>LETDOWN</th><th>LOOKAHEAD</th><th>REVENGE</th></tr></thead><tbody>';
   var _TVC=['ALL','H','A','N','R1','R2','R34','R5','C23','C34','I35','REDGE','RDIS','T1','T2','T3','T4','T5','TZ2','ALT','KILL','OPPTRIP','OPPRST','LOWP','AVGP','HIGHP','OFFRD','ALTX','LETDN','LOOKA','REVG'];
   var _agg={};_TVC.forEach(function(c){_agg[c]={n:0,w:0,l:0,aw:0,al:0,ap:0};});
   rows.forEach(function(r){_TVC.forEach(function(c){var x=r.R[c];if(x){var a=_agg[c];a.n+=x.n||0;a.w+=x.w||0;a.l+=x.l||0;a.aw+=x.aw||0;a.al+=x.al||0;a.ap+=x.ap||0;}});});
@@ -3996,7 +3996,7 @@ function mxDrill(kind,idx){
   if(!_mxLast||!_mxLast[kind])return;var o=_mxLast[kind][idx];if(!o)return;
   var lab;
   if(kind==='rank')lab='vs rank '+_MX_RB[idx][1];
-  else if(kind==='pace')lab=['LOW \u2264135','AVG 136-155','HIGH 156+'][idx]+' pace';
+  else if(kind==='pace')lab=['LOW \u2264144','AVG 145-157','HIGH 158+'][idx]+' pace';
   else if(kind==='style')lab=(_MX_STY.filter(function(s){return s[0]===idx;})[0]||['','?'])[1];
   else if(kind==='ha')lab=_MX_HA[idx];
   else if(kind==='fd')lab='as '+_MX_FD[idx];
@@ -4067,7 +4067,7 @@ function mxNarrative(C,nm){
 function _mxHeat(m){if(m==null)return {bg:'transparent',fg:'var(--txt3)'};var a=Math.min(0.55,0.12+Math.abs(m)/12);var bg=m>=0?('rgba(74,222,128,'+a.toFixed(2)+')'):('rgba(248,113,113,'+a.toFixed(2)+')');return {bg:bg,fg:_mxMgCol(m)};}
 function mxQuadrant(C){
   var G=C.grid;if(!G)return '';var any=false;G.forEach(function(row){row.forEach(function(o){if(o.n>0)any=true;});});if(!any)return '';
-  var STR=['Strong (1-40)','Mid (41-125)','Weak (126+)'],PACE=['Low \u2264135','Avg 136-155','High 156+'];
+  var STR=['Strong (1-40)','Mid (41-125)','Weak (126+)'],PACE=['Low \u2264144','Avg 145-157','High 158+'];
   var h='<div class="panel" style="margin-top:14px;padding:12px"><div style="font-size:11px;color:var(--txt2);font-weight:800;letter-spacing:1px;margin-bottom:2px">SITUATIONAL FINGERPRINT</div><div style="font-size:9px;color:var(--txt3);font-style:italic;margin-bottom:8px">Opponent strength \u00d7 expected pace \u2014 color = avg cover margin (green beats the number, red falls short). Click a cell for the games.</div>';
   h+='<div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:4px;width:100%;max-width:560px"><thead><tr><th></th>';
   PACE.forEach(function(p){h+='<th style="font-size:9px;color:var(--txt3);font-weight:700;text-align:center;letter-spacing:.5px">'+p+'</th>';});
@@ -4081,7 +4081,7 @@ function mxQuadrant(C){
 }
 function mxGridDrill(si,pi){
   if(!_mxLast||!_mxLast.grid)return;var o=_mxLast.grid[si][pi];if(!o)return;
-  var STR=['Strong (1-40)','Mid (41-125)','Weak (126+)'],PACE=['Low \u2264135','Avg 136-155','High 156+'];
+  var STR=['Strong (1-40)','Mid (41-125)','Weak (126+)'],PACE=['Low \u2264144','Avg 145-157','High 158+'];
   var rows=(o.games||[]).slice().sort(function(a,b){return a.d<b.d?1:-1;}).map(function(g){var opp=_mxNames[g.opp]||('#'+g.opp);var ac=g.ats==='W'?'var(--grn2)':(g.ats==='L'?'var(--red2)':'var(--txt3)');return '<tr><td>'+g.d+'</td><td>'+opp+(g.rank?' (#'+g.rank+')':'')+'</td><td style="text-align:center">'+(g.home?'H':'A')+'</td><td style="text-align:center">'+g.su+'</td><td style="text-align:center;font-weight:800;color:'+ac+'">'+g.ats+'</td><td style="text-align:center;color:'+_mxMgCol(g.smv)+'">'+_mxMg(g.smv)+'</td><td style="text-align:center;font-weight:700;color:'+_mxMgCol(g.cmv)+'">'+_mxMg(g.cmv)+'</td></tr>';}).join('');
   if(typeof _showModal==='function')_showModal((_mxNames[_mxTeam]||'Team')+' \u2014 '+STR[si]+' \u00b7 '+PACE[pi]+' ('+(o.games?o.games.length:0)+' games)','<div style="overflow-x:auto;padding:6px"><table class="data" style="font-size:11px;width:100%"><thead><tr><th>DATE</th><th>OPPONENT</th><th style="text-align:center">SITE</th><th style="text-align:center">SU</th><th style="text-align:center">ATS</th><th style="text-align:center">MOV</th><th style="text-align:center">COV</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
 }
