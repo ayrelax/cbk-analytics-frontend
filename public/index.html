@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Berbert's Full Court Press — CBK Analytics</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjE1IiBmaWxsPSIjYzg4MTFmIiBzdHJva2U9IiMyMDE0MGEiIHN0cm9rZS13aWR0aD0iMS44Ii8+CjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIwMTQwYSIgc3Ryb2tlLXdpZHRoPSIxLjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC41Ij4KPGxpbmUgeDE9IjE2IiB5MT0iMSIgeDI9IjE2IiB5Mj0iMzEiLz4KPGxpbmUgeDE9IjEiIHkxPSIxNiIgeDI9IjMxIiB5Mj0iMTYiLz4KPHBhdGggZD0iTTUuNiA1LjYgQyAxMiAxMSwgMTIgMjEsIDUuNiAyNi40Ii8+CjxwYXRoIGQ9Ik0yNi40IDUuNiBDIDIwIDExLCAyMCAyMSwgMjYuNCAyNi40Ii8+CjwvZz4KPHRleHQgeD0iMTYiIHk9IjE2LjUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIiBmb250LWZhbWlseT0iQXJpYWwsIEhlbHZldGljYSwgc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIxNSIgbGV0dGVyLXNwYWNpbmc9Ii0wLjUiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzIwMTQwYSIgc3Ryb2tlLXdpZHRoPSIwLjgiIHBhaW50LW9yZGVyPSJzdHJva2UiPlBCPC90ZXh0Pgo8L3N2Zz4="/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiNjODgxMWYiIHN0cm9rZT0iIzIwMTQwYSIgc3Ryb2tlLXdpZHRoPSIxLjgiLz48ZyBmaWxsPSJub25lIiBzdHJva2U9IiMyMDE0MGEiIHN0cm9rZS13aWR0aD0iMS4zIiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNSI+PGxpbmUgeDE9IjE2IiB5MT0iMSIgeDI9IjE2IiB5Mj0iMzEiLz48bGluZSB4MT0iMSIgeTE9IjE2IiB4Mj0iMzEiIHkyPSIxNiIvPjxwYXRoIGQ9Ik01LjYgNS42IEMgMTIgMTEsIDEyIDIxLCA1LjYgMjYuNCIvPjxwYXRoIGQ9Ik0yNi40IDUuNiBDIDIwIDExLCAyMCAyMSwgMjYuNCAyNi40Ii8+PC9nPjwvc3ZnPg=="/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg0:#f8f4ef;--bg1:#ffffff;--bg2:#ede8e1;--bg3:#e5ddd4;--bg4:#d4c9b8;--acc:#8b6914;--acc2:#c8a96e;--acc3:#b8860b;--grn:#1b5e20;--grn2:#2e7d32;--red:#b71c1c;--red2:#c62828;--amb:#e65100;--amb2:#ff8f00;--pur:#6a1b9a;--txt1:#1a1208;--txt2:#2c1f0a;--txt3:#4a3510;--bdr:#cabda8;--bdr2:#b6a482;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
@@ -2910,14 +2910,7 @@ function restoreSession(){
   var ps=document.getElementById('prelogin-style');if(ps&&ps.parentNode)ps.parentNode.removeChild(ps);
   var ls=document.getElementById('login-screen');if(ls)ls.style.display='none';
   try{if(isAdmin){var ab=document.getElementById('admin-badge');if(ab)ab.style.display='flex';var np=document.getElementById('nav-prupdate');if(np)np.style.display='block';var nr=document.getElementById('nav-rosterload');if(nr)nr.style.display='block';var su=document.getElementById('nav-statsupload');if(su)su.style.display='block';}else{var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';setTimeout(cbkStartFinalPolling,500);}}catch(e){}
-  var pg=null;try{pg=localStorage.getItem('cbk_page');}catch(e){}
-  if(pg&&pg!=='dashboard'&&document.getElementById('page-'+pg)){
-    cbkGoToPage(pg);
-    setTimeout(function(){cbkGoToPage(pg);},120);
-    setTimeout(function(){cbkGoToPage(pg);},400);
-  }else{
-    loadDashboard();
-  }
+  loadDashboard(); /* always open on Dashboard for a new visit */
 }
 function cbkGoToPage(pg){
   if(!document.getElementById('page-'+pg))return;
