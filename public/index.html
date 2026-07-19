@@ -462,7 +462,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 
 /* ===== MOBILE READABILITY (phones only; desktop untouched) ===== */
 @media (max-width:640px){
-  html,body{max-width:100%;overflow-x:hidden}
+  html,body{max-width:100%}
   .content{padding:10px 10px}
   /* header: compact + wrap; drop sticky so it can't overlap the nav */
   .top-bar{position:static!important;flex-wrap:wrap;padding:8px 12px;gap:6px 10px}
@@ -475,11 +475,14 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   .nav-btn{flex:0 0 auto;padding:9px 11px;font-size:9.5px;letter-spacing:.7px}
   /* conference cards 2-up so team names aren't clipped */
   .conf-strip{grid-template-columns:1fr 1fr!important;gap:8px}
+  /* dashboard Top25 / Top Games stack instead of sitting side-by-side */
+  .split{grid-template-columns:1fr!important}
+  .cbox{overflow-x:auto}
   /* stack side-by-side dashboard columns instead of overflowing */
   .content > div[style*="display:flex"]{flex-wrap:wrap}
   .pm-two>.panel{min-width:0!important}
   /* wide tables scroll inside their own box, never widen the page */
-  .panel{padding:10px}
+  .panel{padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .content div[style*="overflow-x:auto"]{max-width:100%}
   table.data{font-size:10px}
   /* floating logout badge: smaller + translucent so it covers less */
