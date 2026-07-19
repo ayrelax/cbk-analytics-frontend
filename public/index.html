@@ -9,7 +9,7 @@
 <title>Berbert's Full Court Press — CBK Analytics</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg0:#f8f4ef;--bg1:#ffffff;--bg2:#ede8e1;--bg3:#e5ddd4;--bg4:#d4c9b8;--acc:#8b6914;--acc2:#c8a96e;--acc3:#b8860b;--grn:#1b5e20;--grn2:#2e7d32;--red:#b71c1c;--red2:#c62828;--amb:#e65100;--amb2:#ff8f00;--pur:#6a1b9a;--txt1:#1a1208;--txt2:#2c1f0a;--txt3:#4a3510;--bdr:#d4c9b8;--bdr2:#c8b896;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+:root{--bg0:#f8f4ef;--bg1:#ffffff;--bg2:#ede8e1;--bg3:#e5ddd4;--bg4:#d4c9b8;--acc:#8b6914;--acc2:#c8a96e;--acc3:#b8860b;--grn:#1b5e20;--grn2:#2e7d32;--red:#b71c1c;--red2:#c62828;--amb:#e65100;--amb2:#ff8f00;--pur:#6a1b9a;--txt1:#1a1208;--txt2:#2c1f0a;--txt3:#4a3510;--bdr:#cabda8;--bdr2:#b6a482;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 body{background:var(--bg0);color:var(--txt1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;min-height:100vh}
 .logo,.nav,.nav-btn,.clock,.live-badge,.fresh-badge,.ticker,.ticker-track,#tipoff,#cbk-theme-toggle,.panel-title,.panel-title-dot,.panel-hdr,.cbox-hdr,.cbox-hdr-sub,.gc-section,.psm-sechdr,.psm-scout-hdr,.pru-section-hdr,.pru-header,.pru-team-name,.conf-hdr,.conf-hdr-cols,.ct-seedgroup-hdr,.sim-market-hdr,.tp-group-hdr,.tp-market-hdr,.playin-card-hdr,.qc-title,.qc-label,.b-col-hdr,.sp-col-hdr,.edit-region-col-hdr,.roster-slot-label,.team-stat-label,.team-header-name,.team-header-sub,th{font-family:'Courier New',monospace}
 .top-bar{background:var(--bg1);border-bottom:1px solid var(--bdr2);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
@@ -320,8 +320,8 @@ table.data tbody tr:hover{background:var(--bg2)}
 
 
 /* ===== DARK MODE THEMES (body-class overrides of the :root vars) ===== */
-body.cbk-warm{--bg0:#1a1611;--bg1:#241f18;--bg2:#2e2820;--bg3:#38312a;--bg4:#443c32;--acc:#d4af5a;--acc2:#c8a96e;--acc3:#e0b84e;--grn:#4caf50;--grn2:#5cbf60;--red:#e57373;--red2:#e57373;--amb:#ffa726;--amb2:#ffb74d;--pur:#b085d6;--txt1:#f0e9dc;--txt2:#e0d6c4;--txt3:#b3a488;--bdr:#3a332a;--bdr2:#4a4234}
-body.cbk-true{--bg0:#0d0d0f;--bg1:#161619;--bg2:#1f1f23;--bg3:#28282d;--bg4:#333339;--acc:#d4af5a;--acc2:#c8a96e;--acc3:#e6bd4d;--grn:#4caf50;--grn2:#4caf50;--red:#ef5350;--red2:#ef5350;--amb:#ffa726;--amb2:#ffb74d;--pur:#b085d6;--txt1:#f2f2f0;--txt2:#dcdcd8;--txt3:#a0a0a0;--bdr:#2a2a30;--bdr2:#3a3a42}
+body.cbk-warm{--bg0:#17120b;--bg1:#211a11;--bg2:#2b2318;--bg3:#372d1f;--bg4:#453927;--acc:#e8c25c;--acc2:#cdb079;--acc3:#f2cd54;--grn:#63d17a;--grn2:#63d17a;--red:#f28b8b;--red2:#f28b8b;--amb:#ffb74d;--amb2:#ffc670;--pur:#c79be6;--txt1:#f6f0e3;--txt2:#e4dac8;--txt3:#bcae90;--bdr:#372d1e;--bdr2:#4e402b}
+body.cbk-true{--bg0:#0f1216;--bg1:#171b21;--bg2:#1e232b;--bg3:#272d37;--bg4:#343c48;--acc:#e6c15a;--acc2:#cdb488;--acc3:#f0cb5a;--grn:#4ade80;--grn2:#4ade80;--red:#f87171;--red2:#f87171;--amb:#fbbf24;--amb2:#fcd34d;--pur:#c084fc;--txt1:#f5f7fa;--txt2:#d4dae2;--txt3:#9fabba;--bdr:#2c333d;--bdr2:#404a58}
 /* smooth theme transition */
 body,.panel,.nav,.nav-btn,.btn,.field,table,td,th,.card,input,select{transition:background-color .3s ease,color .3s ease,border-color .3s ease}
 /* the toggle button */
@@ -332,7 +332,7 @@ body,.panel,.nav,.nav-btn,.btn,.field,table,td,th,.card,input,select{transition:
 
 /* ===== DARK MODE FIXES — remap hardcoded light backgrounds to dark shades ===== */
 /* These selectors used hardcoded cream/white bg that vanished in dark mode. */
-body.cbk-warm table.data tr:nth-child(even) td,body.cbk-true table.data tr:nth-child(even) td{background:var(--bg2)}
+body.cbk-warm .data th,body.cbk-true .data th{background:var(--bg2)!important;color:var(--txt2)!important;border-bottom-color:var(--bdr2)!important}body.cbk-warm table.data tr:nth-child(odd) td,body.cbk-true table.data tr:nth-child(odd) td{background:var(--bg1)}body.cbk-warm table.data tr:hover td,body.cbk-true table.data tr:hover td{background:var(--bg3)!important}body.cbk-warm #players-board .data td,body.cbk-true #players-board .data td{color:var(--txt1)}body.cbk-warm #players-board .data td.muted,body.cbk-true #players-board .data td.muted{color:var(--txt3)!important}body.cbk-warm [style*="background:#fff"],body.cbk-true [style*="background:#fff"],body.cbk-warm [style*="background:#fdf9f4"],body.cbk-true [style*="background:#fdf9f4"],body.cbk-warm [style*="background:#f8f4ef"],body.cbk-true [style*="background:#f8f4ef"],body.cbk-warm [style*="background:#f2ebe1"],body.cbk-true [style*="background:#f2ebe1"],body.cbk-warm [style*="background:#ede8e1"],body.cbk-true [style*="background:#ede8e1"],body.cbk-warm [style*="background:#e5ddd4"],body.cbk-true [style*="background:#e5ddd4"],body.cbk-warm [style*="background:#fff8"],body.cbk-true [style*="background:#fff8"]{background:var(--bg2)!important}body.cbk-warm [style*="color:#1a1208"],body.cbk-true [style*="color:#1a1208"],body.cbk-warm [style*="color:#2c1f0a"],body.cbk-true [style*="color:#2c1f0a"],body.cbk-warm [style*="color:#4a3510"],body.cbk-true [style*="color:#4a3510"]{color:var(--txt1)!important}body.cbk-warm [style*="color:#8b6914"],body.cbk-true [style*="color:#8b6914"],body.cbk-warm [style*="color:#b8860b"],body.cbk-true [style*="color:#b8860b"]{color:var(--acc)!important}body.cbk-warm [style*="color:#2f6fb0"],body.cbk-true [style*="color:#2f6fb0"]{color:#6ba9e0!important}body.cbk-warm .gc-badge-neutral,body.cbk-true .gc-badge-neutral{background:var(--bg3)!important;color:var(--txt2)!important}body.cbk-warm table.data tr:nth-child(even) td,body.cbk-true table.data tr:nth-child(even) td{background:var(--bg2)}
 body.cbk-warm table.data tr:hover td,body.cbk-true table.data tr:hover td{background:var(--bg3)}
 body.cbk-warm .panel-hdr,body.cbk-true .panel-hdr{background:var(--bg2)}
 body.cbk-warm .quick-calc,body.cbk-true .quick-calc{background:var(--bg2)}
@@ -484,6 +484,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   <button class="nav-btn" onclick="showPage('spreads',this)">GAME SPREADS</button>
   <button class="nav-btn" onclick="showPage('travel',this)">TRAVEL</button>
   <button class="nav-btn" onclick="showPage('modelats',this)">MODEL ATS</button>
+  <button class="nav-btn" onclick="showPage('matchups',this)">SITUATIONAL</button>
   <button class="nav-btn" onclick="showPage('teamprofile',this)">TEAM PROFILES</button>
   <button class="nav-btn" onclick="showPage('players',this)">PLAYER STATS</button>
   <button class="nav-btn" onclick="showPage('specials',this)">PLAYER SPECIALS</button>
@@ -919,6 +920,10 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   <div id="players-board"></div>
 </div>
 <div id="page-modelats" style="display:none"></div>
+<div id="page-matchups" style="display:none">
+  <div id="matchups-controls" style="margin-bottom:12px"></div>
+  <div id="matchups-body"></div>
+</div>
 <div id="page-plays" style="display:none">
   <div id="plays-leaderboard" style="margin-bottom:14px"></div>
   <div class="search-bar" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
@@ -1050,7 +1055,7 @@ function goToTeam(teamId){if(teamId==null)return;document.querySelectorAll('[id^
 function goToTeamByName(name){if(!name)return;var key=String(name).toLowerCase().trim();var id=TEAM_ID_BY_NAME[key];if(id!=null){goToTeam(id);return;}sb.from('teams').select('id,team').ilike('team',name).limit(1).then(function(res){if(res.data&&res.data.length){TEAM_ID_BY_NAME[key]=res.data[0].id;goToTeam(res.data[0].id);}});}
 document.addEventListener('click',function(e){var el=e.target&&e.target.closest?e.target.closest('.team-link[data-team-name]'):null;if(el){e.preventDefault();goToTeamByName(el.getAttribute('data-team-name'));}});
 sb.from('teams').select('id,team').range(0,9999).then(function(res){registerTeamNames(res.data);});
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='matchups')loadMatchups();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -1325,7 +1330,7 @@ html+='<div class="panel"><div class="panel-hdr"><div class="panel-title">Roster
 html+=renderPlayerStats(playerStats);html+='<div class="panel" style="margin-top:12px"><div class="panel-hdr"><div class="panel-title">Head to Head Simulator</div></div><div style="padding:14px"><div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div class="qc-group"><div class="qc-label">Opponent</div><select class="field" id="h2h-opp" style="width:200px">';allTeamsList.forEach(function(t){if(String(t.id)!==String(teamId))html+='<option value="'+t.id+'" data-pr="'+t.pr+'" data-hc="'+t.hc+'">'+t.team+'</option>';});html+='</select></div><div class="qc-group"><div class="qc-label">Location</div><select class="field" id="h2h-loc" style="width:110px"><option value="home">Home</option><option value="away">Away</option><option value="neutral">Neutral</option></select></div><button class="btn primary" onclick="calcH2H('+team.id+','+team.pr+','+team.hc+')">CALCULATE</button></div><div id="h2h-result" style="margin-top:14px;font-size:15px;font-weight:700;color:var(--acc)"></div></div></div>';
 html+='</div></div>';
 html+='<div class="panel" style="margin-top:12px"><div class="panel-hdr"><div class="panel-title"><div class="panel-title-dot"></div>ATS PERFORMANCE</div><div style="font-size:9px;color:var(--txt3);letter-spacing:1px">VS MODEL SPREAD</div></div><div id="team-ats-panel" style="padding:14px"><div style="color:var(--txt3);font-size:12px">Loading...</div></div></div>';
-content.innerHTML=html;
+content.innerHTML=html+'<div id="tp-mxcard"></div>';(function(tid){var host=document.getElementById('tp-mxcard');if(!host)return;function f(){try{host.innerHTML=(typeof mxCardHtml==='function'?mxCardHtml(tid):'');}catch(e){}}if(typeof _mxReady!=='undefined'&&_mxReady){f();}else if(typeof loadMatchups==='function'){loadMatchups();var n=0,iv=setInterval(function(){if(typeof _mxReady!=='undefined'&&_mxReady){clearInterval(iv);f();}else if(n++>80)clearInterval(iv);},100);}})(teamId);
 loadTeamATS(teamId,document.getElementById('team-ats-panel'));});});}
 function saveRoster(teamId){if(!isAdmin)return;var inputs=document.querySelectorAll('[data-slot][data-field]');var bySlot={};inputs.forEach(function(inp){var slot=inp.getAttribute('data-slot');var field=inp.getAttribute('data-field');if(!bySlot[slot])bySlot[slot]={slot:slot,team_id:parseInt(teamId)};var val=inp.value.trim();bySlot[slot][field]=val||null;});var rows=Object.values(bySlot).filter(function(r){return r.player_name;});if(!rows.length){cbkToast('Nothing to save','No players to save','info');return;}sb.from('rosters').upsert(rows,{onConflict:'team_id,slot'}).then(function(res){if(res.error)alert('Error: '+res.error.message);else cbkToast('Saved','Roster saved successfully','success');});}
 function addInjury(teamId){if(!isAdmin)return;var name=prompt('Player name:');if(!name)return;var impact=parseFloat(prompt('Point impact (e.g. 4):'));if(isNaN(impact))return;var notes=prompt('Notes (optional):');sb.from('injuries').insert({team_id:parseInt(teamId),player_name:name,impact:impact,notes:notes||'',active:true}).then(function(){loadTeamProfile();});}
@@ -3807,6 +3812,266 @@ function cbkStartFinalPolling(){
 }
 /* ===== end live final notifications ===== */
 
+
+/* ===== MATCHUPS TAB (opponent-strength / pace / style splits) ===== */
+var _mxTeam=null,_mxTeams=[],_mxGames=null,_mxRank={},_mxNames={},_mxStyle={},_mxReady=false,_mxLast=null;var _mxConf={};var _MX_SPR=['0-2.5','3-5.5','6-9.5','10-14.5','15+'],_MX_HA=['Home','Away'],_MX_FD=['Favorite','Underdog'],_MX_CF=['Conference','Non-Conference'];
+var _mxMode='team',_mxCat='steps',_mxMinN=3,_mxDir='best',_mxAllCache=null;var _mxMetric='pct';
+var _MX_LB=[{k:'steps',g:'Overall',lbl:'Steps-Up (top-40 vs 126+)',type:'steps'},{k:'overall',g:'Overall',lbl:'Overall (all games)',type:'overall'},{k:'r0',g:'Opp Strength',lbl:'ATS vs 1-10',type:'rank',idx:0},{k:'r1',g:'Opp Strength',lbl:'ATS vs 11-25',type:'rank',idx:1},{k:'r2',g:'Opp Strength',lbl:'ATS vs 26-40',type:'rank',idx:2},{k:'r3',g:'Opp Strength',lbl:'ATS vs 41-75',type:'rank',idx:3},{k:'r4',g:'Opp Strength',lbl:'ATS vs 76-125',type:'rank',idx:4},{k:'r5',g:'Opp Strength',lbl:'ATS vs 126-200',type:'rank',idx:5},{k:'r6',g:'Opp Strength',lbl:'ATS vs 201+',type:'rank',idx:6},{k:'p0',g:'Pace',lbl:'ATS Low Pace \u2264135',type:'pace',idx:0},{k:'p1',g:'Pace',lbl:'ATS Avg Pace 136-155',type:'pace',idx:1},{k:'p2',g:'Pace',lbl:'ATS High Pace 156+',type:'pace',idx:2},{k:'sh3',g:'Style',lbl:'ATS vs Heavy 3PT',type:'style',key:'h3'},{k:'srim',g:'Style',lbl:'ATS vs Rim-Attacking',type:'style',key:'rim'},{k:'seO',g:'Style',lbl:'ATS vs Elite Offense',type:'style',key:'eliteO'},{k:'seD',g:'Style',lbl:'ATS vs Elite Defense',type:'style',key:'eliteD'},{k:'sf',g:'Style',lbl:'ATS vs Foul-Drawers',type:'style',key:'foul'},{k:'ha0',g:'Home/Away',lbl:'ATS as Home',type:'ha',idx:0},{k:'ha1',g:'Home/Away',lbl:'ATS as Away',type:'ha',idx:1},{k:'fd0',g:'Fav/Dog',lbl:'ATS as Favorite',type:'fd',idx:0},{k:'fd1',g:'Fav/Dog',lbl:'ATS as Underdog',type:'fd',idx:1},{k:'cf0',g:'Conference',lbl:'ATS in Conference',type:'conf',idx:0},{k:'cf1',g:'Conference',lbl:'ATS Non-Conference',type:'conf',idx:1},{k:'spr0',g:'Spread Range',lbl:'ATS 0-2.5',type:'spr',idx:0},{k:'spr1',g:'Spread Range',lbl:'ATS 3-5.5',type:'spr',idx:1},{k:'spr2',g:'Spread Range',lbl:'ATS 6-9.5',type:'spr',idx:2},{k:'spr3',g:'Spread Range',lbl:'ATS 10-14.5',type:'spr',idx:3},{k:'spr4',g:'Spread Range',lbl:'ATS 15+',type:'spr',idx:4}];
+
+var _MX_RB=[[0,'1-10'],[1,'11-25'],[2,'26-40'],[3,'41-75'],[4,'76-125'],[5,'126-200'],[6,'201+']];
+var _MX_STY=[['h3','vs HEAVY 3PT','Opponents in the top quartile of 3-point attempt rate.'],['rim','vs RIM-ATTACKING','Opponents in the top quartile of rim-attempt rate.'],['eliteO','vs ELITE OFFENSE','Opponents in the top 30% of minutes-weighted offensive rating.'],['eliteD','vs ELITE DEFENSE','Opponents in the top 30% of minutes-weighted defensive rating.'],['foul','vs FOUL-DRAWERS','Opponents in the top quartile of free-throw rate.']];
+function _mxAgg(){return {n:0,w:0,l:0,aw:0,al:0,ap:0,sm:0,cmg:0,games:[]};}
+function _mxAdd(o,su,ats,g){o.n++;if(su==='W')o.w++;else if(su==='L')o.l++;if(ats==='W')o.aw++;else if(ats==='L')o.al++;else if(ats==='P')o.ap++;o.sm+=(g.smv||0);o.cmg+=(g.cmv||0);o.games.push(g);}
+function _mxPct(o){var d=o.aw+o.al;return d?(o.aw/d*100):null;}
+function _mxCol(p){return p==null?'var(--txt3)':(p>=52.4?'var(--grn2)':(p<47.6?'var(--red2)':'var(--txt1)'));}
+function _mxRec(o){return o.aw+'-'+o.al+(o.ap?'-'+o.ap:'');}
+function _mxSU(o){return o.w+'-'+o.l;}
+function _mxAvgCM(o){return o.n?(o.cmg/o.n):null;}
+function _mxAvgMV(o){return o.n?(o.sm/o.n):null;}
+function _mxMg(v){return v==null?'\u2014':((v>=0?'+':'')+v.toFixed(1));}
+function _mxMgCol(v){return v==null?'var(--txt3)':(v>0.5?'var(--grn2)':(v<-0.5?'var(--red2)':'var(--txt1)'));}
+function loadMatchups(){
+  if(_mxReady){mxRenderControls();mxRender();return;}
+  sb.from('teams').select('id,team,conference,pr').range(0,999).then(function(tr){
+    var teams=(tr.data||[]);
+    teams.forEach(function(t){_mxNames[t.id]=t.team;_mxConf[t.id]=t.conference;});
+    var withPr=teams.filter(function(t){return t.pr!=null;}).slice().sort(function(a,b){return parseFloat(b.pr)-parseFloat(a.pr);});
+    withPr.forEach(function(t,i){_mxRank[t.id]=i+1;});
+    _mxTeams=teams.slice().sort(function(a,b){return (a.team<b.team)?-1:1;});
+    sb.from('games').select('game_date,home_team_id,away_team_id,home_score,away_score,cover_margin,closing_total,closing_spread,opening_spread,status').range(0,99999).then(function(gr){
+      _mxGames=(gr.data||[]);
+      function done(){_mxReady=true;mxRenderControls();mxRender();}
+      if(typeof plEnsureData==='function'){try{plEnsureData(function(){try{mxBuildStyle();}catch(e){}done();});}catch(e){done();}}else{done();}
+    });
+  });
+}
+function mxBuildStyle(){
+  var tms=(typeof _plTeams!=='undefined'&&_plTeams)?_plTeams:[];if(!tms.length)return;
+  function q(arr,p){var s=arr.filter(function(v){return v!=null&&!isNaN(v);}).sort(function(a,b){return a-b;});if(!s.length)return null;return s[Math.floor((s.length-1)*p)];}
+  var t3=q(tms.map(function(t){return t.thrRate;}),0.75),tRim=q(tms.map(function(t){return t.rimRate;}),0.75),
+      tO=q(tms.map(function(t){return t.ortgWtd;}),0.70),tD=q(tms.map(function(t){return t.drtgWtd;}),0.30),tF=q(tms.map(function(t){return t.ftr;}),0.75);
+  tms.forEach(function(t){_mxStyle[String(t.team_id)]={h3:(t.thrRate!=null&&t3!=null&&t.thrRate>=t3),rim:(t.rimRate!=null&&tRim!=null&&t.rimRate>=tRim),eliteO:(t.ortgWtd!=null&&tO!=null&&t.ortgWtd>=tO),eliteD:(t.drtgWtd!=null&&tD!=null&&t.drtgWtd<=tD),foul:(t.ftr!=null&&tF!=null&&t.ftr>=tF)};});
+}
+function mxSetTeam(v){_mxTeam=v||null;try{localStorage.setItem('cbk_mx_team',String(v||''));}catch(e){}mxRender();}
+function mxAllTeams(){
+  if(_mxAllCache)return _mxAllCache;
+  function rankBk(r){if(r==null)return null;if(r<=10)return 0;if(r<=25)return 1;if(r<=40)return 2;if(r<=75)return 3;if(r<=125)return 4;if(r<=200)return 5;return 6;}
+  function paceBk(t){if(t==null)return null;t=parseFloat(t);if(isNaN(t))return null;return t<=135?0:(t<=155?1:2);}
+  var by={};
+  function ens(id){if(!by[id]){by[id]={rank:_MX_RB.map(function(){return _mxAgg();}),pace:[_mxAgg(),_mxAgg(),_mxAgg()],style:{},ha:[_mxAgg(),_mxAgg()],fd:[_mxAgg(),_mxAgg()],conf:[_mxAgg(),_mxAgg()],spr:[_mxAgg(),_mxAgg(),_mxAgg(),_mxAgg(),_mxAgg()]};_MX_STY.forEach(function(s){by[id].style[s[0]]=_mxAgg();});}return by[id];}
+  (_mxGames||[]).forEach(function(g){
+    if(g.status!=='final'||g.home_score==null||g.away_score==null||(g.opening_spread==null&&g.closing_spread==null))return;
+    var margin=g.home_score-g.away_score,_op=(g.opening_spread!=null?g.opening_spread:g.closing_spread),cm=margin-_op;
+    [[String(g.home_team_id),String(g.away_team_id),true],[String(g.away_team_id),String(g.home_team_id),false]].forEach(function(p){
+      var tid=p[0],oppId=p[1],isHome=p[2];
+      var su=((isHome?margin>0:margin<0))?'W':'L';var ats;if(Number(cm)===0)ats='P';else ats=((isHome?cm>0:cm<0))?'W':'L';
+      var gg={d:g.game_date,opp:oppId,home:isHome,su:su,ats:ats,rank:_mxRank[oppId],smv:(isHome?margin:-margin),cmv:(isHome?cm:-cm)};var T=ens(tid);
+      var rb=rankBk(_mxRank[oppId]!=null?_mxRank[oppId]:null);if(rb!=null)_mxAdd(T.rank[rb],su,ats,gg);
+      var pb=paceBk(g.closing_total);if(pb!=null)_mxAdd(T.pace[pb],su,ats,gg);_mxAdd(T.ha[isHome?0:1],su,ats,gg);{var _ln=_op*(isHome?1:-1);if(_ln>0)_mxAdd(T.fd[0],su,ats,gg);else if(_ln<0)_mxAdd(T.fd[1],su,ats,gg);var _a=Math.abs(_ln);_mxAdd(T.spr[_a<=2.5?0:(_a<=5.5?1:(_a<=9.5?2:(_a<=14.5?3:4)))],su,ats,gg);}var _cf=_mxConf[oppId],_ct=_mxConf[tid];if(_cf!=null&&_ct!=null&&_cf!==''&&_ct!=='')_mxAdd(T.conf[_cf===_ct?0:1],su,ats,gg);
+      var st=_mxStyle[oppId];if(st)_MX_STY.forEach(function(s){if(st[s[0]])_mxAdd(T.style[s[0]],su,ats,gg);});
+    });
+  });
+  _mxAllCache=by;return by;
+}
+function _mxCatOf(k){for(var i=0;i<_MX_LB.length;i++)if(_MX_LB[i].k===k)return _MX_LB[i];return _MX_LB[0];}
+function mxBoardRows(){
+  var cat=_mxCatOf(_mxCat),all=mxAllTeams(),out=[],met=_mxMetric;
+  function mv(o){return met==='cmg'?_mxAvgCM(o):(met==='mov'?_mxAvgMV(o):_mxPct(o));}
+  function qual(o){return met==='pct'?((o.aw+o.al)>=_mxMinN):(o.n>=_mxMinN);}
+  function cb(list){var q=_mxAgg();list.forEach(function(x){q.aw+=x.aw;q.al+=x.al;q.ap+=x.ap;q.n+=x.n;q.sm+=x.sm;q.cmg+=x.cmg;});return q;}
+  Object.keys(all).forEach(function(tid){var T=all[tid],val=null,rec='',n=0;
+    if(cat.type==='overall'){var o=cb(T.rank);if(!qual(o))return;val=mv(o);rec=_mxRec(o);n=o.n;}
+    else if(cat.type==='steps'){var s=cb([T.rank[0],T.rank[1],T.rank[2]]),w=cb([T.rank[5],T.rank[6]]);if(!qual(s)||!qual(w))return;var sv=mv(s),wv=mv(w);if(sv==null||wv==null)return;val=sv-wv;rec=(met==='pct'?(s.aw+'-'+s.al+' / '+w.aw+'-'+w.al):(_mxMg(sv)+' / '+_mxMg(wv)));n=s.n+w.n;}
+    else{var o2;if(cat.type==='rank')o2=T.rank[cat.idx];else if(cat.type==='pace')o2=T.pace[cat.idx];else if(cat.type==='style')o2=T.style[cat.key];else o2=T[cat.type][cat.idx];if(!o2||!qual(o2))return;val=mv(o2);rec=_mxRec(o2);n=o2.n;}
+    if(val==null)return;
+    out.push({tid:tid,name:_mxNames[tid]||('#'+tid),pr:_mxRank[tid],val:val,rec:rec,n:n});
+  });
+  out.sort(function(a,b){return _mxDir==='best'?(b.val-a.val):(a.val-b.val);});
+  return out;
+}
+function mxRenderBoard(){
+  var box=document.getElementById('matchups-body');if(!box)return;
+  var cat=_mxCatOf(_mxCat),rows=mxBoardRows(),isSteps=cat.type==='steps',met=_mxMetric;
+  var metLbl=met==='cmg'?'AVG COVER MARGIN':(met==='mov'?'AVG MARGIN OF VICTORY':'COVER%');
+  var recHdr=isSteps?'40 / 126+':'ATS',valHdr=isSteps?'DIFF':metLbl;
+  var h='<div class="panel" style="margin-top:12px;padding:12px"><div style="font-size:12px;color:var(--txt2);font-weight:800;letter-spacing:1px;margin-bottom:2px">LEADERBOARD \u2014 '+cat.lbl+' \u00b7 '+metLbl+'</div><div style="font-size:9px;color:var(--txt3);font-style:italic;margin-bottom:8px">'+rows.length+' teams with '+_mxMinN+'+ '+(isSteps?'games on each side':'games in this split')+' \u00b7 '+(_mxDir==='best'?'best first':'worst first')+' \u00b7 ATS vs opening line \u00b7 click a team for its full profile.</div>';
+  h+='<div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th style="width:34px">#</th><th>TEAM</th><th style="text-align:center">PR#</th><th style="text-align:center">GP</th><th style="text-align:center">'+recHdr+'</th><th style="text-align:right">'+valHdr+'</th></tr></thead><tbody>';
+  rows.forEach(function(r,i){var col,vtxt;
+    if(met==='pct'){vtxt=isSteps?((r.val>=0?'+':'')+r.val.toFixed(1)+'%'):(r.val.toFixed(1)+'%');col=isSteps?(r.val>=0?'var(--grn2)':'var(--red2)'):_mxCol(r.val);}
+    else{vtxt=_mxMg(r.val);col=_mxMgCol(r.val);}
+    h+='<tr onclick="mxJump(\''+r.tid+'\')" style="cursor:pointer"><td class="muted">'+(i+1)+'</td><td class="bold">'+r.name+'</td><td class="muted" style="text-align:center">'+(r.pr||'\u2014')+'</td><td style="text-align:center">'+r.n+'</td><td class="muted" style="text-align:center">'+r.rec+'</td><td style="text-align:right;font-weight:800;color:'+col+'">'+vtxt+'</td></tr>';});
+  if(!rows.length)h+='<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:14px">No teams meet the minimum sample yet</td></tr>';
+  h+='</tbody></table></div></div>';box.innerHTML=h;
+}
+function mxJump(tid){_mxMode='team';_mxTeam=String(tid);try{localStorage.setItem('cbk_mx_team',String(tid));}catch(e){}mxRenderControls();mxRender();if(window.scrollTo)window.scrollTo(0,0);}
+function mxSetMode(m){_mxMode=m;mxRenderControls();mxRender();}
+function mxSetCat(k){_mxCat=k;mxRenderBoard();}
+function mxSetMetric(v){_mxMetric=v;mxRenderBoard();}
+function mxSetMinN(v){_mxMinN=Math.max(1,parseInt(v,10)||1);mxRenderBoard();}
+function mxToggleDir(){_mxDir=(_mxDir==='best')?'worst':'best';mxRenderBoard();}
+function mxRenderControls(){
+  var el=document.getElementById('matchups-controls');if(!el)return;
+  if(!_mxTeam){try{_mxTeam=localStorage.getItem('cbk_mx_team')||null;}catch(e){}}
+  function modeBtn(lbl,m){return '<button onclick="mxSetMode(\''+m+'\')" class="btn'+(_mxMode===m?' primary':'')+'" style="font-size:11px;padding:5px 14px;margin:1px">'+lbl+'</button>';}
+  var bar='<div style="display:flex;gap:4px;margin-bottom:8px">'+modeBtn('TEAM','team')+modeBtn('LEADERBOARD','board')+'</div>';
+  var body='';
+  if(_mxMode==='board'){
+    var groups={};_MX_LB.forEach(function(c){(groups[c.g]=groups[c.g]||[]).push(c);});
+    var catSel='<select onchange="mxSetCat(this.value)" style="font-size:12px;padding:5px 8px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:6px;min-width:230px">';
+    ['Overall','Opp Strength','Pace','Style','Home/Away','Fav/Dog','Conference','Spread Range'].forEach(function(gn){if(!groups[gn])return;catSel+='<optgroup label="'+gn+'">';groups[gn].forEach(function(c){catSel+='<option value="'+c.k+'"'+(_mxCat===c.k?' selected':'')+'>'+c.lbl+'</option>';});catSel+='</optgroup>';});
+    catSel+='</select>';var metSel='<select onchange="mxSetMetric(this.value)" style="font-size:12px;padding:5px 8px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:6px"><option value="pct"'+(_mxMetric==='pct'?' selected':'')+'>Cover %</option><option value="cmg"'+(_mxMetric==='cmg'?' selected':'')+'>Avg Cover Margin</option><option value="mov"'+(_mxMetric==='mov'?' selected':'')+'>Avg Margin of Victory</option></select>';
+    var minSel='<select onchange="mxSetMinN(this.value)" style="font-size:12px;padding:5px 8px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:6px">';
+    [1,3,5,8,10].forEach(function(v){minSel+='<option value="'+v+'"'+(_mxMinN===v?' selected':'')+'>min '+v+' G</option>';});minSel+='</select>';
+    var dirBtn='<button onclick="mxToggleDir()" class="btn" style="font-size:11px;padding:5px 12px">'+(_mxDir==='best'?'\u25b2 Best first':'\u25bc Worst first')+'</button>';
+    body='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:10px;letter-spacing:1.5px;color:var(--txt3);text-transform:uppercase">Category</span>'+catSel+'<span style="font-size:10px;letter-spacing:1.5px;color:var(--txt3);text-transform:uppercase">Metric</span>'+metSel+minSel+dirBtn+'</div>';
+  } else {
+    var sel='<select onchange="mxSetTeam(this.value)" style="font-size:13px;padding:6px 10px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:6px;min-width:220px"><option value="">Select a team\u2026</option>';
+    _mxTeams.forEach(function(t){sel+='<option value="'+t.id+'"'+(String(_mxTeam)===String(t.id)?' selected':'')+'>'+t.team+(t.pr!=null&&_mxRank[t.id]?'  (#'+_mxRank[t.id]+')':'')+'</option>';});
+    sel+='</select>';
+    body='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:10px;letter-spacing:1.5px;color:var(--txt3);text-transform:uppercase">Team</span>'+sel+'<span style="font-size:10px;color:var(--txt3)">opponent-adjusted \u00b7 pace \u00b7 style \u00b7 ATS graded to the opening line</span></div>';
+  }
+  el.innerHTML=bar+body;
+}
+function mxCompute(teamId){
+  teamId=String(teamId);
+  function rankBk(r){if(r==null)return null;if(r<=10)return 0;if(r<=25)return 1;if(r<=40)return 2;if(r<=75)return 3;if(r<=125)return 4;if(r<=200)return 5;return 6;}
+  function paceBk(t){if(t==null)return null;t=parseFloat(t);if(isNaN(t))return null;return t<=135?0:(t<=155?1:2);}
+  var rank=_MX_RB.map(function(){return _mxAgg();}),pace=[_mxAgg(),_mxAgg(),_mxAgg()],style={};var grid=[[_mxAgg(),_mxAgg(),_mxAgg()],[_mxAgg(),_mxAgg(),_mxAgg()],[_mxAgg(),_mxAgg(),_mxAgg()]];var ha=[_mxAgg(),_mxAgg()],fd=[_mxAgg(),_mxAgg()],conf=[_mxAgg(),_mxAgg()],spr=[_mxAgg(),_mxAgg(),_mxAgg(),_mxAgg(),_mxAgg()];
+  _MX_STY.forEach(function(s){style[s[0]]=_mxAgg();});
+  (_mxGames||[]).forEach(function(g){
+    if(g.status!=='final')return;
+    var home=String(g.home_team_id),away=String(g.away_team_id);
+    if(home!==teamId&&away!==teamId)return;
+    if(g.home_score==null||g.away_score==null)return;
+    var isHome=(home===teamId),oppId=isHome?away:home;
+    var margin=g.home_score-g.away_score;
+    var su=((isHome?margin>0:margin<0))?'W':'L';
+    var _op=g.opening_spread;if(_op==null)_op=g.closing_spread;if(_op==null)return;
+    var cm=margin-_op,ats;
+    if(cm===0)ats='P';else ats=((isHome?cm>0:cm<0))?'W':'L';
+    var gg={d:g.game_date,opp:oppId,home:isHome,su:su,ats:ats,rank:_mxRank[oppId],smv:(isHome?margin:-margin),cmv:(isHome?cm:-cm)};
+    var rb=rankBk(_mxRank[oppId]!=null?_mxRank[oppId]:null);if(rb!=null)_mxAdd(rank[rb],su,ats,gg);
+    var pb=paceBk(g.closing_total);if(pb!=null)_mxAdd(pace[pb],su,ats,gg);if(rb!=null&&pb!=null){var _ti=rb<=2?0:(rb<=4?1:2);_mxAdd(grid[_ti][pb],su,ats,gg);}_mxAdd(ha[isHome?0:1],su,ats,gg);{var _ln=_op*(isHome?1:-1);if(_ln>0)_mxAdd(fd[0],su,ats,gg);else if(_ln<0)_mxAdd(fd[1],su,ats,gg);var _a=Math.abs(_ln);_mxAdd(spr[_a<=2.5?0:(_a<=5.5?1:(_a<=9.5?2:(_a<=14.5?3:4)))],su,ats,gg);}var _cf=_mxConf[oppId],_ct=_mxConf[teamId];if(_cf!=null&&_ct!=null&&_cf!==''&&_ct!=='')_mxAdd(conf[_cf===_ct?0:1],su,ats,gg);
+    var st=_mxStyle[oppId];if(st){_MX_STY.forEach(function(s){if(st[s[0]])_mxAdd(style[s[0]],su,ats,gg);});}
+  });
+  return {rank:rank,pace:pace,style:style,grid:grid,ha:ha,fd:fd,conf:conf,spr:spr};
+}
+function mxDrill(kind,idx){
+  if(!_mxLast||!_mxLast[kind])return;var o=_mxLast[kind][idx];if(!o)return;
+  var lab;
+  if(kind==='rank')lab='vs rank '+_MX_RB[idx][1];
+  else if(kind==='pace')lab=['LOW \u2264135','AVG 136-155','HIGH 156+'][idx]+' pace';
+  else if(kind==='style')lab=(_MX_STY.filter(function(s){return s[0]===idx;})[0]||['','?'])[1];
+  else if(kind==='ha')lab=_MX_HA[idx];
+  else if(kind==='fd')lab='as '+_MX_FD[idx];
+  else if(kind==='conf')lab=_MX_CF[idx];
+  else if(kind==='spr')lab='spread '+_MX_SPR[idx];
+  else lab='';
+  var rows=(o.games||[]).slice().sort(function(a,b){return a.d<b.d?1:-1;}).map(function(g){var opp=_mxNames[g.opp]||('#'+g.opp);var ac=g.ats==='W'?'var(--grn2)':(g.ats==='L'?'var(--red2)':'var(--txt3)');return '<tr><td>'+g.d+'</td><td>'+opp+(g.rank?' (#'+g.rank+')':'')+'</td><td style="text-align:center">'+(g.home?'H':'A')+'</td><td style="text-align:center">'+g.su+'</td><td style="text-align:center;font-weight:800;color:'+ac+'">'+g.ats+'</td><td style="text-align:center;color:'+_mxMgCol(g.smv)+'">'+_mxMg(g.smv)+'</td><td style="text-align:center;font-weight:700;color:'+_mxMgCol(g.cmv)+'">'+_mxMg(g.cmv)+'</td></tr>';}).join('');
+  if(typeof _showModal==='function')_showModal((_mxNames[_mxTeam]||'Team')+' \u2014 '+lab+' ('+(o.games?o.games.length:0)+' games)','<div style="overflow-x:auto;padding:6px"><table class="data" style="font-size:11px;width:100%"><thead><tr><th>DATE</th><th>OPPONENT</th><th style="text-align:center">SITE</th><th style="text-align:center">SU</th><th style="text-align:center">ATS</th><th style="text-align:center">MOV</th><th style="text-align:center">COV</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+}
+function _mxSpectrum(rank){
+  // strong (1-10) on the LEFT -> weak (201+) on the RIGHT; bar height + color = ATS cover%
+  var cells='';
+  _MX_RB.forEach(function(b,i){var o=rank[i];var p=_mxPct(o);var h=(p==null)?4:Math.max(6,Math.min(100,p));var col=_mxCol(p);
+    cells+='<div onclick="mxDrill(\'rank\','+i+')" title="click for games" style="flex:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0">'
+      +'<div style="font-size:11px;font-weight:800;color:'+col+'">'+(p==null?'\u2014':p.toFixed(0)+'%')+'</div>'
+      +'<div style="width:78%;height:70px;display:flex;align-items:flex-end;margin:2px 0"><div style="width:100%;height:'+h+'%;background:'+col+';opacity:.85;border-radius:3px 3px 0 0"></div></div>'
+      +'<div style="font-size:9px;color:var(--txt2);font-weight:700;white-space:nowrap">'+b[1]+'</div>'
+      +'<div style="font-size:8px;color:var(--txt3)">'+(o.n||0)+'g</div>'+'<div style="font-size:9px;font-weight:700;color:'+_mxMgCol(_mxAvgCM(o))+'">'+(_mxAvgCM(o)==null?'':_mxMg(_mxAvgCM(o)))+'</div></div>';
+  });
+  return '<div style="display:flex;align-items:flex-end;gap:4px;padding:6px 2px">'+cells+'</div>'
+    +'<div style="text-align:center;font-size:8px;color:var(--txt3);padding:0 4px 3px">bar = ATS cover% \u00b7 figure = avg cover margin vs the opening line</div>'+'<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--txt3);letter-spacing:1px;padding:0 4px 4px"><span>\u25c0 TOUGHER OPPONENTS</span><span>WEAKER OPPONENTS \u25b6</span></div>';
+}
+function mxRender(){
+  var box=document.getElementById('matchups-body');if(!box)return;
+  if(_mxMode==='board'){mxRenderBoard();return;}if(!_mxTeam){box.innerHTML='<div class="panel" style="padding:20px"><div class="muted" style="font-size:13px">Pick a team above to see how it performs against tougher vs weaker opponents, in slow vs fast games, and against different styles of play.</div></div>';return;}
+  var C=mxCompute(_mxTeam);_mxLast=C;var nm=_mxNames[_mxTeam]||'Team';
+  function comb(list){var o=_mxAgg();list.forEach(function(x){o.aw+=x.aw;o.al+=x.al;o.ap+=x.ap;o.w+=x.w;o.l+=x.l;o.n+=x.n;});return o;}
+  var strong=comb([C.rank[0],C.rank[1],C.rank[2]]),weak=comb([C.rank[5],C.rank[6]]);
+  var sp=_mxPct(strong),wp=_mxPct(weak),steps=(sp!=null&&wp!=null)?(sp-wp):null;
+  var badge='';
+  if(steps!=null){var up=steps>=0;badge='<div style="display:inline-flex;flex-direction:column;align-items:center;background:var(--bg2);border:1px solid var(--bdr2);border-left:4px solid '+(up?'var(--grn2)':'var(--red2)')+';border-radius:8px;padding:8px 16px"><div style="font-size:20px;font-weight:800;color:'+(up?'var(--grn2)':'var(--red2)')+'">'+(up?'+':'')+steps.toFixed(1)+'%</div><div style="font-size:9px;letter-spacing:1px;color:var(--txt3);text-transform:uppercase">'+(up?'STEPS UP':'FADES DOWN')+'</div></div>';}
+  var headExtra='<div style="font-size:10px;color:var(--txt3);max-width:300px;line-height:1.5">ATS cover% vs top-40 opponents ('+(sp==null?'\u2014':sp.toFixed(0)+'%')+') minus vs 126+ ('+(wp==null?'\u2014':wp.toFixed(0)+'%')+'). Positive = raises its game against better teams.</div>';
+  // opponent-strength table
+  function tbl(title,note,rowsArr,labels,kind){
+    var h='<div class="panel" style="margin-top:14px;padding:12px"><div style="font-size:11px;color:var(--txt2);font-weight:700;letter-spacing:1px;margin-bottom:2px">'+title+'</div>';
+    if(note)h+='<div style="font-size:9px;color:var(--txt3);font-style:italic;margin-bottom:8px">'+note+'</div>';
+    h+='<div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>SPLIT</th><th style="text-align:center">GP</th><th style="text-align:center">SU</th><th style="text-align:center">ATS</th><th style="text-align:right">COVER%</th><th style="text-align:right">MOV</th><th style="text-align:right">COV MRG</th></tr></thead><tbody>';
+    rowsArr.forEach(function(o,i){var p=_mxPct(o);h+='<tr onclick="mxDrill(\''+kind+'\','+(kind==='style'?('\''+labels[i][2]+'\''):i)+')" style="cursor:pointer"><td class="bold">'+labels[i][0]+'</td><td style="text-align:center">'+(o.n||0)+'</td><td style="text-align:center">'+_mxSU(o)+'</td><td style="text-align:center">'+_mxRec(o)+'</td><td style="text-align:right;font-weight:800;color:'+_mxCol(p)+'">'+(p==null?'\u2014':p.toFixed(1)+'%')+'</td><td style="text-align:right;font-weight:700;color:'+_mxMgCol(_mxAvgMV(o))+'">'+_mxMg(_mxAvgMV(o))+'</td><td style="text-align:right;font-weight:800;color:'+_mxMgCol(_mxAvgCM(o))+'">'+_mxMg(_mxAvgCM(o))+'</td></tr>';});
+    h+='</tbody></table></div></div>';return h;
+  }
+  var rankLabels=_MX_RB.map(function(b){return [b[1]];});
+  var paceLabels=[['LOW \u2264135'],['AVG 136-155'],['HIGH 156+']];
+  var styleRows=_MX_STY.map(function(s){return C.style[s[0]];});
+  var styleLabels=_MX_STY.map(function(s){return [s[1],s[2],s[0]];});
+  var html='<div class="panel" style="margin-top:12px;padding:14px"><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:10px"><div style="font-size:17px;font-weight:800;color:var(--acc)">'+nm+(_mxRank[_mxTeam]?' \u00b7 #'+_mxRank[_mxTeam]:'')+'</div>'+badge+headExtra+'</div>'
+    +'<div style="font-size:10px;color:var(--txt2);font-weight:800;letter-spacing:1px;margin-bottom:2px">ATS COVER% ACROSS OPPONENT STRENGTH</div>'+_mxSpectrum(C.rank)+'</div>';
+  html+=mxNarrative(C,nm);
+  html+=mxQuadrant(C);
+  html+=tbl('BY OPPONENT STRENGTH (by power rank)','SU and ATS by where the opponent ranks. Click a row for the game log.',C.rank,rankLabels,'rank');
+  html+=tbl('BY EXPECTED PACE (posted total)','How the team does when the market hangs a slow, average, or fast number.',C.pace,paceLabels,'pace');html+=tbl('HOME / AWAY','Straight-up and ATS at home vs on the road.',C.ha,[['Home'],['Away']],'ha');html+=tbl('FAVORITE / UNDERDOG','How the team does laying points vs taking them (by the opening line).',C.fd,[['As Favorite'],['As Underdog']],'fd');html+=tbl('BY SPREAD RANGE','ATS by how big the opening number is, regardless of side.',C.spr,[['0-2.5'],['3-5.5'],['6-9.5'],['10-14.5'],['15+']],'spr');html+=tbl('CONFERENCE / NON-CONFERENCE','League play vs everyone else.',C.conf,[['Conference'],['Non-Conference']],'conf');
+  html+=tbl('BY OPPONENT STYLE','How the team fares against specific styles of play. Needs opponent player data \u2014 samples grow through the season.',styleRows,styleLabels,'style');
+  html+=mxArchetypeRank(C);box.innerHTML=html;
+}
+function mxNarrative(C,nm){
+  var bits=[];
+  function cb(list){var q=_mxAgg();list.forEach(function(x){q.aw+=x.aw;q.al+=x.al;q.cmg+=x.cmg;q.n+=x.n;});return q;}
+  var s=cb([C.rank[0],C.rank[1],C.rank[2]]),w=cb([C.rank[5],C.rank[6]]);var sp=_mxPct(s),wp=_mxPct(w);
+  if(sp!=null&&wp!=null&&(s.aw+s.al)>=3&&(w.aw+w.al)>=3){var d=sp-wp;if(d>=4)bits.push('raises its game against better teams (+'+d.toFixed(0)+'% ATS vs top-40 over 126+)');else if(d<=-4)bits.push('pads its cover rate against weak teams ('+d.toFixed(0)+'% vs top-40 over 126+)');}
+  var PL=['low-scoring','average-paced','high-scoring'],pb=null;C.pace.forEach(function(o,i){var cm=_mxAvgCM(o);if(o.n>=3&&cm!=null&&(pb==null||cm>pb.cm))pb={i:i,cm:cm};});
+  if(pb&&pb.cm>=1.5)bits.push('best in '+PL[pb.i]+' games ('+_mxMg(pb.cm)+' cover margin)');
+  var items=_MX_STY.map(function(st){var o=C.style[st[0]];return {l:st[1].replace(/^vs /,'').toLowerCase(),cm:_mxAvgCM(o),n:o.n};}).filter(function(x){return x.n>=2&&x.cm!=null;});
+  if(items.length>=2){items.sort(function(a,b){return b.cm-a.cm;});var b0=items[0],wq=items[items.length-1];if(b0.cm-wq.cm>=3)bits.push('feasts on '+b0.l+' teams but struggles vs '+wq.l);}
+  var fav=C.fd[0],dog=C.fd[1],fp=_mxAvgCM(fav),dp=_mxAvgCM(dog);
+  if(fav.n>=3&&dog.n>=3&&fp!=null&&dp!=null){if(fp-dp>=2)bits.push('covers better as a favorite');else if(dp-fp>=2)bits.push('is stronger value as an underdog');}
+  if(!bits.length)return '';
+  return '<div class="panel" style="margin-top:12px;padding:12px;border-left:4px solid var(--acc)"><div style="font-size:9px;letter-spacing:1.5px;color:var(--txt3);text-transform:uppercase;margin-bottom:3px">Auto Read</div><div style="font-size:13px;color:var(--txt1);line-height:1.55"><b>'+nm+'</b> '+bits.slice(0,3).join('; ')+'.</div></div>';
+}
+function _mxHeat(m){if(m==null)return {bg:'transparent',fg:'var(--txt3)'};var a=Math.min(0.55,0.12+Math.abs(m)/12);var bg=m>=0?('rgba(74,222,128,'+a.toFixed(2)+')'):('rgba(248,113,113,'+a.toFixed(2)+')');return {bg:bg,fg:_mxMgCol(m)};}
+function mxQuadrant(C){
+  var G=C.grid;if(!G)return '';var any=false;G.forEach(function(row){row.forEach(function(o){if(o.n>0)any=true;});});if(!any)return '';
+  var STR=['Strong (1-40)','Mid (41-125)','Weak (126+)'],PACE=['Low \u2264135','Avg 136-155','High 156+'];
+  var h='<div class="panel" style="margin-top:14px;padding:12px"><div style="font-size:11px;color:var(--txt2);font-weight:800;letter-spacing:1px;margin-bottom:2px">SITUATIONAL FINGERPRINT</div><div style="font-size:9px;color:var(--txt3);font-style:italic;margin-bottom:8px">Opponent strength \u00d7 expected pace \u2014 color = avg cover margin (green beats the number, red falls short). Click a cell for the games.</div>';
+  h+='<div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:4px;width:100%;max-width:560px"><thead><tr><th></th>';
+  PACE.forEach(function(p){h+='<th style="font-size:9px;color:var(--txt3);font-weight:700;text-align:center;letter-spacing:.5px">'+p+'</th>';});
+  h+='</tr></thead><tbody>';
+  STR.forEach(function(sl,si){h+='<tr><td style="font-size:9px;color:var(--txt3);font-weight:700;white-space:nowrap;padding-right:6px">'+sl+'</td>';
+    PACE.forEach(function(pl,pi){var o=G[si][pi];var cm=_mxAvgCM(o);var p=_mxPct(o);var ht=_mxHeat(o.n>0?cm:null);
+      if(o.n>0){h+='<td onclick="mxGridDrill('+si+','+pi+')" style="cursor:pointer;text-align:center;background:'+ht.bg+';border:1px solid var(--bdr);border-radius:6px;padding:8px 6px;min-width:78px"><div style="font-size:15px;font-weight:800;color:'+ht.fg+'">'+_mxMg(cm)+'</div><div style="font-size:8px;color:var(--txt3)">'+(p==null?'\u2014':p.toFixed(0)+'%')+' \u00b7 '+o.n+'g</div></td>';}
+      else{h+='<td style="text-align:center;background:transparent;border:1px dashed var(--bdr);border-radius:6px;padding:8px 6px;min-width:78px"><div style="font-size:11px;color:var(--txt3)">\u2014</div></td>';}
+    });h+='</tr>';});
+  h+='</tbody></table></div></div>';return h;
+}
+function mxGridDrill(si,pi){
+  if(!_mxLast||!_mxLast.grid)return;var o=_mxLast.grid[si][pi];if(!o)return;
+  var STR=['Strong (1-40)','Mid (41-125)','Weak (126+)'],PACE=['Low \u2264135','Avg 136-155','High 156+'];
+  var rows=(o.games||[]).slice().sort(function(a,b){return a.d<b.d?1:-1;}).map(function(g){var opp=_mxNames[g.opp]||('#'+g.opp);var ac=g.ats==='W'?'var(--grn2)':(g.ats==='L'?'var(--red2)':'var(--txt3)');return '<tr><td>'+g.d+'</td><td>'+opp+(g.rank?' (#'+g.rank+')':'')+'</td><td style="text-align:center">'+(g.home?'H':'A')+'</td><td style="text-align:center">'+g.su+'</td><td style="text-align:center;font-weight:800;color:'+ac+'">'+g.ats+'</td><td style="text-align:center;color:'+_mxMgCol(g.smv)+'">'+_mxMg(g.smv)+'</td><td style="text-align:center;font-weight:700;color:'+_mxMgCol(g.cmv)+'">'+_mxMg(g.cmv)+'</td></tr>';}).join('');
+  if(typeof _showModal==='function')_showModal((_mxNames[_mxTeam]||'Team')+' \u2014 '+STR[si]+' \u00b7 '+PACE[pi]+' ('+(o.games?o.games.length:0)+' games)','<div style="overflow-x:auto;padding:6px"><table class="data" style="font-size:11px;width:100%"><thead><tr><th>DATE</th><th>OPPONENT</th><th style="text-align:center">SITE</th><th style="text-align:center">SU</th><th style="text-align:center">ATS</th><th style="text-align:center">MOV</th><th style="text-align:center">COV</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+}
+function mxArchetypeRank(C){
+  var items=_MX_STY.map(function(s){var o=C.style[s[0]];return {lbl:s[1].replace(/^vs /,''),o:o,cm:_mxAvgCM(o),pct:_mxPct(o),n:o.n};}).filter(function(x){return x.n>0;});
+  if(!items.length)return '';
+  items.sort(function(a,b){return (b.cm==null?-999:b.cm)-(a.cm==null?-999:a.cm);});
+  var best=items[0],worst=items[items.length-1],mx=1;items.forEach(function(x){if(x.cm!=null)mx=Math.max(mx,Math.abs(x.cm));});
+  var h='<div class="panel" style="margin-top:14px;padding:12px"><div style="font-size:11px;color:var(--txt2);font-weight:800;letter-spacing:1px;margin-bottom:2px">STYLE MATCHUP RANKER</div><div style="font-size:9px;color:var(--txt3);font-style:italic;margin-bottom:8px">Which styles this team feasts on vs struggles against, by avg cover margin. Needs opponent player data \u2014 samples grow through the season.</div>';
+  if(items.length>=2&&best.cm!=null&&worst.cm!=null&&best.cm>worst.cm){h+='<div style="font-size:12px;margin-bottom:10px"><span style="color:var(--grn2);font-weight:800">Feasts on '+best.lbl+'</span> ('+_mxMg(best.cm)+') \u00b7 <span style="color:var(--red2);font-weight:800">Struggles vs '+worst.lbl+'</span> ('+_mxMg(worst.cm)+')</div>';}
+  items.forEach(function(x){var w=x.cm==null?0:Math.min(50,Math.abs(x.cm)/mx*50);var pos=x.cm!=null&&x.cm>=0;var col=pos?'var(--grn2)':'var(--red2)';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:150px;font-size:11px;color:var(--txt1);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.lbl+'</div><div style="flex:1;display:flex;align-items:center;height:16px"><div style="width:50%;display:flex;justify-content:flex-end"><div style="height:12px;width:'+(pos?0:w)+'%;background:'+col+';opacity:.8;border-radius:3px 0 0 3px"></div></div><div style="width:1px;height:16px;background:var(--bdr2)"></div><div style="width:50%"><div style="height:12px;width:'+(pos?w:0)+'%;background:'+col+';opacity:.8;border-radius:0 3px 3px 0"></div></div></div><div style="width:52px;text-align:right;font-size:12px;font-weight:800;color:'+_mxMgCol(x.cm)+'">'+_mxMg(x.cm)+'</div><div style="width:66px;text-align:right;font-size:9px;color:var(--txt3)">'+(x.pct==null?'\u2014':x.pct.toFixed(0)+'%')+' \u00b7 '+x.n+'g</div></div>';
+  });
+  h+='</div>';return h;
+}
+/* compact card for the team page */
+function mxCardHtml(teamId){
+  if(!_mxReady||teamId==null)return '';
+  var prev=_mxTeam;_mxTeam=String(teamId);var C=mxCompute(teamId);_mxTeam=prev;
+  function comb(list){var o=_mxAgg();list.forEach(function(x){o.aw+=x.aw;o.al+=x.al;});return o;}
+  var sp=_mxPct(comb([C.rank[0],C.rank[1],C.rank[2]])),wp=_mxPct(comb([C.rank[5],C.rank[6]]));
+  var steps=(sp!=null&&wp!=null)?(sp-wp):null;var any=C.rank.some(function(o){return o.n>0;});if(!any)return '';
+  var up=steps!=null&&steps>=0;
+  var badge=steps==null?'':'<span style="font-weight:800;color:'+(up?'var(--grn2)':'var(--red2)')+'">'+(up?'+':'')+steps.toFixed(1)+'% '+(up?'STEPS UP':'FADES')+'</span>';
+  return '<div class="panel" style="padding:12px;margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--txt2)">OPPONENT-ADJUSTED ATS</div><div style="font-size:11px">'+badge+'</div></div>'+_mxSpectrum(C.rank)+'</div>';
+}
 
 /* ===== THEME TOGGLE (Light / Warm Dark / True Dark) ===== */
 var _cbkThemes=[{cls:'',icon:'\u2600',lbl:'LIGHT'},{cls:'cbk-warm',icon:'\ud83c\udf19',lbl:'WARM'},{cls:'cbk-true',icon:'\ud83c\udf19',lbl:'DARK'}];
