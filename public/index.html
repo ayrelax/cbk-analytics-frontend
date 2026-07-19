@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Berbert's Full Court Press — CBK Analytics</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjE1IiBmaWxsPSIjYzg4MTFmIi8+CjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIwMTQwYSIgc3Ryb2tlLXdpZHRoPSIxLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+CjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjE1Ii8+CjxsaW5lIHgxPSIxNiIgeTE9IjEiIHgyPSIxNiIgeTI9IjMxIi8+CjxsaW5lIHgxPSIxIiB5MT0iMTYiIHgyPSIzMSIgeTI9IjE2Ii8+CjxwYXRoIGQ9Ik01LjYgNS42IEMgMTIgMTEsIDEyIDIxLCA1LjYgMjYuNCIvPgo8cGF0aCBkPSJNMjYuNCA1LjYgQyAyMCAxMSwgMjAgMjEsIDI2LjQgMjYuNCIvPgo8L2c+Cjwvc3ZnPg=="/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjE1IiBmaWxsPSIjYzg4MTFmIiBzdHJva2U9IiMyMDE0MGEiIHN0cm9rZS13aWR0aD0iMS44Ii8+CjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIwMTQwYSIgc3Ryb2tlLXdpZHRoPSIxLjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC41Ij4KPGxpbmUgeDE9IjE2IiB5MT0iMSIgeDI9IjE2IiB5Mj0iMzEiLz4KPGxpbmUgeDE9IjEiIHkxPSIxNiIgeDI9IjMxIiB5Mj0iMTYiLz4KPHBhdGggZD0iTTUuNiA1LjYgQyAxMiAxMSwgMTIgMjEsIDUuNiAyNi40Ii8+CjxwYXRoIGQ9Ik0yNi40IDUuNiBDIDIwIDExLCAyMCAyMSwgMjYuNCAyNi40Ii8+CjwvZz4KPHRleHQgeD0iMTYiIHk9IjE2LjUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIiBmb250LWZhbWlseT0iQXJpYWwsIEhlbHZldGljYSwgc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjgwMCIgZm9udC1zaXplPSIxNSIgbGV0dGVyLXNwYWNpbmc9Ii0wLjUiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzIwMTQwYSIgc3Ryb2tlLXdpZHRoPSIwLjgiIHBhaW50LW9yZGVyPSJzdHJva2UiPlBCPC90ZXh0Pgo8L3N2Zz4="/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg0:#f8f4ef;--bg1:#ffffff;--bg2:#ede8e1;--bg3:#e5ddd4;--bg4:#d4c9b8;--acc:#8b6914;--acc2:#c8a96e;--acc3:#b8860b;--grn:#1b5e20;--grn2:#2e7d32;--red:#b71c1c;--red2:#c62828;--amb:#e65100;--amb2:#ff8f00;--pur:#6a1b9a;--txt1:#1a1208;--txt2:#2c1f0a;--txt3:#4a3510;--bdr:#cabda8;--bdr2:#b6a482;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
@@ -30,7 +30,25 @@ body{background:var(--bg0);color:var(--txt1);font-family:-apple-system,BlinkMacS
 .fav-team-edit:hover{color:var(--acc);background:var(--bg2)}
 .fav-team-sel{background:var(--bg2);border:1px solid var(--bdr2);color:var(--txt1);font-family:inherit;font-size:10px;letter-spacing:.5px;padding:4px 8px;border-radius:5px;max-width:200px}
 .fav-team-sel:focus{outline:none;border-color:var(--acc)}
-.nav{background:var(--bg1);border-bottom:2px solid var(--bdr2);display:flex;overflow-x:auto}
+#cbk-hamburger{cursor:pointer;background:none;border:none;color:var(--acc);font-size:20px;line-height:1;padding:2px 6px 2px 0;font-family:inherit}
+#cbk-hamburger:hover{color:var(--acc3)}
+.cbk-ham-lbl{font-size:11px;font-weight:700;letter-spacing:1.5px;vertical-align:middle;margin-left:6px}
+#cbk-drawer-overlay{position:fixed;inset:0;background:rgba(20,15,8,.42);opacity:0;visibility:hidden;transition:opacity .2s;z-index:9998}
+#cbk-drawer-overlay.open{opacity:1;visibility:visible}
+#cbk-drawer{position:fixed;top:0;left:0;height:100%;width:252px;max-width:82vw;background:var(--bg1);border-right:1px solid var(--bdr2);box-shadow:2px 0 16px rgba(0,0,0,.14);transform:translateX(-100%);transition:transform .22s ease;z-index:9999;overflow-y:auto}
+#cbk-drawer.open{transform:translateX(0)}
+.cbk-drawer-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;font-size:12px;font-weight:800;letter-spacing:2px;color:var(--acc);border-bottom:1px solid var(--bdr);background:#fdf9f4;position:sticky;top:0}
+.cbk-drawer-x{cursor:pointer;color:var(--txt3);font-size:16px;line-height:1;padding:0 4px}
+.cbk-drawer-x:hover{color:var(--acc)}
+.cbk-drawer-item{position:relative;border-bottom:1px solid var(--bg2)}
+.cbk-drawer-main{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:1.4px;color:var(--txt2)}
+.cbk-drawer-main:hover,.cbk-drawer-item.hot .cbk-drawer-main{background:var(--bg2);color:var(--acc)}
+.cbk-chev{color:var(--txt3);font-size:13px;font-weight:800}
+.cbk-flyout-fixed{position:fixed;min-width:184px;max-height:calc(100vh - 16px);overflow-y:auto;background:var(--bg1);border:1px solid var(--bdr2);box-shadow:2px 2px 14px rgba(0,0,0,.16);z-index:10000;border-radius:0 6px 6px 0}
+.cbk-flyitem{padding:10px 16px;font-size:11px;font-weight:600;letter-spacing:1px;color:var(--txt2);cursor:pointer;white-space:nowrap;border-bottom:1px solid var(--bg2)}
+.cbk-flyitem:last-child{border-bottom:none}
+.cbk-flyitem:hover{background:var(--bg2);color:var(--acc)}
+.nav{display:none}
 .nav-btn{padding:12px 18px;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--txt3);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;white-space:nowrap;font-family:inherit}
 .nav-btn:hover{color:var(--txt1);background:var(--bg2)}
 .nav-btn.active{color:var(--acc);border-bottom-color:var(--acc)}
@@ -508,7 +526,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 <body>
 <style id="prelogin-style">body{overflow:hidden!important}#login-screen{display:flex!important;position:fixed!important;top:0!important;left:0!important;width:100%!important;height:100%!important;background:#f8f4ef!important;z-index:999999!important}</style>
 <div class="top-bar">
-  <div class="logo">BERBERT'S FULL COURT PRESS <span>/ </span>CBK ANALYTICS</div>
+  <div style="display:flex;align-items:center;gap:10px"><button id="cbk-hamburger" onclick="cbkToggleDrawer()" aria-label="Open menu" title="Menu">&#9776;<span class="cbk-ham-lbl">MENU</span></button><div class="logo">BERBERT'S FULL COURT PRESS <span>/ </span>CBK ANALYTICS</div></div>
   <div id="tipoff" title="Season Tip-Off: Notre Dame vs Villanova" style="display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:7px;padding:4px 11px">
     <span style="font-size:8px;font-weight:800;letter-spacing:1.5px;color:var(--acc);text-transform:uppercase;white-space:nowrap">&#127936; Tip-Off</span>
     <span style="font-weight:700;color:var(--txt1);font-size:11px;white-space:nowrap">Notre Dame vs Villanova</span>
@@ -521,6 +539,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
     <div class="clock" id="clock"></div>
   </div>
 </div>
+<div id="cbk-drawer-overlay" onclick="cbkCloseDrawer()"></div><nav id="cbk-drawer" aria-label="Main menu"><div class="cbk-drawer-hdr">MENU<span class="cbk-drawer-x" onclick="cbkCloseDrawer()" title="Close">&times;</span></div><div id="cbk-drawer-list"></div></nav>
 <div class="nav">
   <button class="nav-btn active" onclick="showPage('dashboard',this)">DASHBOARD</button>
   <button class="nav-btn" onclick="showPage('ratings',this)">POWER RATINGS</button>
@@ -2906,6 +2925,19 @@ function cbkGoToPage(pg){
   for(var i=0;i<navs.length;i++){var oc=navs[i].getAttribute('onclick')||'';if(oc.indexOf("showPage('"+pg+"'")>=0){btn=navs[i];break;}}
   try{showPage(pg,btn||{classList:{add:function(){}}});}catch(e){}
 }
+var _MENU_SUB={spreads:[{l:'Today',f:function(){loadSpreads('today');}},{l:'All Games',f:function(){loadSpreads('all');}},{l:'Results',f:function(){loadSpreads('final');}}],travel:[{l:'Schedule',f:function(){travelMode('sched');}},{l:'SU / ATS Records',f:function(){travelMode('rec');}}],modelats:[{l:'This Season',f:function(){matsView('season');}},{l:'Historical',f:function(){matsView('hist');}}],matchups:[{l:'Team',f:function(){mxSetMode('team');}},{l:'Leaderboard',f:function(){mxSetMode('board');}}],players:[{l:'Players',f:function(){plSetView('players');}},{l:'Teams',f:function(){plSetView('teams');}}],markets:[{l:'Markets',f:function(){pmSetView('markets');}},{l:'Watchlist',f:function(){pmSetView('watch');}}],specials:[{l:'Single Game',f:function(){spSwitchMode('game');}},{l:'Daily Top 25',f:function(){spSwitchMode('day');}},{l:'Game Props',f:function(){spSwitchMode('props');}},{l:'First 3 PT',f:function(){spSwitchMode('first3');}},{l:'First Scorer',f:function(){spSwitchMode('firstsc');}},{l:'Game Specials',f:function(){spSwitchMode('gamespec');}}],mte:[{l:'Players Era 16',f:function(){mteShowEvent('pe16');}},{l:'Players Era 8',f:function(){mteShowEvent('pe8');}},{l:'Maui',f:function(){mteShowEvent('maui');}},{l:'Battle 4 Atlantis',f:function(){mteShowEvent('b4a');}},{l:'Baha Mar',f:function(){mteShowEvent('bahamar');}},{l:'Hall of Fame',f:function(){mteShowEvent('hof');}},{l:'Charleston',f:function(){mteShowEvent('charleston');}}],ncaa:[{l:'Bracket',f:function(){ncaaShowView('bracket');}},{l:'Schedule',f:function(){ncaaShowView('schedule');}}],conftourney:function(){var sel=document.getElementById('ct-conf');if(!sel)return[];var out=[];Array.prototype.forEach.call(sel.options,function(o){if(o.disabled||!o.value)return;out.push({l:(o.textContent||o.value).trim(),f:(function(v){return function(){var s2=document.getElementById('ct-conf');if(s2){s2.value=v;ctChangeConf();}};})(o.value)});});return out;}};function _menuItems(code){var m=_MENU_SUB[code];if(!m)return null;return (typeof m==='function')?m():m;}
+var _flyTimer=null;
+function cbkBuildDrawer(){var list=document.getElementById('cbk-drawer-list');if(!list)return;var navs=document.querySelectorAll('.nav-btn');var html='';navs.forEach(function(b){if(b.style.display==='none')return;var oc=b.getAttribute('onclick')||'';var m=oc.match(/showPage\('([a-z]+)'/);if(!m)return;var code=m[1];var label=(b.textContent||'').trim();var sub=_MENU_SUB[code];var attr=sub?(' onmouseenter="cbkFly(\''+code+'\',this)" onmouseleave="cbkFlyDelay()"'):'';html+='<div class="cbk-drawer-item"'+attr+'><div class="cbk-drawer-main" onclick="cbkNavDrawer(\''+code+'\')"><span>'+label+'</span>'+(sub?'<span class="cbk-chev">\u203a</span>':'')+'</div></div>';});list.innerHTML=html;}
+function cbkOpenDrawer(){cbkBuildDrawer();var d=document.getElementById('cbk-drawer'),o=document.getElementById('cbk-drawer-overlay');if(d)d.classList.add('open');if(o)o.classList.add('open');}
+function cbkCloseDrawer(){cbkFlyHide();var d=document.getElementById('cbk-drawer'),o=document.getElementById('cbk-drawer-overlay');if(d)d.classList.remove('open');if(o)o.classList.remove('open');}
+function cbkToggleDrawer(){var d=document.getElementById('cbk-drawer');if(d&&d.classList.contains('open'))cbkCloseDrawer();else cbkOpenDrawer();}
+function cbkNavDrawer(code){cbkCloseDrawer();try{cbkGoToPage(code);}catch(e){}}
+function cbkGoSub(code,idx){cbkCloseDrawer();try{cbkGoToPage(code);}catch(e){}var sub=_menuItems(code);if(sub&&sub[idx]){setTimeout(function(){try{sub[idx].f();}catch(e){}},150);setTimeout(function(){try{sub[idx].f();}catch(e){}},420);}}
+function cbkFly(code,itemEl){var sub=_menuItems(code);if(!sub||!sub.length)return;if(_flyTimer){clearTimeout(_flyTimer);_flyTimer=null;}cbkFlyHide();document.querySelectorAll('.cbk-drawer-item.hot').forEach(function(x){x.classList.remove('hot');});itemEl.classList.add('hot');var r=itemEl.getBoundingClientRect();var fly=document.createElement('div');fly.id='cbk-active-fly';fly.className='cbk-flyout-fixed';fly.style.left=r.right+'px';var h='';sub.forEach(function(s,i){h+='<div class="cbk-flyitem" onclick="cbkGoSub(\''+code+'\','+i+')">'+s.l+'</div>';});fly.innerHTML=h;fly.addEventListener('mouseenter',function(){if(_flyTimer){clearTimeout(_flyTimer);_flyTimer=null;}});fly.addEventListener('mouseleave',cbkFlyHide);document.body.appendChild(fly);var fh=fly.offsetHeight;var maxTop=window.innerHeight-fh-8;var top=Math.max(4,Math.min(r.top,Math.max(4,maxTop)));fly.style.top=top+'px';fly._owner=itemEl;}
+function cbkFlyDelay(){if(_flyTimer)clearTimeout(_flyTimer);_flyTimer=setTimeout(cbkFlyHide,200);}
+function cbkFlyHide(){var f=document.getElementById('cbk-active-fly');if(f){if(f._owner)f._owner.classList.remove('hot');f.parentNode.removeChild(f);}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')cbkCloseDrawer();});
+
 function cbkLogout(){try{localStorage.removeItem('cbk_session');sessionStorage.removeItem('cbk_session');localStorage.removeItem('cbk_page');}catch(e){}location.reload();}
 function cbkLogoutConfirm(){if(confirm('Log out?')){cbkLogout();}}
 
