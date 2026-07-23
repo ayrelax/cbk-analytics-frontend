@@ -2904,7 +2904,22 @@ function restoreSession(){
   var ps=document.getElementById('prelogin-style');if(ps&&ps.parentNode)ps.parentNode.removeChild(ps);
   var ls=document.getElementById('login-screen');if(ls)ls.style.display='none';
   try{if(isAdmin){var ab=document.getElementById('admin-badge');if(ab)ab.style.display='flex';var np=document.getElementById('nav-prupdate');if(np)np.style.display='block';var nr=document.getElementById('nav-rosterload');if(nr)nr.style.display='block';var su=document.getElementById('nav-statsupload');if(su)su.style.display='block';}else{var _vl=document.getElementById('viewonly-logout');if(_vl)_vl.style.display='block';setTimeout(cbkStartFinalPolling,500);}}catch(e){}
-  loadDashboard(); /* always open on Dashboard for a new visit */
+  cbkRestorePage();
+}
+function cbkRestorePage(){
+  var st=null;try{st=history.state;}catch(e){}
+  var page=null,sub=null;
+  if(st&&st.cbk&&st.page){page=st.page;sub=st.sub||null;}
+  if(!page){try{page=localStorage.getItem('cbk_page');}catch(e){}}
+  var ADM={prupdate:1,rosterload:1,statsupload:1};
+  if(!page||page==='dashboard'||!document.getElementById('page-'+page)||(ADM[page]&&!isAdmin)){loadDashboard();return;}
+  try{cbkGoToPage(page);}catch(e){loadDashboard();return;}
+  var pel=document.getElementById('page-'+page);
+  if(!pel||pel.style.display!=='block'){loadDashboard();return;}
+  try{history.replaceState({cbk:1,page:page,sub:sub},'');}catch(e){}
+  if(sub&&sub.fn&&typeof window[sub.fn]==='function'){var f=window[sub.fn],a=sub.arg;
+    setTimeout(function(){try{f(a);}catch(e){}},200);
+    setTimeout(function(){try{f(a);}catch(e){}},520);}
 }
 function cbkGoToPage(pg){
   if(!document.getElementById('page-'+pg))return;
