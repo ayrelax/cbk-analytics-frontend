@@ -805,6 +805,44 @@ body.cbk-capturing .sg-c{font-size:7px!important}
 body.cbk-capturing .sg-ab{font-size:12px!important}
 body.cbk-capturing .sg-nm{font-size:9px!important}
 body.cbk-capturing .cg-row{font-size:9px!important;padding:1px 6px!important}
+
+/* ---- v5: print = grid only, packed into columns, larger names ---- */
+@media print{
+  @page{size:landscape;margin:8mm}
+  body.cbk-printing .cbk-legend{display:none!important}
+  /* multi-column packs cards vertically instead of leaving row-height gaps */
+  body.cbk-printing .sg-grid,body.cbk-printing .cg-grid{
+    display:block!important;column-count:5;column-gap:7px}
+  body.cbk-printing .sg-card,body.cbk-printing .cg-card{
+    display:inline-block;width:100%;margin:0 0 7px 0;break-inside:avoid;page-break-inside:avoid}
+  body.cbk-printing .sg-row{font-size:13px!important;padding:2px 8px!important;line-height:1.5}
+  body.cbk-printing .sg-t{font-size:13px!important;font-weight:600}
+  body.cbk-printing .sg-c{font-size:9.5px!important}
+  body.cbk-printing .sg-ab{font-size:16px!important}
+  body.cbk-printing .sg-nm{font-size:12.5px!important}
+  body.cbk-printing .sg-ct{font-size:9.5px!important}
+  body.cbk-printing .sg-hd{padding:4px 8px!important}
+  body.cbk-printing .sg-warn{font-size:10px!important;padding:3px 8px!important;letter-spacing:.9px!important}
+  body.cbk-printing .cg-row{font-size:13px!important;padding:2px 8px!important;line-height:1.5}
+  body.cbk-printing .cg-hd{font-size:13px!important;padding:4px 8px!important}
+  body.cbk-printing .cg-s{font-size:10px!important}
+  body.cbk-printing .cbk-cbar{height:12px;width:3px}
+  body.cbk-printing .cmp-notes{padding:6px 9px!important;margin-bottom:8px!important}
+  body.cbk-printing .cmp-note{font-size:10px!important;line-height:1.5}
+  body.cbk-printing .cmp-notes-t{font-size:9px!important}
+}
+/* same packing + sizing for Save-as-PDF */
+body.cbk-capturing .cbk-legend{display:none!important}
+body.cbk-capturing .sg-grid,body.cbk-capturing .cg-grid{display:block!important;column-count:5;column-gap:7px}
+body.cbk-capturing .sg-card,body.cbk-capturing .cg-card{display:inline-block;width:100%;margin:0 0 7px 0;break-inside:avoid}
+body.cbk-capturing .sg-row{font-size:13px!important;padding:2px 8px!important;line-height:1.5}
+body.cbk-capturing .sg-t{font-size:13px!important;font-weight:600}
+body.cbk-capturing .sg-c{font-size:9.5px!important}
+body.cbk-capturing .sg-ab{font-size:16px!important}
+body.cbk-capturing .sg-nm{font-size:12.5px!important}
+body.cbk-capturing .sg-warn{font-size:10px!important;padding:3px 8px!important}
+body.cbk-capturing .cg-row{font-size:13px!important;padding:2px 8px!important}
+body.cbk-capturing .cg-hd{font-size:13px!important}
 </style>
 </head>
 <body>
