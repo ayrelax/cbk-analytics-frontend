@@ -713,6 +713,45 @@ body.cbk-capturing .cmp-d{font-size:9px!important}
   body.cbk-printing .cmp-d{font-size:8.5px!important}
   body.cbk-printing .alt-tbl td,body.cbk-printing .alt-tbl th{padding:1.5px 6px!important}
 }
+/* ---- conference grid ---- */
+.cg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:9px}
+.cg-card{border:1px solid var(--bdr);border-radius:6px;overflow:hidden;background:var(--bg1);break-inside:avoid;page-break-inside:avoid}
+.cg-hd{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);padding:5px 9px;font-weight:800;font-size:11.5px;letter-spacing:.5px;color:var(--acc)}
+.cg-ct{color:var(--txt3);font-weight:700;font-size:10px}
+.cg-row{display:grid;grid-template-columns:1fr 30px 58px;align-items:center;gap:5px;padding:2.5px 9px;font-size:11.5px}
+.cg-row:nth-child(even){background:rgba(0,0,0,0.025)}
+.cg-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt1)}
+.cg-s{font-weight:800;font-size:10.5px;color:var(--red2);text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace}
+.cg-n{font-size:8px;font-weight:800;color:var(--amb);letter-spacing:.4px;text-align:right}
+/* ---- state grid ---- */
+.sg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:10px}
+.sg-card{border:1px solid var(--bdr);border-radius:7px;overflow:hidden;background:var(--bg1);break-inside:avoid;page-break-inside:avoid}
+.sg-neut{border-color:var(--amb);border-width:2px}
+.sg-hd{display:flex;align-items:center;gap:8px;background:var(--bg2);padding:6px 10px;border-bottom:1px solid var(--bdr)}
+.sg-ab{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:800;font-size:14px;color:var(--acc);letter-spacing:1px}
+.sg-nm{font-size:11px;color:var(--txt2);font-weight:700;flex:1}
+.sg-ct{font-size:10px;color:var(--txt3);font-weight:700}
+.sg-warn{background:rgba(230,81,0,0.14);color:var(--amb);font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;text-align:center}
+.sg-body{padding:3px 0}
+.sg-row{display:flex;align-items:center;gap:6px;padding:2.5px 10px;font-size:11.5px}
+.sg-row:nth-child(even){background:rgba(0,0,0,0.025)}
+.sg-t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt1)}
+.sg-c{font-size:9px;color:var(--txt3);font-weight:700;letter-spacing:.3px}
+@media print{
+  body.cbk-printing .sg-grid{grid-template-columns:repeat(5,1fr)!important;gap:5px!important}
+  body.cbk-printing .cg-grid{grid-template-columns:repeat(5,1fr)!important;gap:5px!important}
+  body.cbk-printing .sg-row,body.cbk-printing .cg-row{font-size:7px!important;padding:0 5px!important;line-height:1.35}
+  body.cbk-printing .sg-hd{padding:2px 5px!important}
+  body.cbk-printing .sg-ab{font-size:10px!important}
+  body.cbk-printing .sg-nm{font-size:7.5px!important}
+  body.cbk-printing .sg-warn{font-size:6.5px!important;padding:1px 5px!important}
+  body.cbk-printing .cg-hd{padding:2px 5px!important;font-size:8px!important}
+}
+body.cbk-capturing .sg-grid,body.cbk-capturing .cg-grid{grid-template-columns:repeat(5,1fr)!important;gap:5px!important}
+body.cbk-capturing .sg-row,body.cbk-capturing .cg-row{font-size:7.5px!important;padding:0 5px!important;line-height:1.4}
+body.cbk-capturing .sg-hd,body.cbk-capturing .cg-hd{padding:2px 5px!important}
+body.cbk-capturing .sg-ab{font-size:10px!important}
+body.cbk-capturing .sg-nm{font-size:8px!important}
 </style>
 </head>
 <body>
@@ -1257,12 +1296,13 @@ body.cbk-capturing .cmp-d{font-size:9px!important}
 </div>
 <div id="page-compliance" style="display:none">
 <div style="font-size:12px;color:var(--txt2);margin-bottom:8px">COMPLIANCE</div>
-<div class="search-bar" style="gap:10px;align-items:center;margin-bottom:12px">
+<div class="seg" id="cmp-seg" style="margin-bottom:12px"><button class="seg-btn active" onclick="cmpSwitch('daily',this)">DAILY COMPLIANCE</button><button class="seg-btn" onclick="cmpSwitch('conf',this)">CONF GRID</button><button class="seg-btn" onclick="cmpSwitch('state',this)">STATE GRID</button></div>
+<div class="search-bar" id="cmp-daily-bar" style="gap:10px;align-items:center;margin-bottom:12px">
 <input type="date" class="field" id="cmp-date" style="max-width:170px" onchange="cmpLoad()">
 <button class="btn" onclick="cmpLoad()">LOAD</button>
 <span style="font-size:11px;color:var(--txt3)">Which games cannot be offered in which states, because a participant is based there.</span>
 </div>
-<div class="panel"><div id="cmp-body"></div></div>
+<div class="panel"><div id="cmp-body"></div><div id="cmp-conf-body" style="display:none"></div><div id="cmp-state-body" style="display:none"></div></div>
 </div>
 <div id="page-matrix" style="display:none">
 <div style="font-size:12px;color:var(--txt2);margin-bottom:8px">CONFERENCE MATRIX</div>
@@ -5604,8 +5644,8 @@ async function matsPullBOL(){
 
 
 /* ================= CBK v2 DATA ================= */
-var CBK_PROPS_T2S={"Georgetown": "Washington DC", "George Washington": "Washington DC", "American": "Washington DC", "Howard": "Washington DC", "Maine": "Maine", "Nebraska": "Nebraska", "Creighton": "Nebraska", "Nebraska Omaha": "Nebraska", "Providence": "Rhode Island", "Rhode Island": "Rhode Island", "Brown": "Rhode Island", "Bryant": "Rhode Island", "Illinois": "Illinois", "Northwestern": "Illinois", "DePaul": "Illinois", "Loyola Chicago": "Illinois", "Illinois St.": "Illinois", "Southern Illinois": "Illinois", "Bradley": "Illinois", "Illinois Chicago": "Illinois", "Eastern Illinois": "Illinois", "Western Illinois": "Illinois", "SIU Edwardsville": "Illinois", "Chicago St.": "Illinois", "Seton Hall": "New Jersey", "Rutgers": "New Jersey", "Princeton": "New Jersey", "Monmouth": "New Jersey", "Rider": "New Jersey", "Saint Peter's": "New Jersey", "NJIT": "New Jersey", "Fairleigh Dickinson": "New Jersey", "Iowa": "Iowa", "Iowa St.": "Iowa", "Northern Iowa": "Iowa", "Drake": "Iowa", "Missouri": "Missouri", "Saint Louis": "Missouri", "Missouri St.": "Missouri", "Southeast Missouri St.": "Missouri", "UMKC": "Missouri", "Lindenwood": "Missouri", "Washington": "Washington State", "Washington St.": "Washington State", "Gonzaga": "Washington State", "Seattle": "Washington State", "Eastern Washington": "Washington State"};
-var CBK_GAME_T2S={"Georgetown": "Washington DC", "George Washington": "Washington DC", "American": "Washington DC", "Howard": "Washington DC", "Delaware": "Delaware", "Delaware St.": "Delaware", "Maine": "Maine", "Nebraska": "Nebraska", "Creighton": "Nebraska", "Nebraska Omaha": "Nebraska", "Providence": "Rhode Island", "Rhode Island": "Rhode Island", "Brown": "Rhode Island", "Bryant": "Rhode Island", "Illinois": "Illinois", "Northwestern": "Illinois", "DePaul": "Illinois", "Loyola Chicago": "Illinois", "Illinois St.": "Illinois", "Southern Illinois": "Illinois", "Bradley": "Illinois", "Illinois Chicago": "Illinois", "Eastern Illinois": "Illinois", "Western Illinois": "Illinois", "SIU Edwardsville": "Illinois", "Chicago St.": "Illinois", "Boston College": "Massachusetts", "Boston University": "Massachusetts", "Harvard": "Massachusetts", "Massachusetts": "Massachusetts", "UMass Lowell": "Massachusetts", "Northeastern": "Massachusetts", "Holy Cross": "Massachusetts", "Merrimack": "Massachusetts", "Stonehill": "Massachusetts", "Seton Hall": "New Jersey", "Rutgers": "New Jersey", "Princeton": "New Jersey", "Monmouth": "New Jersey", "Rider": "New Jersey", "Saint Peter's": "New Jersey", "NJIT": "New Jersey", "Fairleigh Dickinson": "New Jersey", "Virginia": "Virginia", "Virginia Tech": "Virginia", "VCU": "Virginia", "George Mason": "Virginia", "Richmond": "Virginia", "Old Dominion": "Virginia", "James Madison": "Virginia", "William & Mary": "Virginia", "Liberty": "Virginia", "Radford": "Virginia", "VMI": "Virginia", "Longwood": "Virginia", "Norfolk St.": "Virginia", "Hampton": "Virginia", "St. John's": "New York", "Syracuse": "New York", "Cornell": "New York", "Columbia": "New York", "Fordham": "New York", "Manhattan": "New York", "Iona": "New York", "Siena": "New York", "Canisius": "New York", "Niagara": "New York", "Binghamton": "New York", "Albany": "New York", "Stony Brook": "New York", "Buffalo": "New York", "Army": "New York", "Colgate": "New York", "Hofstra": "New York", "LIU": "New York", "St. Bonaventure": "New York", "Marist": "New York", "Wagner": "New York", "Le Moyne": "New York", "Washington": "Washington State", "Washington St.": "Washington State", "Gonzaga": "Washington State", "Seattle": "Washington State", "Eastern Washington": "Washington State"};
+var CBK_PROPS_T2S={"Georgetown": "Washington DC", "George Washington": "Washington DC", "American": "Washington DC", "Howard": "Washington DC", "Maine": "Maine", "Nebraska": "Nebraska", "Creighton": "Nebraska", "Nebraska Omaha": "Nebraska", "Providence": "Rhode Island", "Rhode Island": "Rhode Island", "Brown": "Rhode Island", "Bryant": "Rhode Island", "Illinois": "Illinois", "Northern Illinois": "Illinois", "Northwestern": "Illinois", "DePaul": "Illinois", "Loyola Chicago": "Illinois", "Illinois St.": "Illinois", "Southern Illinois": "Illinois", "Bradley": "Illinois", "Illinois Chicago": "Illinois", "Eastern Illinois": "Illinois", "Western Illinois": "Illinois", "SIU Edwardsville": "Illinois", "Chicago St.": "Illinois", "Seton Hall": "New Jersey", "Rutgers": "New Jersey", "Princeton": "New Jersey", "Monmouth": "New Jersey", "Rider": "New Jersey", "Saint Peter's": "New Jersey", "NJIT": "New Jersey", "Fairleigh Dickinson": "New Jersey", "Iowa": "Iowa", "Iowa St.": "Iowa", "Northern Iowa": "Iowa", "Drake": "Iowa", "Missouri": "Missouri", "Saint Louis": "Missouri", "Missouri St.": "Missouri", "Southeast Missouri St.": "Missouri", "UMKC": "Missouri", "Lindenwood": "Missouri", "Washington": "Washington State", "Washington St.": "Washington State", "Gonzaga": "Washington State", "Seattle": "Washington State", "Eastern Washington": "Washington State"};
+var CBK_GAME_T2S={"Georgetown": "Washington DC", "George Washington": "Washington DC", "American": "Washington DC", "Howard": "Washington DC", "Delaware": "Delaware", "Delaware St.": "Delaware", "Maine": "Maine", "Nebraska": "Nebraska", "Creighton": "Nebraska", "Nebraska Omaha": "Nebraska", "Providence": "Rhode Island", "Rhode Island": "Rhode Island", "Brown": "Rhode Island", "Bryant": "Rhode Island", "Illinois": "Illinois", "Northern Illinois": "Illinois", "Northwestern": "Illinois", "DePaul": "Illinois", "Loyola Chicago": "Illinois", "Illinois St.": "Illinois", "Southern Illinois": "Illinois", "Bradley": "Illinois", "Illinois Chicago": "Illinois", "Eastern Illinois": "Illinois", "Western Illinois": "Illinois", "SIU Edwardsville": "Illinois", "Chicago St.": "Illinois", "Boston College": "Massachusetts", "Boston University": "Massachusetts", "Harvard": "Massachusetts", "Massachusetts": "Massachusetts", "UMass Lowell": "Massachusetts", "Northeastern": "Massachusetts", "Holy Cross": "Massachusetts", "Merrimack": "Massachusetts", "Stonehill": "Massachusetts", "Seton Hall": "New Jersey", "Rutgers": "New Jersey", "Princeton": "New Jersey", "Monmouth": "New Jersey", "Rider": "New Jersey", "Saint Peter's": "New Jersey", "NJIT": "New Jersey", "Fairleigh Dickinson": "New Jersey", "Virginia": "Virginia", "Virginia Tech": "Virginia", "VCU": "Virginia", "George Mason": "Virginia", "Richmond": "Virginia", "Old Dominion": "Virginia", "James Madison": "Virginia", "William & Mary": "Virginia", "Liberty": "Virginia", "Radford": "Virginia", "VMI": "Virginia", "Longwood": "Virginia", "Norfolk St.": "Virginia", "Hampton": "Virginia", "St. John's": "New York", "Syracuse": "New York", "Cornell": "New York", "Columbia": "New York", "Fordham": "New York", "Manhattan": "New York", "Iona": "New York", "Siena": "New York", "Canisius": "New York", "Niagara": "New York", "Binghamton": "New York", "Albany": "New York", "Stony Brook": "New York", "Buffalo": "New York", "Army": "New York", "Colgate": "New York", "Hofstra": "New York", "LIU": "New York", "St. Bonaventure": "New York", "Marist": "New York", "Wagner": "New York", "Le Moyne": "New York", "Washington": "Washington State", "Washington St.": "Washington State", "Gonzaga": "Washington State", "Seattle": "Washington State", "Eastern Washington": "Washington State"};
 var CBK_COLORS={"Duke": "#001A57", "North Carolina": "#7BAFD4", "N.C. State": "#CC0000", "Virginia": "#232D4B", "Virginia Tech": "#630031", "Louisville": "#AD0000", "Miami FL": "#F47321", "Florida St.": "#782F40", "Clemson": "#F56600", "Syracuse": "#F76900", "Pittsburgh": "#003594", "Boston College": "#98002E", "Wake Forest": "#9E7E38", "Georgia Tech": "#B3A369", "Notre Dame": "#0C2340", "SMU": "#0033A0", "California": "#041E42", "Stanford": "#8C1515", "Illinois": "#E84A27", "Michigan": "#00274C", "Michigan St.": "#18453B", "UCLA": "#2D68C4", "Nebraska": "#E41C38", "Ohio St.": "#BB0000", "Purdue": "#CEB888", "Iowa": "#FFCD00", "Maryland": "#E03A3E", "Indiana": "#990000", "Wisconsin": "#C5050C", "USC": "#990000", "Oregon": "#154733", "Northwestern": "#4E2A84", "Minnesota": "#7A0019", "Rutgers": "#CC0033", "Washington": "#4B2E83", "Penn St.": "#041E42", "Houston": "#C8102E", "Arizona": "#CC0033", "Iowa St.": "#C8102E", "Kansas": "#0051BA", "Cincinnati": "#E00122", "TCU": "#4D1979", "Baylor": "#154734", "Arizona St.": "#8C1D40", "Texas Tech": "#CC0000", "West Virginia": "#002855", "Oklahoma St.": "#FF7300", "BYU": "#002E5D", "UCF": "#BA9B37", "Kansas St.": "#512888", "Colorado": "#CFB87C", "Utah": "#CC0000", "Florida": "#0021A5", "Texas": "#BF5700", "Tennessee": "#FF8200", "Arkansas": "#9D2235", "Alabama": "#9E1B32", "Kentucky": "#0033A0", "Missouri": "#F1B82D", "Vanderbilt": "#866D4B", "LSU": "#461D7C", "Auburn": "#0C2340", "Texas A&M": "#500000", "Georgia": "#BA0C2F", "Oklahoma": "#841617", "Mississippi": "#CE1126", "South Carolina": "#73000A", "Mississippi St.": "#660000", "Connecticut": "#000E2F", "St. John's": "#BA0C2F", "Marquette": "#003366", "Villanova": "#00205B", "Providence": "#000000", "Creighton": "#005CA9", "Xavier": "#0C2340", "DePaul": "#0057B8", "Seton Hall": "#004488", "Georgetown": "#041E42", "Butler": "#13294B", "Gonzaga": "#041E42", "Utah St.": "#00263A", "Colorado St.": "#1E4D2B", "San Diego St.": "#A6192E", "Oregon St.": "#DC4405", "Boise St.": "#0033A0", "Texas St.": "#501214", "Washington St.": "#981E32", "Fresno St.": "#DB0032", "VCU": "#000000", "Saint Louis": "#003DA5", "Dayton": "#CE1141", "George Washington": "#004165", "Loyola Chicago": "#7A0019", "George Mason": "#006633", "Davidson": "#B01F24", "Richmond": "#990000", "Saint Joseph's": "#9A1D2E", "Rhode Island": "#002147", "Fordham": "#900028", "St. Bonaventure": "#6C4C42", "Duquesne": "#041E42", "La Salle": "#003057", "Saint Mary's": "#06315B", "Santa Clara": "#862633", "Pepperdine": "#00205B", "San Diego": "#002855", "Loyola Marymount": "#8A1538", "Seattle": "#AA0000", "Denver": "#862633", "Pacific": "#E56A54", "San Francisco": "#FDBB30", "Portland": "#4B2E83", "South Florida": "#006747", "Wichita St.": "#FFCD00", "UAB": "#1E6B52", "North Texas": "#00853E", "Tulsa": "#003366", "Memphis": "#003087", "Florida Atlantic": "#003366", "Temple": "#9D2235", "Tulane": "#006747", "Rice": "#00205B", "Charlotte": "#046A38", "East Carolina": "#592A8A", "UTSA": "#0C2340", "New Mexico": "#BA0C2F", "Grand Canyon": "#522398", "UNLV": "#CF0A2C", "Nevada": "#003366", "Wyoming": "#492F24", "Hawaii": "#024731", "UTEP": "#041E42", "UC Davis": "#022851", "San Jose St.": "#0055A2", "Air Force": "#003087", "Northern Iowa": "#4B116F", "Bradley": "#C8102E", "Belmont": "#000080", "Illinois St.": "#CE1126", "Illinois Chicago": "#D50032", "Drake": "#004477", "Southern Illinois": "#720000", "Valparaiso": "#613318", "Murray St.": "#002144", "Indiana St.": "#0033A0", "Evansville": "#4B2E83", "Akron": "#00285E", "Miami OH": "#C41230", "Kent St.": "#003976", "Toledo": "#00305E", "Bowling Green": "#4F2C1D", "Massachusetts": "#881C1C", "Ohio": "#00694E", "Eastern Michigan": "#046A38", "Central Michigan": "#6A0032", "Ball St.": "#BA0C2F", "Buffalo": "#005BBB", "Western Michigan": "#6C4023", "Kennesaw St.": "#FDBB30", "Liberty": "#002D62", "Sam Houston St.": "#F56600", "Middle Tennessee": "#0066CC", "Jacksonville St.": "#CC0000", "New Mexico St.": "#8C0B42", "Western Kentucky": "#C60C30", "FIU": "#081E3F", "Missouri St.": "#5E0009", "Delaware": "#00539F", "Arkansas St.": "#CC092F", "Troy": "#8A2432", "Louisiana Tech": "#002F8B", "South Alabama": "#00205B", "Appalachian St.": "#000000", "James Madison": "#450084", "Marshall": "#00B140", "Georgia Southern": "#041E42", "Southern Miss": "#FFAB00", "Old Dominion": "#003057", "Coastal Carolina": "#006F71", "Louisiana": "#CE181E", "Georgia St.": "#0039A6", "Louisiana Monroe": "#800029", "UNC Wilmington": "#006666", "Hofstra": "#003591", "Towson": "#FFB300", "Charleston": "#7C2529", "Monmouth": "#041E42", "Drexel": "#07294D", "Campbell": "#FF6A13", "William & Mary": "#115740", "Stony Brook": "#900028", "Hampton": "#00539B", "Elon": "#73000A", "Northeastern": "#C8102E", "North Carolina A&T": "#004684", "Yale": "#00356B", "Cornell": "#B31B1B", "Harvard": "#A51C30", "Penn": "#011F5B", "Princeton": "#EE7F2D", "Columbia": "#9BCBEB", "Brown": "#4E3629", "Dartmouth": "#00693E", "Utah Valley": "#0E602D", "UC San Diego": "#182B49", "UC Irvine": "#0064A4", "Cal Baptist": "#00447C", "UC Santa Barbara": "#003660", "Cal St. Northridge": "#D22630", "Cal Poly": "#154734", "UC Riverside": "#003DA5", "Cal St. Fullerton": "#00274C", "Long Beach St.": "#000000", "Sacramento St.": "#043927", "Cal St. Bakersfield": "#00539B", "Northern Colorado": "#013C65", "Montana St.": "#00205B", "Portland St.": "#154734", "Montana": "#7C2529", "Idaho": "#B3A369", "Eastern Washington": "#A10022", "Utah Tech": "#BA0C2F", "Weber St.": "#4F2D7F", "Southern Utah": "#CC0000", "Idaho St.": "#F47321", "Northern Arizona": "#003466", "High Point": "#3D2A56", "Winthrop": "#722F8E", "Radford": "#009639", "Longwood": "#003263", "UNC Asheville": "#12264C", "Presbyterian": "#00539B", "Charleston Southern": "#00263E", "USC Upstate": "#004F39", "Gardner Webb": "#BA0C2F", "Robert Morris": "#14234B", "Wright St.": "#006A4D", "Northern Kentucky": "#FDB913", "Oakland": "#000000", "Purdue Fort Wayne": "#B1B3B3", "Green Bay": "#00573F", "Youngstown St.": "#B3282D", "Detroit Mercy": "#00539B", "Milwaukee": "#000000", "Cleveland St.": "#006A4D", "IU Indy": "#990000", "Northern Illinois": "#BA0C2F", "Siena": "#00703C", "Merrimack": "#003865", "Iona": "#8A1538", "Mount St. Mary's": "#003DA5", "Marist": "#C8102E", "Quinnipiac": "#00205B", "Sacred Heart": "#C8102E", "Saint Peter's": "#004990", "Fairfield": "#E31837", "Manhattan": "#00703C", "Niagara": "#4B2E83", "Canisius": "#003DA5", "Rider": "#8A1538", "Furman": "#582C83", "East Tennessee St.": "#041E42", "Samford": "#00457C", "Chattanooga": "#00386B", "Mercer": "#F76900", "Western Carolina": "#582C83", "UNC Greensboro": "#FFB71B", "Wofford": "#886A2C", "Tennessee Tech": "#4B2E83", "The Citadel": "#003057", "VMI": "#8A2432", "McNeese St.": "#00427D", "Texas A&M Corpus Chris": "#0067C5", "UT Rio Grande Valley": "#FF6A13", "Stephen F. Austin": "#4E2A84", "Nicholls St.": "#B10022", "Lamar": "#C8102E", "Southeastern Louisiana": "#046A38", "Northwestern St.": "#582C83", "Incarnate Word": "#CE1126", "New Orleans": "#005596", "Houston Christian": "#003DA5", "East Texas A&M": "#003DA5", "North Dakota St.": "#009A44", "St. Thomas": "#582C83", "Nebraska Omaha": "#000000", "South Dakota St.": "#003DA5", "North Dakota": "#009A44", "South Dakota": "#C8102E", "Oral Roberts": "#003DA5", "UMKC": "#005BBB", "UT Arlington": "#0064B1", "Central Arkansas": "#582C83", "Austin Peay": "#C8102E", "Abilene Christian": "#4E2A84", "Tarleton St.": "#4E2A84", "Eastern Kentucky": "#7A0019", "Little Rock": "#7A0019", "North Alabama": "#4E2A84", "West Georgia": "#0033A0", "Tennessee St.": "#00539B", "Southeast Missouri St.": "#BA0C2F", "SIU Edwardsville": "#C8102E", "Tennessee Martin": "#00539B", "Lindenwood": "#000000", "Morehead St.": "#00447C", "Eastern Illinois": "#0033A0", "Southern Indiana": "#C8102E", "Western Illinois": "#4B2E83", "Navy": "#00205B", "Boston University": "#CC0000", "Colgate": "#821019", "American": "#C8102E", "Lehigh": "#663300", "Bucknell": "#E87722", "Lafayette": "#910029", "Loyola MD": "#00694E", "Holy Cross": "#602D89", "Army": "#000000", "Queens": "#00263E", "Lipscomb": "#4E2A84", "Florida Gulf Coast": "#00573F", "Jacksonville": "#004B23", "Bellarmine": "#C8102E", "Stetson": "#046A38", "North Florida": "#0A2240", "West Florida": "#00573F", "UMBC": "#000000", "Vermont": "#095540", "UMass Lowell": "#0067B1", "Albany": "#4C2882", "Bryant": "#000000", "NJIT": "#C8102E", "Maine": "#003263", "Binghamton": "#005A43", "New Hampshire": "#00477D", "LIU": "#00548F", "New Haven": "#003DA5", "Central Connecticut": "#0033A0", "Mercyhurst": "#004B23", "Wagner": "#046A38", "Fairleigh Dickinson": "#C8102E", "Le Moyne": "#046A38", "Stonehill": "#4B2E83", "Chicago St.": "#046A38", "Howard": "#003A63", "Norfolk St.": "#046A38", "South Carolina St.": "#7A0019", "North Carolina Central": "#7A0019", "Morgan St.": "#F26522", "Delaware St.": "#BA0C2F", "Coppin St.": "#005EB8", "Maryland Eastern Shore": "#7A0019", "Southern": "#003DA5", "Bethune Cookman": "#8A1538", "Alabama St.": "#BA0C2F", "Florida A&M": "#046A38", "Prairie View A&M": "#4E2A84", "Grambling St.": "#000000", "Jackson St.": "#00427D", "Texas Southern": "#65104C", "Alabama A&M": "#7A0019", "Alcorn St.": "#4B2E83", "Arkansas Pine Bluff": "#000000", "Mississippi Valley St.": "#046A38"};
 var CBK_CONFCOL={"ACC": "#013CA6", "B10": "#0088CE", "B12": "#C8102E", "SEC": "#004B8D", "BE": "#00205B", "P12": "#004B87", "A10": "#8A1538", "WCC": "#005596", "AAC": "#003087", "MWC": "#1B365D", "MVC": "#003DA5", "MAC": "#00285E", "CUSA": "#004B87", "SBC": "#B10022", "CAA": "#003591", "Ivy": "#00356B", "BW": "#003660", "BSky": "#013C65", "BSouth": "#3D2A56", "Hor": "#14234B", "MAAC": "#00703C", "SoCon": "#582C83", "SL": "#00427D", "Sum": "#009A44", "UAC": "#4E2A84", "OVC": "#00539B", "Pat": "#00205B", "ASUN": "#00263E", "AE": "#095540", "NEC": "#00548F", "MEAC": "#003A63", "SWAC": "#003DA5"};
 var CBK_GAME_BLOCK=["Washington DC", "Delaware", "Maine", "Nebraska", "Rhode Island", "Illinois", "Massachusetts", "New Jersey", "Virginia", "New York", "Washington State"];
@@ -5786,10 +5826,11 @@ function cmpLoad(){
     });
 }
 var CBK_NEUTRAL_BLOCK=['New Jersey','Rhode Island','Washington State'];
+var CBK_ST_ABBR={'Washington DC':'DC','Delaware':'DE','Maine':'ME','Nebraska':'NE','Rhode Island':'RI','Illinois':'IL','Massachusetts':'MA','New Jersey':'NJ','Virginia':'VA','New York':'NY','Washington State':'WA'};
 var CBK_CMP_NOTES=[
  'RI, NJ and WA do <b>not</b> allow neutral-court games.',
  'RI and MA schools <b>can</b> be offered for tournaments.',
- 'NE can be offered for an MTE as long as it is <b>not</b> played in NE.'
+ 'NE schools can be offered for an MTE as long as the event is <b>not</b> played in NE.'
 ];
 function cmpRender(){
   var box=document.getElementById('cmp-body');
@@ -6210,6 +6251,101 @@ function brkRender(){
     +'<div class="cbk-legend">Percentage columns are the chance of <b>reaching</b> that round; the last is the chance of winning outright, and it sums to exactly 100% across the field. '
     +'Gold columns are the same numbers as American prices with '+((hold-1)*100).toFixed(0)+'% hold applied \u2014 so QF ODDS is the price on that team simply to reach the quarterfinal. '
     +'Opening-round matchups are priced at 4.5% hold. Change the field on the MTEs tab.</div>';
+}
+
+
+var _cmpMode='daily',_cmpTeams=[];
+function cmpSwitch(mode,btn){
+  _cmpMode=mode;
+  var seg=document.getElementById('cmp-seg');
+  if(seg){Array.prototype.forEach.call(seg.children,function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');}
+  document.getElementById('cmp-daily-bar').style.display=(mode==='daily')?'flex':'none';
+  document.getElementById('cmp-body').style.display=(mode==='daily')?'block':'none';
+  document.getElementById('cmp-conf-body').style.display=(mode==='conf')?'block':'none';
+  document.getElementById('cmp-state-body').style.display=(mode==='state')?'block':'none';
+  if(mode==='conf')cmpConfRender();
+  if(mode==='state')cmpStateRender();
+}
+function cmpNeedTeams(cb){
+  if(_cmpTeams.length){cb();return;}
+  sb.from('teams').select('team,conference').range(0,9999).then(function(r){_cmpTeams=r.data||[];cb();});
+}
+function cmpNotesBlock(){
+  return '<div class="cmp-notes"><div class="cmp-notes-t">STANDING NOTES</div>'
+    +CBK_CMP_NOTES.map(function(n){return'<div class="cmp-note">&bull; '+n+'</div>';}).join('')+'</div>';
+}
+/* ---------- CONFERENCE GRID ---------- */
+function cmpConfRender(){
+  var box=document.getElementById('cmp-conf-body');
+  box.innerHTML='<div class="cbk-empty">Loading...</div>';
+  cmpNeedTeams(function(){
+    var byConf={};
+    _cmpTeams.forEach(function(t){
+      var st=CBK_GAME_T2S[t.team];
+      if(!st)return;
+      (byConf[t.conference]=byConf[t.conference]||[]).push({team:t.team,state:st});
+    });
+    var confs=Object.keys(byConf).sort();
+    var clear=[];
+    _cmpTeams.forEach(function(t){if(t.conference&&confs.indexOf(t.conference)<0&&clear.indexOf(t.conference)<0)clear.push(t.conference);});
+    clear.sort();
+    var ABBR=CBK_ST_ABBR;
+    var cards='';
+    confs.forEach(function(c){
+      var list=byConf[c].sort(function(a,b){return a.state===b.state?(a.team<b.team?-1:1):(a.state<b.state?-1:1);});
+      var rows=list.map(function(x){
+        var neut=CBK_NEUTRAL_BLOCK.indexOf(x.state)>=0;
+        return'<div class="cg-row"><span class="cg-t">'+x.team+'</span>'
+          +'<span class="cg-s">'+ABBR[x.state]+'</span>'
+          +'<span class="cg-n">'+(neut?'<span title="no neutral-court games in '+x.state+'">NO NEUT</span>':'')+'</span></div>';
+      }).join('');
+      cards+='<div class="cg-card"><div class="cg-hd">'+c+'<span class="cg-ct">'+list.length+'</span></div>'+rows+'</div>';
+    });
+    box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">Restricted Teams by Conference</div>'
+      +'<div style="font-size:11px;color:var(--txt3)">'+confs.length+' conferences carry a restricted school &middot; '
+      +Object.keys(CBK_GAME_T2S).length+' schools across 11 states</div></div>'+cbkBtns('compliance-by-conference')+'</div>'
+      +cmpNotesBlock()
+      +'<div class="cg-grid">'+cards+'</div>'
+      +(clear.length?'<div class="cbk-detail"><div class="cbk-detail-t">NO RESTRICTED SCHOOLS</div>'
+        +'<div style="font-size:11.5px;color:var(--txt2);line-height:1.7">'+clear.join(' &middot; ')+'</div></div>':'')
+      +'<div class="cbk-legend">A game involving any school listed here cannot be offered in that school\u2019s home state. '
+      +'<b style="color:var(--amb)">NO NEUT</b> marks states that additionally bar every neutral-court game.</div>';
+  });
+}
+/* ---------- STATE GRID ---------- */
+function cmpStateRender(){
+  var box=document.getElementById('cmp-state-body');
+  box.innerHTML='<div class="cbk-empty">Loading...</div>';
+  cmpNeedTeams(function(){
+    var conf={};
+    _cmpTeams.forEach(function(t){conf[t.team]=t.conference;});
+    var byState={};
+    Object.keys(CBK_GAME_T2S).forEach(function(t){
+      var st=CBK_GAME_T2S[t];
+      (byState[st]=byState[st]||[]).push(t);
+    });
+    var ABBR=CBK_ST_ABBR;
+    var cards='';
+    CBK_GAME_BLOCK.forEach(function(st){
+      var list=(byState[st]||[]).sort();
+      var neut=CBK_NEUTRAL_BLOCK.indexOf(st)>=0;
+      var rows=list.map(function(t){
+        return'<div class="sg-row"><span class="cbk-cbar" style="background:'+cbkTeamColor(t,conf[t])+'"></span>'
+          +'<span class="sg-t">'+t+'</span><span class="sg-c">'+(conf[t]||'')+'</span></div>';
+      }).join('');
+      cards+='<div class="sg-card'+(neut?' sg-neut':'')+'">'
+        +'<div class="sg-hd"><span class="sg-ab">'+ABBR[st]+'</span><span class="sg-nm">'+st+'</span><span class="sg-ct">'+list.length+'</span></div>'
+        +(neut?'<div class="sg-warn">NO NEUTRAL-COURT GAMES</div>':'')
+        +'<div class="sg-body">'+rows+'</div></div>';
+    });
+    box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">Restricted States &mdash; School Directory</div>'
+      +'<div style="font-size:11px;color:var(--txt3)">'+Object.keys(CBK_GAME_T2S).length+' schools across '+CBK_GAME_BLOCK.length+' states &middot; a game cannot be offered in a participant\u2019s home state</div></div>'
+      +cbkBtns('compliance-by-state')+'</div>'
+      +cmpNotesBlock()
+      +'<div class="sg-grid">'+cards+'</div>'
+      +'<div class="cbk-legend">Amber-bordered states additionally bar every neutral-court game regardless of who is playing. '
+      +'This is the master list the daily sheet checks against.</div>';
+  });
 }
 
 </script>
