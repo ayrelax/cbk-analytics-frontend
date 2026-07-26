@@ -738,11 +738,8 @@ body.cbk-capturing .cmp-d{font-size:9px!important}
 .sg-t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt1)}
 .sg-c{font-size:9px;color:var(--txt3);font-weight:700;letter-spacing:.3px}
 @media print{
-  body.cbk-printing .sg-row,
 }
-body.cbk-capturing .sg-grid,
-body.cbk-capturing .sg-row,
-body.cbk-capturing .sg-hd,
+
 
 /* ---- v3: conf grid two columns, larger state grid ---- */
 .cg-row{grid-template-columns:1fr 36px!important;font-size:12.5px!important;padding:3px 10px!important}
@@ -759,9 +756,7 @@ body.cbk-capturing .sg-hd,
 .sg-warn{font-size:10px!important;letter-spacing:1.2px!important;padding:4px 11px!important}
 .cbk-cbar{height:13px}
 @media print{
-  body.cbk-printing .sg-row,
 }
-body.cbk-capturing .sg-row,
 
 /* ---- v4: strip remaining chrome from print/PDF, larger school names ---- */
 @media print{
@@ -6388,7 +6383,12 @@ function cmpStateRender(){
     });
     var ABBR=CBK_ST_ABBR;
     var cards='';
-    CBK_GAME_BLOCK.forEach(function(st){
+    var stOrder=CBK_GAME_BLOCK.slice().sort(function(a,b){
+      var na=(byState[a]||[]).length, nb=(byState[b]||[]).length;
+      if(na!==nb)return nb-na;
+      return CBK_GAME_BLOCK.indexOf(a)-CBK_GAME_BLOCK.indexOf(b);
+    });
+    stOrder.forEach(function(st){
       var list=(byState[st]||[]).sort();
       var neut=CBK_NEUTRAL_BLOCK.indexOf(st)>=0;
       var rows=list.map(function(t){
