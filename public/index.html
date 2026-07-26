@@ -738,20 +738,11 @@ body.cbk-capturing .cmp-d{font-size:9px!important}
 .sg-t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt1)}
 .sg-c{font-size:9px;color:var(--txt3);font-weight:700;letter-spacing:.3px}
 @media print{
-  body.cbk-printing .sg-grid{grid-template-columns:repeat(5,1fr)!important;gap:5px!important}
-  body.cbk-printing .cg-grid{grid-template-columns:repeat(5,1fr)!important;gap:5px!important}
-  body.cbk-printing .sg-row,body.cbk-printing .cg-row{font-size:7px!important;padding:0 5px!important;line-height:1.35}
-  body.cbk-printing .sg-hd{padding:2px 5px!important}
-  body.cbk-printing .sg-ab{font-size:10px!important}
-  body.cbk-printing .sg-nm{font-size:7.5px!important}
-  body.cbk-printing .sg-warn{font-size:6.5px!important;padding:1px 5px!important}
-  body.cbk-printing .cg-hd{padding:2px 5px!important;font-size:8px!important}
+  body.cbk-printing .sg-row,
 }
-body.cbk-capturing .sg-grid,body.cbk-capturing .cg-grid{grid-template-columns:repeat(5,1fr)!important;gap:5px!important}
-body.cbk-capturing .sg-row,body.cbk-capturing .cg-row{font-size:7.5px!important;padding:0 5px!important;line-height:1.4}
-body.cbk-capturing .sg-hd,body.cbk-capturing .cg-hd{padding:2px 5px!important}
-body.cbk-capturing .sg-ab{font-size:10px!important}
-body.cbk-capturing .sg-nm{font-size:8px!important}
+body.cbk-capturing .sg-grid,
+body.cbk-capturing .sg-row,
+body.cbk-capturing .sg-hd,
 
 /* ---- v3: conf grid two columns, larger state grid ---- */
 .cg-row{grid-template-columns:1fr 36px!important;font-size:12.5px!important;padding:3px 10px!important}
@@ -768,13 +759,9 @@ body.cbk-capturing .sg-nm{font-size:8px!important}
 .sg-warn{font-size:10px!important;letter-spacing:1.2px!important;padding:4px 11px!important}
 .cbk-cbar{height:13px}
 @media print{
-  body.cbk-printing .sg-row,body.cbk-printing .cg-row{font-size:7.5px!important}
-  body.cbk-printing .sg-t{font-size:7.5px!important}
-  body.cbk-printing .sg-c{font-size:6px!important}
+  body.cbk-printing .sg-row,
 }
-body.cbk-capturing .sg-row,body.cbk-capturing .cg-row{font-size:8px!important}
-body.cbk-capturing .sg-t{font-size:8px!important}
-body.cbk-capturing .sg-c{font-size:6.5px!important}
+body.cbk-capturing .sg-row,
 
 /* ---- v4: strip remaining chrome from print/PDF, larger school names ---- */
 @media print{
@@ -784,65 +771,51 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
   body.cbk-printing #viewonly-logout,
   body.cbk-printing #fav-team-wrap,
   body.cbk-printing #cbk-theme-toggle{display:none!important}
-  body.cbk-printing .sg-row{font-size:9px!important;padding:1px 6px!important;line-height:1.5}
-  body.cbk-printing .sg-t{font-size:9px!important;font-weight:600}
-  body.cbk-printing .sg-c{font-size:7px!important}
-  body.cbk-printing .sg-ab{font-size:12px!important}
-  body.cbk-printing .sg-nm{font-size:9px!important}
-  body.cbk-printing .sg-ct{font-size:8px!important}
-  body.cbk-printing .sg-warn{font-size:7.5px!important;padding:2px 6px!important}
-  body.cbk-printing .cg-row{font-size:9px!important;padding:1px 6px!important;line-height:1.5}
-  body.cbk-printing .cg-hd{font-size:9.5px!important}
-  body.cbk-printing .cbk-cbar{height:8px;width:2.5px}
 }
 body.cbk-capturing .seg,
 body.cbk-capturing .cbk-pagelbl,
 body.cbk-capturing #admin-badge,
 body.cbk-capturing #viewonly-logout{display:none!important}
-body.cbk-capturing .sg-row{font-size:9px!important;padding:1px 6px!important;line-height:1.5}
-body.cbk-capturing .sg-t{font-size:9px!important;font-weight:600}
-body.cbk-capturing .sg-c{font-size:7px!important}
-body.cbk-capturing .sg-ab{font-size:12px!important}
-body.cbk-capturing .sg-nm{font-size:9px!important}
-body.cbk-capturing .cg-row{font-size:9px!important;padding:1px 6px!important}
 
 /* ---- v5: print = grid only, packed into columns, larger names ---- */
 @media print{
   @page{size:landscape;margin:8mm}
   body.cbk-printing .cbk-legend{display:none!important}
   /* multi-column packs cards vertically instead of leaving row-height gaps */
-  body.cbk-printing .sg-grid,body.cbk-printing .cg-grid{
-    display:block!important;column-count:5;column-gap:7px}
-  body.cbk-printing .sg-card,body.cbk-printing .cg-card{
-    display:inline-block;width:100%;margin:0 0 7px 0;break-inside:avoid;page-break-inside:avoid}
-  body.cbk-printing .sg-row{font-size:13px!important;padding:2px 8px!important;line-height:1.5}
-  body.cbk-printing .sg-t{font-size:13px!important;font-weight:600}
-  body.cbk-printing .sg-c{font-size:9.5px!important}
-  body.cbk-printing .sg-ab{font-size:16px!important}
-  body.cbk-printing .sg-nm{font-size:12.5px!important}
-  body.cbk-printing .sg-ct{font-size:9.5px!important}
-  body.cbk-printing .sg-hd{padding:4px 8px!important}
-  body.cbk-printing .sg-warn{font-size:10px!important;padding:3px 8px!important;letter-spacing:.9px!important}
-  body.cbk-printing .cg-row{font-size:13px!important;padding:2px 8px!important;line-height:1.5}
-  body.cbk-printing .cg-hd{font-size:13px!important;padding:4px 8px!important}
-  body.cbk-printing .cg-s{font-size:10px!important}
-  body.cbk-printing .cbk-cbar{height:12px;width:3px}
   body.cbk-printing .cmp-notes{padding:6px 9px!important;margin-bottom:8px!important}
   body.cbk-printing .cmp-note{font-size:10px!important;line-height:1.5}
   body.cbk-printing .cmp-notes-t{font-size:9px!important}
 }
 /* same packing + sizing for Save-as-PDF */
 body.cbk-capturing .cbk-legend{display:none!important}
-body.cbk-capturing .sg-grid,body.cbk-capturing .cg-grid{display:block!important;column-count:5;column-gap:7px}
-body.cbk-capturing .sg-card,body.cbk-capturing .cg-card{display:inline-block;width:100%;margin:0 0 7px 0;break-inside:avoid}
-body.cbk-capturing .sg-row{font-size:13px!important;padding:2px 8px!important;line-height:1.5}
-body.cbk-capturing .sg-t{font-size:13px!important;font-weight:600}
-body.cbk-capturing .sg-c{font-size:9.5px!important}
-body.cbk-capturing .sg-ab{font-size:16px!important}
-body.cbk-capturing .sg-nm{font-size:12.5px!important}
-body.cbk-capturing .sg-warn{font-size:10px!important;padding:3px 8px!important}
-body.cbk-capturing .cg-row{font-size:13px!important;padding:2px 8px!important}
-body.cbk-capturing .cg-hd{font-size:13px!important}
+
+/* ---- v6: back to grid for print (multi-column does not paginate) ---- */
+@media print{
+  body.cbk-printing .sg-grid{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:6px!important;align-items:start}
+  body.cbk-printing .cg-grid{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:6px!important;align-items:start}
+  body.cbk-printing .sg-card,body.cbk-printing .cg-card{break-inside:avoid;page-break-inside:avoid}
+  body.cbk-printing .sg-row{font-size:10px!important;padding:0.5px 6px!important;line-height:1.4}
+  body.cbk-printing .sg-t{font-size:10px!important;font-weight:600}
+  body.cbk-printing .sg-c{font-size:7.5px!important}
+  body.cbk-printing .sg-ab{font-size:12.5px!important}
+  body.cbk-printing .sg-nm{font-size:10px!important}
+  body.cbk-printing .sg-ct{font-size:8.5px!important}
+  body.cbk-printing .sg-hd{padding:2px 6px!important}
+  body.cbk-printing .sg-warn{font-size:8px!important;padding:1.5px 6px!important;letter-spacing:.6px!important}
+  body.cbk-printing .cg-row{font-size:10px!important;padding:0.5px 6px!important;line-height:1.4}
+  body.cbk-printing .cg-hd{font-size:10.5px!important;padding:2px 6px!important}
+  body.cbk-printing .cg-s{font-size:9px!important}
+  body.cbk-printing .cbk-cbar{height:9px;width:2.5px}
+}
+body.cbk-capturing .sg-grid,body.cbk-capturing .cg-grid{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:6px!important;align-items:start}
+body.cbk-capturing .sg-row{font-size:10px!important;padding:0.5px 6px!important;line-height:1.4}
+body.cbk-capturing .sg-t{font-size:10px!important;font-weight:600}
+body.cbk-capturing .sg-c{font-size:7.5px!important}
+body.cbk-capturing .sg-ab{font-size:12.5px!important}
+body.cbk-capturing .sg-nm{font-size:10px!important}
+body.cbk-capturing .sg-warn{font-size:8px!important;padding:1.5px 6px!important}
+body.cbk-capturing .cg-row{font-size:10px!important;padding:0.5px 6px!important}
+body.cbk-capturing .cg-hd{font-size:10.5px!important}
 </style>
 </head>
 <body>
