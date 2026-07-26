@@ -567,6 +567,54 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   body.cbk-printing tr{page-break-inside:avoid}
 }
 
+/* ---- line sheet ---- */
+.ls-tbl td,.ls-tbl th{padding:7px 10px!important;vertical-align:middle}
+.ls-tbl th{font-size:9px;letter-spacing:1px;color:var(--acc);white-space:nowrap}
+.ls-dot{width:22px;text-align:center}
+.ls-team{font-weight:600;white-space:nowrap}
+.ls-at{color:var(--txt3);text-align:center;width:28px;font-size:10px}
+.ls-num{white-space:nowrap;color:var(--txt1)}
+.ls-num b{color:var(--acc);font-family:ui-monospace,Menlo,Consolas,monospace}
+.ls-ml{white-space:nowrap;color:var(--txt2);font-size:11px}
+.ls-flag{font-size:10px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+/* ---- compliance ---- */
+.cmp-tbl td,.cmp-tbl th{padding:6px 8px!important}
+.cmp-g{text-align:left!important;white-space:nowrap;font-weight:600}
+.cmp-s{font-size:10px;letter-spacing:1px;color:var(--acc);text-align:center;width:38px}
+.cmp-c{text-align:center;font-size:10px;font-weight:700;width:38px}
+.cbk-ok{color:var(--txt3)}
+.cmp-d{margin-bottom:4px;font-size:11px}
+/* ---- conference matrix cards ---- */
+.mtx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;padding:2px}
+.mtx-card{border:1px solid var(--bdr);border-radius:6px;overflow:hidden;background:var(--bg1);break-inside:avoid}
+.mtx-hd{display:flex;justify-content:space-between;align-items:center;padding:6px 9px;background:var(--bg2)}
+.mtx-t{font-weight:700;font-size:12px}
+.mtx-pr{font-size:11px;color:var(--txt3)}
+.mtx-body{padding:3px 0}
+.mtx-l{display:flex;justify-content:space-between;padding:2px 9px;font-size:11px}
+.mtx-l:nth-child(even){background:rgba(0,0,0,0.025)}
+.mtx-o{color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
+.mtx-v{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;white-space:nowrap}
+.mtx-avg{display:flex;justify-content:space-between;padding:5px 9px;border-top:1px solid var(--bdr);font-size:9px;letter-spacing:1px;color:var(--txt3);font-weight:700}
+/* ---- bracket ---- */
+.brk-tbl td,.brk-tbl th{padding:6px 9px!important;white-space:nowrap}
+.brk-tbl th{font-size:9px;letter-spacing:1px;color:var(--acc)}
+.brk-open{margin-top:12px;padding:10px 12px;border:1px solid var(--bdr);border-radius:6px;background:var(--bg1)}
+.brk-g{display:grid;grid-template-columns:1fr 62px 60px 62px 1fr;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:11px}
+.brk-g:last-child{border-bottom:none}
+.brk-side{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brk-r{text-align:right}
+.brk-od{text-align:center;color:var(--acc);font-weight:700;font-size:11px}
+.brk-sp{text-align:center;color:var(--txt3);font-size:10px}
+.cbk-empty{padding:34px 24px;text-align:center;color:var(--txt3);font-size:12px;line-height:1.7}
+.cbk-empty b{color:var(--txt2)}
+@media print{
+  body.cbk-printing .mtx-grid{grid-template-columns:repeat(4,1fr)!important;gap:6px!important}
+  body.cbk-printing .mtx-card{border:1px solid #bbb!important}
+  body.cbk-printing .mtx-hd{background:#f0f0f0!important}
+  body.cbk-printing .ls-tbl td,body.cbk-printing .cmp-tbl td{padding:3px 6px!important}
+}
+
 </style>
 </head>
 <body>
@@ -1157,17 +1205,15 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 <div class="panel"><div id="arc-body"></div></div>
 </div>
 <div id="page-bracket" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">MULTI-TEAM EVENTS</div>
+<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">MTE BRACKET</div>
 <div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-<select class="field" id="brk-preset" style="max-width:230px" onchange="brkPreset()"><option value="">Custom field...</option></select>
-<select class="field" id="brk-size" style="max-width:130px" onchange="brkBuildSlots()"><option value="8">8 teams</option><option value="4">4 teams</option></select>
-<span style="font-size:11px;color:var(--txt3)">Exact bracket math for tournament futures.</span>
+<select class="field" id="brk-event" style="max-width:300px" onchange="brkLoad()"><option value="">Loading events...</option></select>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--txt3)">HOLD</span>
+<input class="field" id="brk-hold" type="number" step="0.01" value="1.18" style="width:76px" onchange="brkRender()"></div>
+<button class="btn" onclick="brkLoad()">RELOAD FIELD</button>
+<span style="font-size:11px;color:var(--txt3)">Field is set on the MTEs tab.</span>
 </div>
-<div style="display:grid;grid-template-columns:260px 1fr;gap:14px;align-items:start">
-<div class="panel" style="padding:10px"><div style="font-size:10px;letter-spacing:1px;color:var(--acc);font-weight:700;margin-bottom:8px">FIELD (SEEDED)</div><div id="brk-slots"></div></div>
 <div class="panel"><div id="brk-body"></div></div>
-</div>
-
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -5553,44 +5599,41 @@ function lsLoad(){
     .then(function(res){
       var g=(res.data||[]).filter(function(x){return x.home&&x.away;});
       _lsGames=g;
-      if(!g.length){box.innerHTML='<div style="padding:20px;color:var(--txt3);font-size:12px">No games on '+date+'.</div>';return;}
+      if(!g.length){box.innerHTML='<div class="cbk-empty"><b>No games scheduled on '+date+'.</b><br>Pick another date above.</div>';return;}
       lsRender();
     });
 }
 function lsRender(){
   var box=document.getElementById('ls-body');
   var date=document.getElementById('ls-date').value||cbkToday();
-  var rows='',nHigh=0,nBlock=0;
+  var rows='',nHigh=0;
   _lsGames.forEach(function(g){
     var sp=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
     var buy=cbkIsBuy(g);
     var v=cbkVol(sp,g.game_date,buy,null);
     if(v.lvl==='HIGH')nHigh++;
-    var blocks=cbkGameBlocks(g.away.team,g.home.team);
-    if(blocks.length)nBlock++;
     var ml=spreadToML(sp);
-    var ac=cbkTeamColor(g.away.team,g.away.conference), hcol=cbkTeamColor(g.home.team,g.home.conference);
-    var bl=blocks.length?blocks.map(function(b){return b.state;}).join(', '):'';
+    var favName=sp>=0?g.home.team:g.away.team;
+    var line=fmtSp(-Math.abs(Math.round(sp*2)/2));
     rows+='<tr>'
-      +'<td style="white-space:nowrap"><span class="cbk-dot" style="background:'+v.col+'" title="'+v.txt+'"></span></td>'
-      +'<td><span class="cbk-cbar" style="background:'+ac+'"></span>'+TL(g.away.team)+'</td>'
-      +'<td style="color:var(--txt3);text-align:center">'+(g.neutral_site?'vs':'@')+'</td>'
-      +'<td><span class="cbk-cbar" style="background:'+hcol+'"></span>'+TL(g.home.team)+'</td>'
-      +'<td class="tnum bold" style="color:var(--acc)">'+fmtSp(-Math.abs(sp))+' '+(sp>=0?TL(g.home.team):TL(g.away.team))+'</td>'
-      +'<td class="tnum">'+fmtOdds(ml.fav)+' / '+fmtOdds(ml.dog)+'</td>'
-      +'<td style="font-size:10px;color:'+v.col+';font-weight:700">'+v.lvl+(buy?' \u00b7 BUY':'')+'</td>'
-      +'<td style="font-size:10px;color:'+(bl?'var(--red2)':'var(--txt3)')+';font-weight:'+(bl?'700':'400')+'">'+(bl||'\u2014')+'</td>'
+      +'<td class="ls-dot"><span class="cbk-dot" style="background:'+v.col+'" title="'+v.txt+'"></span></td>'
+      +'<td class="ls-team"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.away.team,g.away.conference)+'"></span>'+g.away.team+'</td>'
+      +'<td class="ls-at">'+(g.neutral_site?'vs':'@')+'</td>'
+      +'<td class="ls-team"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.home.team,g.home.conference)+'"></span>'+g.home.team+'</td>'
+      +'<td class="ls-num">'+favName+' <b>'+line+'</b></td>'
+      +'<td class="ls-ml tnum">'+fmtOdds(ml.fav)+' / '+fmtOdds(ml.dog)+'</td>'
+      +'<td class="ls-flag" style="color:'+v.col+'">'+v.lvl+(buy?' &middot; BUY':'')+'</td>'
       +'</tr>';
   });
-  box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">CBK Analytics \u2014 Line Sheet</div>'
-    +'<div style="font-size:11px;color:var(--txt3)">'+date+' \u00b7 '+_lsGames.length+' games \u00b7 '+nHigh+' high-variance \u00b7 '+nBlock+' with state restrictions</div></div>'
+  box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">CBK Analytics &mdash; Line Sheet</div>'
+    +'<div style="font-size:11px;color:var(--txt3)">'+date+' &middot; '+_lsGames.length+' game'+(_lsGames.length===1?'':'s')+' &middot; '+nHigh+' high-variance</div></div>'
     +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
-    +'<table class="tbl"><thead><tr><th></th><th>AWAY</th><th></th><th>HOME</th><th>OUR NUMBER</th><th>ML</th><th>FLAG</th><th>NOT ALLOWED IN</th></tr></thead><tbody>'
+    +'<table class="tbl ls-tbl"><thead><tr><th></th><th>AWAY</th><th></th><th>HOME</th><th>OUR NUMBER</th><th>MONEYLINE</th><th>CONFIDENCE</th></tr></thead><tbody>'
     +rows+'</tbody></table>'
-    +'<div class="cbk-legend">Green = market-quality confidence \u00b7 Amber = elevated variance \u00b7 Red = high variance, widen or lower limit. '
-    +'Flags derive from spread size, month, buy-game status. NOT ALLOWED IN lists states where the game itself cannot be offered because a participant is based there.</div>';
-}
-function cbkPrint(){document.body.classList.add('cbk-printing');window.print();setTimeout(function(){document.body.classList.remove('cbk-printing');},600);}
+    +'<div class="cbk-legend"><b>CONFIDENCE</b> &mdash; LOW is market-quality, MED elevated variance, HIGH means widen or lower the limit. '
+    +'Derived from spread size, month and buy-game status. BUY marks a low-major visiting a high or mid-major. '
+    +'State restrictions are on the Compliance tab.</div>';
+}function cbkPrint(){document.body.classList.add('cbk-printing');window.print();setTimeout(function(){document.body.classList.remove('cbk-printing');},600);}
 
 /* ================= COMPLIANCE (daily game x state grid) ================= */
 var _cmpGames=[];
@@ -5613,43 +5656,42 @@ function cmpLoad(){
 function cmpRender(){
   var box=document.getElementById('cmp-body');
   var date=document.getElementById('cmp-date').value||cbkToday();
-  if(!_cmpGames.length){box.innerHTML='<div style="padding:20px;color:var(--txt3);font-size:12px">No games on '+date+'.</div>';return;}
+  if(!_cmpGames.length){box.innerHTML='<div style="padding:24px;color:var(--txt3);font-size:12px">No games scheduled on '+date+'.</div>';return;}
   var ST=CBK_GAME_BLOCK;
-  var head='<tr><th style="text-align:left">GAME</th>';
-  ST.forEach(function(s){head+='<th class="cbk-vert">'+s+'</th>';});
+  var ABBR={'Washington DC':'DC','Delaware':'DE','Maine':'ME','Nebraska':'NE','Rhode Island':'RI','Illinois':'IL',
+            'Massachusetts':'MA','New Jersey':'NJ','Virginia':'VA','New York':'NY','Washington State':'WA'};
+  var head='<tr><th class="cmp-g">GAME</th>';
+  ST.forEach(function(s){head+='<th class="cmp-s" title="'+s+'">'+ABBR[s]+'</th>';});
   head+='</tr>';
   var rows='',flagged=0;
   _cmpGames.forEach(function(g){
-    var blocks=cbkGameBlocks(g.away.team,g.home.team);
-    var bs=blocks.map(function(b){return b.state;});
+    var bs=cbkGameBlocks(g.away.team,g.home.team).map(function(b){return b.state;});
     if(bs.length)flagged++;
-    var ac=cbkTeamColor(g.away.team,g.away.conference),hc=cbkTeamColor(g.home.team,g.home.conference);
-    rows+='<tr><td style="white-space:nowrap"><span class="cbk-cbar" style="background:'+ac+'"></span>'+TL(g.away.team)
-      +' <span style="color:var(--txt3)">'+(g.neutral_site?'vs':'@')+'</span> <span class="cbk-cbar" style="background:'+hc+'"></span>'+TL(g.home.team)+'</td>';
+    rows+='<tr><td class="cmp-g"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.away.team,g.away.conference)+'"></span>'+g.away.team
+      +' <span style="color:var(--txt3)">'+(g.neutral_site?'vs':'@')+'</span> <span class="cbk-cbar" style="background:'+cbkTeamColor(g.home.team,g.home.conference)+'"></span>'+g.home.team+'</td>';
     ST.forEach(function(s){
       var bad=bs.indexOf(s)>=0;
-      rows+='<td class="cbk-cell '+(bad?'cbk-no':'cbk-yes')+'">'+(bad?'NO':'\u00b7')+'</td>';
+      rows+='<td class="cmp-c '+(bad?'cbk-no':'cbk-ok')+'">'+(bad?'NO':'&middot;')+'</td>';
     });
     rows+='</tr>';
   });
   var det='';
   _cmpGames.forEach(function(g){
-    var blocks=cbkGameBlocks(g.away.team,g.home.team);
-    if(!blocks.length)return;
-    blocks.forEach(function(b){
-      det+='<div style="margin-bottom:3px"><span style="color:var(--red2);font-weight:700">\u26A0</span> <b>'+TL(g.away.team)+' @ '+TL(g.home.team)
-        +'</b> \u2014 not allowed in <b style="color:var(--red2)">'+b.state+'</b> ('+b.team+' is based there)</div>';
+    cbkGameBlocks(g.away.team,g.home.team).forEach(function(b){
+      det+='<div class="cmp-d"><span style="color:var(--red2);font-weight:700">&#9888;</span> <b>'+g.away.team+' '+(g.neutral_site?'vs':'@')+' '+g.home.team
+        +'</b> &mdash; not allowed in <b style="color:var(--red2)">'+b.state+'</b> <span style="color:var(--txt3)">('+b.team+' is based there)</span></div>';
     });
   });
   box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">Daily Compliance Sheet</div>'
-    +'<div style="font-size:11px;color:var(--txt3)">'+date+' \u00b7 '+_cmpGames.length+' games \u00b7 '+flagged+' restricted</div></div>'
+    +'<div style="font-size:11px;color:var(--txt3)">'+date+' &middot; '+_cmpGames.length+' game'+(_cmpGames.length===1?'':'s')+' &middot; '+flagged+' restricted</div></div>'
     +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
-    +'<table class="tbl cbk-grid"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>'
-    +(det?'<div class="cbk-detail"><div class="cbk-detail-t">RESTRICTED GAMES</div>'+det+'</div>':'<div class="cbk-legend">No games restricted on this date.</div>')
-    +'<div class="cbk-legend">A game may not be offered in a state where either participant is based. '
-    +'Covered: '+ST.join(' \u00b7 ')+'.</div>';
-}
-/* ================= CONFERENCE MATRIX GRID ================= */
+    +'<table class="tbl cmp-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>'
+    +(det?'<div class="cbk-detail"><div class="cbk-detail-t">RESTRICTED GAMES</div>'+det+'</div>'
+        :'<div class="cbk-legend" style="color:var(--grn2)">No games restricted on this date.</div>')
+    +'<div class="cbk-legend">A game cannot be offered in a state where either participant is based. '
+    +'DC Washington DC &middot; DE Delaware &middot; ME Maine &middot; NE Nebraska &middot; RI Rhode Island &middot; IL Illinois &middot; '
+    +'MA Massachusetts &middot; NJ New Jersey &middot; VA Virginia &middot; NY New York &middot; WA Washington State.</div>';
+}/* ================= CONFERENCE MATRIX GRID ================= */
 var _mtxTeams=[];
 function initMtx(){
   var sel=document.getElementById('mtx-conf');
@@ -5668,35 +5710,35 @@ function mtxRender(){
   var conf=document.getElementById('mtx-conf').value;
   var box=document.getElementById('mtx-body');
   var ts=_mtxTeams.filter(function(t){return t.conference===conf;});
-  if(!ts.length){box.innerHTML='<div style="padding:20px;color:var(--txt3)">No teams.</div>';return;}
+  if(!ts.length){box.innerHTML='<div style="padding:24px;color:var(--txt3)">No teams.</div>';return;}
   ts.sort(function(a,b){return b.pr-a.pr;});
-  var head='<tr><th class="cbk-mx-corner">HOME \\ AWAY</th>';
-  ts.forEach(function(t){
-    head+='<th class="cbk-vert" style="border-bottom:3px solid '+cbkTeamColor(t.team,conf)+'">'+TL(t.team)+'</th>';
-  });
-  head+='<th class="cbk-vert">AVG</th></tr>';
-  var rows='';
+  var cards='';
   ts.forEach(function(h){
-    rows+='<tr><td class="cbk-mx-row" style="border-left:4px solid '+cbkTeamColor(h.team,conf)+'"><b>'+TL(h.team)+'</b> <span style="color:var(--txt3)" class="tnum">'+h.pr.toFixed(1)+'</span></td>';
-    var sum=0,n=0;
+    var lines='',sum=0,n=0;
     ts.forEach(function(a){
-      if(a.id===h.id){rows+='<td class="cbk-mx-self">\u2014</td>';return;}
+      if(a.id===h.id)return;
       var sp=calcSpread(h.pr,h.hc,a.pr,false);
       sum+=sp;n++;
-      var mag=Math.min(Math.abs(sp)/22,1);
-      var col=sp>=0?'rgba(46,125,79,'+(0.10+mag*0.55).toFixed(2)+')':'rgba(198,40,40,'+(0.10+mag*0.55).toFixed(2)+')';
-      rows+='<td class="cbk-mx-cell tnum" style="background:'+col+'" title="'+TL(a.team)+' at '+TL(h.team)+'">'+(sp>0?'-':'+')+Math.abs(sp).toFixed(1)+'</td>';
+      var col=sp>=0?'var(--grn2)':'var(--red2)';
+      lines+='<div class="mtx-l"><span class="mtx-o">'+a.team+'</span>'
+        +'<span class="mtx-v" style="color:'+col+'">'+(sp>=0?'-':'+')+Math.abs(sp).toFixed(1)+'</span></div>';
     });
-    rows+='<td class="cbk-mx-avg tnum">'+(n?(sum/n>=0?'-':'+')+Math.abs(sum/n).toFixed(1):'\u2014')+'</td></tr>';
+    var avg=n?sum/n:0;
+    cards+='<div class="mtx-card">'
+      +'<div class="mtx-hd" style="border-left:4px solid '+cbkTeamColor(h.team,conf)+'">'
+        +'<span class="mtx-t">'+h.team+'</span><span class="mtx-pr tnum">'+h.pr.toFixed(1)+'</span></div>'
+      +'<div class="mtx-body">'+lines+'</div>'
+      +'<div class="mtx-avg"><span>AVG HOME LINE</span><span class="tnum" style="color:var(--acc)">'
+        +(avg>=0?'-':'+')+Math.abs(avg).toFixed(1)+'</span></div></div>';
   });
-  box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">'+conf+' \u2014 Projected Spread Matrix</div>'
-    +'<div style="font-size:11px;color:var(--txt3)">'+ts.length+' teams \u00b7 every matchup \u00b7 read as the HOME team\u2019s line \u00b7 includes home court</div></div>'
+  box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">'+conf+' &mdash; Projected Spreads</div>'
+    +'<div style="font-size:11px;color:var(--txt3)">'+ts.length+' teams &middot; each card is that team at HOME against the rest of the league &middot; home court included</div></div>'
     +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
-    +'<div class="cbk-mx-scroll"><table class="tbl cbk-mx"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'
-    +'<div class="cbk-legend">Each cell is the spread if that row team hosts that column team. Green = home favoured, red = home underdog. '
-    +'AVG is the team\u2019s mean home line against the league \u2014 a quick read on where they sit.</div>';
+    +'<div class="mtx-grid">'+cards+'</div>'
+    +'<div class="cbk-legend">Each card lists that team\u2019s home line against every league opponent, sorted by opponent strength. '
+    +'Green means they are favoured at home, red means they are the home underdog. '
+    +'AVG HOME LINE is their mean line across the league \u2014 a one-number read on where they sit.</div>';
 }
-
 /* ================= BIGGEST MISSES ================= */
 var _msRows=[];
 function initMisses(){
@@ -5732,6 +5774,12 @@ function msRender(){
   if(dir==='over')rows=rows.filter(function(r){return r.miss>0;});
   if(dir==='under')rows=rows.filter(function(r){return r.miss<0;});
   rows.sort(function(a,b){return Math.abs(b.miss)-Math.abs(a.miss);});
+  if(!rows.length){
+    document.getElementById('ms-body').innerHTML='<div class="cbk-empty"><b>No completed games yet.</b><br>'
+      +'This page ranks your worst misses once results are in the database.<br>'
+      +'It scores every final game against the current power ratings, so it fills in automatically as the season plays.</div>';
+    return;
+  }
   var top=rows.slice(0,60);
   var mae=rows.length?rows.reduce(function(s,r){return s+Math.abs(r.miss);},0)/rows.length:0;
   var bias=rows.length?rows.reduce(function(s,r){return s+r.miss;},0)/rows.length:0;
@@ -5842,7 +5890,7 @@ function arcLoadSaved(){
   sb.from('line_archive').select('*').order('saved_at',{ascending:false}).range(0,499).then(function(res){
     if(res.error){box.innerHTML='<div style="padding:20px;color:var(--red2);font-size:12px">Error: '+res.error.message+'</div>';return;}
     var rows=res.data||[];
-    if(!rows.length){box.innerHTML='<div style="padding:20px;color:var(--txt3);font-size:12px">Archive is empty. Pick a date and press SNAPSHOT to store today\u2019s numbers.</div>';return;}
+    if(!rows.length){box.innerHTML='<div class="cbk-empty"><b>Archive is empty.</b><br>Pick a date above and press SNAPSHOT to store every number you have posted for that slate.<br>Each entry is timestamped and permanent \u2014 fill in OPEN and CLOSE later to build a closing-line-value record.</div>';return;}
     var h='';
     rows.forEach(function(r){
       var col=r.conf_flag==='HIGH'?'var(--red2)':(r.conf_flag==='MED'?'var(--amb)':'var(--grn2)');
@@ -5862,124 +5910,120 @@ function arcLoadSaved(){
   });
 }
 /* ================= MTE BRACKET VIEW ================= */
-var _brkTeams=[];
-var BRK_PRESETS={
- 'Maui Invitational':['Duke','Michigan St.','Arizona','Connecticut','Kansas','Gonzaga','Tennessee','Iowa St.'],
- 'Battle 4 Atlantis':['Florida','Houston','Baylor','Villanova','Creighton','Wisconsin','Providence','VCU'],
- 'Empire Classic':['North Carolina','Kentucky','Illinois','Texas'],
- 'Players Era':['Alabama','Auburn','Oregon','Michigan','Kansas St.','Maryland','Rutgers','San Diego St.']
-};
+
+
+var _brkTeams=[],_brkSlots={},_brkEvent='';
 function initBrk(){
-  if(_brkTeams.length){brkBuildSlots();return;}
-  sb.from('teams').select('id,team,pr,hc,conference').order('team',{ascending:true}).range(0,9999).then(function(res){
-    _brkTeams=res.data||[];
-    var p=document.getElementById('brk-preset');
-    if(p&&p.options.length<=1){
-      p.innerHTML='<option value="">Custom field...</option>'+Object.keys(BRK_PRESETS).map(function(k){
-        return'<option value="'+k+'">'+k+'</option>';}).join('');
-    }
-    brkBuildSlots();
-  });
-}
-function brkBuildSlots(){
-  var n=parseInt(document.getElementById('brk-size').value,10);
-  var wrap=document.getElementById('brk-slots');
-  var opts='<option value="">--</option>'+_brkTeams.map(function(t){
-    return'<option value="'+t.id+'">'+t.team+'</option>';}).join('');
-  var h='';
-  for(var i=0;i<n;i++){
-    h+='<div class="cbk-slot"><span class="cbk-seed">'+(i+1)+'</span><select class="field" id="mte-t'+i+'" onchange="brkRender()">'+opts+'</select></div>';
+  var sel=document.getElementById('brk-event');
+  if(sel&&sel.options.length<=1&&typeof MTE_EVENTS!=='undefined'){
+    sel.innerHTML=Object.keys(MTE_EVENTS).map(function(k){
+      return'<option value="'+k+'">'+MTE_EVENTS[k].name+' \u2014 '+MTE_EVENTS[k].subtitle+'</option>';}).join('');
   }
-  wrap.innerHTML=h;
-  brkRender();
+  if(!_brkEvent&&sel&&sel.value)_brkEvent=sel.value;
+  brkLoad();
 }
-function brkPreset(){
-  var k=document.getElementById('brk-preset').value;
-  if(!k)return;
-  var list=BRK_PRESETS[k]||[];
-  document.getElementById('brk-size').value=String(list.length>=8?8:4);
-  brkBuildSlots();
-  list.forEach(function(nm,i){
-    var s=document.getElementById('mte-t'+i);
-    if(!s)return;
-    var t=_brkTeams.filter(function(x){return x.team===nm;})[0];
-    if(t)s.value=t.id;
+function brkLoad(){
+  var sel=document.getElementById('brk-event');
+  _brkEvent=sel.value;
+  var box=document.getElementById('brk-body');
+  box.innerHTML='<div style="padding:24px;color:var(--txt3);font-size:12px">Loading field...</div>';
+  Promise.all([
+    sb.from('teams').select('id,team,pr,conference').range(0,9999),
+    sb.from('mte_slots').select('slot,team_id').eq('event_key',_brkEvent)
+  ]).then(function(r){
+    _brkTeams=r[0].data||[];
+    _brkSlots={};
+    (r[1].data||[]).forEach(function(s){
+      var t=_brkTeams.filter(function(x){return String(x.id)===String(s.team_id);})[0];
+      if(t)_brkSlots[s.slot]=t;
+    });
+    brkRender();
   });
-  brkRender();
 }
 function brkWinP(a,b){return cbkNcdf((a.pr-b.pr)/CBK_SIGMA);}
+function brkShort(k){return k==='CH'?'FINAL':(k==='SF'?'SF':(k==='QF'?'QF':k));}
 function brkRender(){
-  var n=parseInt(document.getElementById('brk-size').value,10);
   var box=document.getElementById('brk-body');
-  var field=[];
-  for(var i=0;i<n;i++){
-    var s=document.getElementById('mte-t'+i);
-    if(!s||!s.value){box.innerHTML='<div style="padding:20px;color:var(--txt3);font-size:12px">Fill all '+n+' slots (or pick a preset) to price the field.</div>';return;}
-    var t=_brkTeams.filter(function(x){return String(x.id)===String(s.value);})[0];
-    if(!t)return;
-    field.push(t);
+  var ev=(typeof MTE_EVENTS!=='undefined')?MTE_EVENTS[_brkEvent]:null;
+  if(!ev){box.innerHTML='<div style="padding:24px;color:var(--txt3)">Pick an event.</div>';return;}
+  var filled=Object.keys(_brkSlots).length;
+  if(filled<ev.count){
+    box.innerHTML='<div style="padding:24px;color:var(--txt3);font-size:12px">'
+      +'<b>'+ev.name+' \u2014 '+ev.subtitle+'</b><br><br>'+filled+' of '+ev.count+' slots filled.<br>'
+      +'Set the field on the <b>MTEs</b> tab and it will price here automatically.</div>';return;
   }
-  var order=(n===8)?[0,7,3,4,1,6,2,5]:[0,3,1,2];
-  var seeds=order.map(function(ix){return field[ix];});
-  var dist=seeds.map(function(t,i){var d={};d[i]=1;return d;});
-  var rounds=Math.log(n)/Math.log(2);
-  var roundNames=(n===8)?['Quarterfinal','Semifinal','Final']:['Semifinal','Final'];
-  var log=[];
-  for(var r=0;r<rounds;r++){
-    var nxt=[],desc=[];
-    for(var m=0;m<dist.length;m+=2){
-      var A=dist[m],B=dist[m+1],merged={};
-      var pA=0;
+  var hold=parseFloat(document.getElementById('brk-hold').value||'1.18');
+  var dist={};
+  function sideDist(sd){
+    if(sd.slot!=null){var d={};d[sd.slot]=1;return d;}
+    return dist[sd.win];
+  }
+  ev.rounds.forEach(function(rd){
+    rd.games.forEach(function(gm){
+      var A=sideDist(gm.a),B=sideDist(gm.b),out={};
       Object.keys(A).forEach(function(ka){
         Object.keys(B).forEach(function(kb){
-          var w=A[ka]*B[kb];
-          var p=brkWinP(seeds[ka],seeds[kb]);
-          merged[ka]=(merged[ka]||0)+w*p;
-          merged[kb]=(merged[kb]||0)+w*(1-p);
-          pA+=w*p;
+          var w=A[ka]*B[kb],p=brkWinP(_brkSlots[ka],_brkSlots[kb]);
+          out[ka]=(out[ka]||0)+w*p; out[kb]=(out[kb]||0)+w*(1-p);
         });
       });
-      nxt.push(merged);
-      desc.push({pA:pA,A:A,B:B});
-    }
-    log.push({name:roundNames[r],games:desc,st:nxt.slice()});
-    dist=nxt;
-  }
-  var fin=dist[0];
-  var res=Object.keys(fin).map(function(k){return{t:seeds[k],p:fin[k]};});
-  res.sort(function(a,b){return b.p-a.p;});
-  var hold=1.18;
-  var rows='';
-  res.forEach(function(x,i){
-    var am=roundML(cbkProbToAm(Math.min(0.985,x.p*hold)));
-    rows+='<tr><td class="muted tnum">'+(i+1)+'</td>'
-      +'<td><span class="cbk-cbar" style="background:'+cbkTeamColor(x.t.team,x.t.conference)+'"></span><b>'+TL(x.t.team)+'</b></td>'
-      +'<td class="muted">'+(x.t.conference||'')+'</td>'
-      +'<td class="tnum">'+x.t.pr.toFixed(1)+'</td>'
-      +'<td class="tnum">'+(x.p*100).toFixed(1)+'%</td>'
-      +'<td class="tnum bold" style="color:var(--acc)">'+am+'</td></tr>';
-  });
-  var brk='';
-  log.forEach(function(rd,ri){
-    brk+='<div class="cbk-rd"><div class="cbk-rd-t">'+rd.name+'</div>';
-    rd.games.forEach(function(gm,gi){
-      var aKeys=Object.keys(gm.A).sort(function(a,b){return gm.B?0:0;});
-      var topA=Object.keys(gm.A).sort(function(a,b){return gm.A[b]-gm.A[a];})[0];
-      var topB=Object.keys(gm.B).sort(function(a,b){return gm.B[b]-gm.B[a];})[0];
-      var nameA=(Object.keys(gm.A).length===1)?TL(seeds[topA].team):(TL(seeds[topA].team)+' ('+(gm.A[topA]*100).toFixed(0)+'%)');
-      var nameB=(Object.keys(gm.B).length===1)?TL(seeds[topB].team):(TL(seeds[topB].team)+' ('+(gm.B[topB]*100).toFixed(0)+'%)');
-      brk+='<div class="cbk-mtch"><span>'+nameA+'</span><span class="cbk-vs">vs</span><span>'+nameB+'</span>'
-         +'<span class="cbk-pct">'+(gm.pA*100).toFixed(0)+'% / '+((1-gm.pA)*100).toFixed(0)+'%</span></div>';
+      dist[gm.id]=out;
     });
-    brk+='</div>';
   });
-  box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">Field of '+n+' \u2014 Odds to Win</div>'
-    +'<div style="font-size:11px;color:var(--txt3)">exact bracket math, neutral court, '+((hold-1)*100).toFixed(0)+'% hold applied</div></div>'
+  var surv=ev.rounds.map(function(rd){
+    var s={};
+    rd.games.forEach(function(gm){Object.keys(dist[gm.id]).forEach(function(k){s[k]=(s[k]||0)+dist[gm.id][k];});});
+    return s;
+  });
+  var champ=dist[ev.champGame];
+  var cols=ev.rounds.map(function(rd,i){return (i+1<ev.rounds.length)?brkShort(ev.rounds[i+1].key):'WIN';});
+  var order=Object.keys(_brkSlots).sort(function(a,b){return (champ[b]||0)-(champ[a]||0);});
+  var head='<tr><th>#</th><th>SEED</th><th>TEAM</th><th>CONF</th><th>PR</th>';
+  cols.forEach(function(c){head+='<th>'+c+'</th>';});
+  head+='<th>ODDS</th></tr>';
+  var rows='';
+  order.forEach(function(k,i){
+    var t=_brkSlots[k];
+    var wp=champ[k]||0;
+    var am=roundML(cbkProbToAm(Math.min(0.985,wp*hold)));
+    rows+='<tr><td class="muted tnum">'+(i+1)+'</td>'
+      +'<td class="tnum muted">'+(parseInt(k,10)+1)+'</td>'
+      +'<td><span class="cbk-cbar" style="background:'+cbkTeamColor(t.team,t.conference)+'"></span><b>'+t.team+'</b></td>'
+      +'<td class="muted">'+(t.conference||'')+'</td>'
+      +'<td class="tnum">'+t.pr.toFixed(1)+'</td>';
+    surv.forEach(function(s,ri){
+      var v=(s[k]||0)*100;
+      var last=(ri===surv.length-1);
+      rows+='<td class="tnum'+(last?' bold':'')+'"'+(last?' style="color:var(--acc)"':'')+'>'+v.toFixed(1)+'%</td>';
+    });
+    rows+='<td class="tnum bold" style="color:var(--acc)">'+am+'</td></tr>';
+  });
+  var r0=ev.rounds[0];
+  var open='';
+  r0.games.forEach(function(gm){
+    var a=_brkSlots[gm.a.slot],b=_brkSlots[gm.b.slot];
+    if(!a||!b)return;
+    var p=brkWinP(a,b);
+    var sp=a.pr-b.pr;
+    var amA=roundML(cbkProbToAm(Math.min(0.985,p*1.045))),amB=roundML(cbkProbToAm(Math.min(0.985,(1-p)*1.045)));
+    open+='<div class="brk-g">'
+      +'<div class="brk-side"><span class="cbk-cbar" style="background:'+cbkTeamColor(a.team,a.conference)+'"></span>'+a.team+'</div>'
+      +'<div class="brk-od tnum">'+amA+'</div>'
+      +'<div class="brk-sp tnum">'+(sp>=0?'-':'+')+Math.abs(sp).toFixed(1)+'</div>'
+      +'<div class="brk-od tnum">'+amB+'</div>'
+      +'<div class="brk-side brk-r">'+b.team+'<span class="cbk-cbar" style="background:'+cbkTeamColor(b.team,b.conference)+';margin:0 0 0 6px"></span></div>'
+      +'</div>';
+  });
+  box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">'+ev.name+' \u2014 '+ev.subtitle+'</div>'
+    +'<div style="font-size:11px;color:var(--txt3)">field loaded from the MTEs tab &middot; exact bracket math &middot; neutral court &middot; '
+    +((hold-1)*100).toFixed(0)+'% hold on the outright</div></div>'
     +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
-    +'<div class="cbk-brk-wrap"><div><table class="tbl"><thead><tr><th>#</th><th>TEAM</th><th>CONF</th><th>PR</th><th>WIN%</th><th>ODDS</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
-    +'<div class="cbk-brk">'+brk+'</div></div>'
-    +'<div class="cbk-legend">Seeding is 1v'+n+' style: slot 1 meets slot '+n+', slot 4 meets slot 5, and so on. '
-    +'Probabilities are exact (every path enumerated), not simulated. Matchup odds use a normal margin model with sigma 11.37.</div>';
+    +'<table class="tbl brk-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>'
+    +'<div class="brk-open"><div class="cbk-detail-t">'+r0.name.toUpperCase()+' \u2014 PRICED MATCHUPS</div>'+open+'</div>'
+    +'<div class="cbk-legend">Percentage columns are the chance of <b>reaching</b> that round; the last one is the chance of winning the event. '
+    +'Every path is enumerated, so the WIN column sums to exactly 100%. '
+    +'Matchup prices use a normal margin model with sigma 11.37 and 4.5% hold; the outright uses '+((hold-1)*100).toFixed(0)+'%. '
+    +'Change the field on the MTEs tab.</div>';
 }
 
 </script>
