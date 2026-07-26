@@ -615,6 +615,60 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
   body.cbk-printing .ls-tbl td,body.cbk-printing .cmp-tbl td{padding:3px 6px!important}
 }
 
+/* ---- alt lines market compare ---- */
+.alt-mkt th{background:rgba(139,105,20,0.07)}
+.alt-edge{font-weight:700}
+.alt-hd{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;font-size:11px;color:var(--txt3)}
+.alt-hd b{color:var(--txt1)}
+/* ---- compliance ---- */
+.cmp-a{text-align:left!important;white-space:nowrap;font-weight:600;padding-right:14px!important}
+.cmp-h{text-align:left!important;white-space:nowrap;font-weight:600}
+.cmp-n{text-align:center;width:44px;font-size:9px;font-weight:800;letter-spacing:.5px}
+.cmp-neu{background:rgba(230,81,0,0.13);color:var(--amb)}
+.cbk-detail-t{font-size:12px!important;letter-spacing:1.2px}
+.cmp-d{margin-bottom:6px;font-size:12.5px;line-height:1.5}
+/* ---- bracket odds columns ---- */
+.brk-od-c{color:var(--acc);font-weight:700}
+.brk-sep{border-left:2px solid var(--bdr)}
+/* ---- buttons ---- */
+.cbk-btns{display:flex;gap:6px;flex-wrap:wrap}
+/* ============ PRINT: show only the sheet ============ */
+@media print{
+  @page{size:landscape;margin:9mm}
+  body.cbk-printing .top-bar,
+  body.cbk-printing .nav,
+  body.cbk-printing .ticker,
+  body.cbk-printing #ticker-bar,
+  body.cbk-printing #tipoff,
+  body.cbk-printing #cbk-drawer,
+  body.cbk-printing #cbk-drawer-overlay,
+  body.cbk-printing #login-screen,
+  body.cbk-printing .search-bar,
+  body.cbk-printing .cbk-noprint,
+  body.cbk-printing .cbk-pagelbl{display:none!important}
+  body.cbk-printing{background:#fff!important;color:#000!important;padding:0!important;margin:0!important}
+  body.cbk-printing .content{padding:0!important;margin:0!important;max-width:100%!important}
+  body.cbk-printing .panel{border:none!important;box-shadow:none!important;background:#fff!important}
+  body.cbk-printing .cbk-sheet-hdr{border-bottom:1.5px solid #000!important;padding:0 0 6px 0!important;margin-bottom:8px!important}
+  body.cbk-printing .tbl{font-size:8.5px!important;width:100%!important}
+  body.cbk-printing .tbl td,body.cbk-printing .tbl th{padding:2px 5px!important;border-color:#ccc!important}
+  body.cbk-printing .cbk-legend{font-size:7.5px!important;color:#444!important;padding:6px 0 0 0!important}
+  body.cbk-printing tr{page-break-inside:avoid}
+  /* matrix: condense hard */
+  body.cbk-printing .mtx-grid{grid-template-columns:repeat(6,1fr)!important;gap:4px!important}
+  body.cbk-printing .mtx-card{border:1px solid #999!important;break-inside:avoid;page-break-inside:avoid}
+  body.cbk-printing .mtx-hd{background:#eee!important;padding:2px 5px!important}
+  body.cbk-printing .mtx-t{font-size:8.5px!important}
+  body.cbk-printing .mtx-pr{font-size:7.5px!important}
+  body.cbk-printing .mtx-l{padding:0px 5px!important;font-size:7.5px!important;line-height:1.45}
+  body.cbk-printing .mtx-l:nth-child(even){background:#f6f6f6!important}
+  body.cbk-printing .mtx-avg{padding:2px 5px!important;font-size:6.5px!important}
+  body.cbk-printing .brk-g{font-size:8.5px!important;padding:2px 0!important}
+  body.cbk-printing .cbk-detail{border:1px solid #999!important}
+}
+
+.cbk-alt-mkt td{background:rgba(230,81,0,0.10)!important;border-top:1px dashed var(--amb);border-bottom:1px dashed var(--amb)}
+body.cbk-capturing .cbk-noprint{display:none!important}
 </style>
 </head>
 <body>
@@ -1181,6 +1235,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 <div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--txt3)">HOLD</span>
 <input type="range" id="alt-hold" min="0.02" max="0.12" step="0.005" value="0.045" oninput="altSetHold(this.value)" style="width:130px">
 <span id="alt-hold-val" style="font-size:11px;color:var(--acc);font-weight:700">4.5%</span></div>
+<div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:var(--txt3)">MARKET</span><input class="field" id="alt-mkt" type="number" step="0.5" placeholder="e.g. -2.5" style="width:104px" oninput="altRender()"><button class="btn" onclick="altClearMkt()" style="font-size:9px">CLEAR</button></div>
 </div>
 <div class="panel"><div id="alt-body"><div style="padding:20px;color:var(--txt3);font-size:12px">Pick a game.</div></div></div>
 </div>
@@ -1218,6 +1273,7 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <script>
 const SUPABASE_URL='https://idygvqhdzjpjyqxbftxj.supabase.co';
 const SUPABASE_KEY='sb_publishable_9RG1FwiODqJ0MUPoDERpzQ_F552c8BN';
@@ -5627,13 +5683,40 @@ function lsRender(){
   });
   box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">CBK Analytics &mdash; Line Sheet</div>'
     +'<div style="font-size:11px;color:var(--txt3)">'+date+' &middot; '+_lsGames.length+' game'+(_lsGames.length===1?'':'s')+' &middot; '+nHigh+' high-variance</div></div>'
-    +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
+    +cbkBtns('line-sheet')+'</div>'
     +'<table class="tbl ls-tbl"><thead><tr><th></th><th>AWAY</th><th></th><th>HOME</th><th>OUR NUMBER</th><th>MONEYLINE</th><th>CONFIDENCE</th></tr></thead><tbody>'
     +rows+'</tbody></table>'
     +'<div class="cbk-legend"><b>CONFIDENCE</b> &mdash; LOW is market-quality, MED elevated variance, HIGH means widen or lower the limit. '
     +'Derived from spread size, month and buy-game status. BUY marks a low-major visiting a high or mid-major. '
     +'State restrictions are on the Compliance tab.</div>';
-}function cbkPrint(){document.body.classList.add('cbk-printing');window.print();setTimeout(function(){document.body.classList.remove('cbk-printing');},600);}
+}/* ---- print / save-as-PDF ---- */
+function cbkPrint(){document.body.classList.add('cbk-printing');window.print();setTimeout(function(){document.body.classList.remove('cbk-printing');},700);}
+function cbkVisiblePage(){
+  var ps=document.querySelectorAll('[id^="page-"]');
+  for(var i=0;i<ps.length;i++){if(ps[i].style.display!=='none')return ps[i];}
+  return null;
+}
+function cbkSavePDF(name){
+  var pg=cbkVisiblePage();
+  if(!pg){cbkPrint();return;}
+  var el=pg.querySelector('.panel')||pg;
+  if(typeof html2pdf==='undefined'){cbkPrint();return;}
+  document.body.classList.add('cbk-capturing');
+  var w=el.scrollWidth;
+  html2pdf().set({
+    margin:[6,6,6,6],
+    filename:(name||'cbk-sheet')+'-'+cbkToday()+'.pdf',
+    image:{type:'jpeg',quality:0.97},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',windowWidth:w},
+    jsPDF:{unit:'mm',format:'a4',orientation:w>900?'landscape':'portrait'},
+    pagebreak:{mode:['css','avoid-all']}
+  }).from(el).save().then(function(){document.body.classList.remove('cbk-capturing');})
+   .catch(function(){document.body.classList.remove('cbk-capturing');});
+}
+function cbkBtns(fname){
+  return '<div class="cbk-btns cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT</button>'
+    +'<button class="btn primary" onclick="cbkSavePDF(\''+fname+'\')">SAVE AS PDF</button></div>';
+}
 
 /* ================= COMPLIANCE (daily game x state grid) ================= */
 var _cmpGames=[];
@@ -5653,42 +5736,59 @@ function cmpLoad(){
       cmpRender();
     });
 }
+var CBK_NEUTRAL_BLOCK=['New Jersey','Rhode Island','Washington State'];
 function cmpRender(){
   var box=document.getElementById('cmp-body');
   var date=document.getElementById('cmp-date').value||cbkToday();
-  if(!_cmpGames.length){box.innerHTML='<div style="padding:24px;color:var(--txt3);font-size:12px">No games scheduled on '+date+'.</div>';return;}
+  if(!_cmpGames.length){box.innerHTML='<div class="cbk-empty"><b>No games scheduled on '+date+'.</b><br>Pick another date above.</div>';return;}
   var ST=CBK_GAME_BLOCK;
   var ABBR={'Washington DC':'DC','Delaware':'DE','Maine':'ME','Nebraska':'NE','Rhode Island':'RI','Illinois':'IL',
             'Massachusetts':'MA','New Jersey':'NJ','Virginia':'VA','New York':'NY','Washington State':'WA'};
-  var head='<tr><th class="cmp-g">GAME</th>';
+  var head='<tr><th class="cmp-a">AWAY</th><th class="cmp-h">HOME</th><th class="cmp-n">NEUTRAL</th>';
   ST.forEach(function(s){head+='<th class="cmp-s" title="'+s+'">'+ABBR[s]+'</th>';});
   head+='</tr>';
-  var rows='',flagged=0;
+  var rows='',flagged=0,neut=0;
   _cmpGames.forEach(function(g){
-    var bs=cbkGameBlocks(g.away.team,g.home.team).map(function(b){return b.state;});
-    if(bs.length)flagged++;
-    rows+='<tr><td class="cmp-g"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.away.team,g.away.conference)+'"></span>'+g.away.team
-      +' <span style="color:var(--txt3)">'+(g.neutral_site?'vs':'@')+'</span> <span class="cbk-cbar" style="background:'+cbkTeamColor(g.home.team,g.home.conference)+'"></span>'+g.home.team+'</td>';
+    var teamBlocks=cbkGameBlocks(g.away.team,g.home.team);
+    var bs=teamBlocks.map(function(b){return b.state;});
+    var isN=!!g.neutral_site;
+    if(isN)neut++;
+    if(bs.length||isN)flagged++;
+    rows+='<tr>'
+      +'<td class="cmp-a"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.away.team,g.away.conference)+'"></span>'+g.away.team+'</td>'
+      +'<td class="cmp-h"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.home.team,g.home.conference)+'"></span>'+g.home.team+'</td>'
+      +'<td class="cmp-n '+(isN?'cmp-neu':'cbk-ok')+'">'+(isN?'YES':'&middot;')+'</td>';
     ST.forEach(function(s){
-      var bad=bs.indexOf(s)>=0;
-      rows+='<td class="cmp-c '+(bad?'cbk-no':'cbk-ok')+'">'+(bad?'NO':'&middot;')+'</td>';
+      var byTeam=bs.indexOf(s)>=0;
+      var byNeut=isN&&CBK_NEUTRAL_BLOCK.indexOf(s)>=0;
+      var cls=byTeam?'cbk-no':(byNeut?'cmp-neu':'cbk-ok');
+      var txt=byTeam?'NO':(byNeut?'N':'&middot;');
+      var ti=byTeam?(s+' \u2014 team based there'):(byNeut?(s+' \u2014 no neutral-court games'):'');
+      rows+='<td class="cmp-c '+cls+'"'+(ti?' title="'+ti+'"':'')+'>'+txt+'</td>';
     });
     rows+='</tr>';
   });
   var det='';
   _cmpGames.forEach(function(g){
     cbkGameBlocks(g.away.team,g.home.team).forEach(function(b){
-      det+='<div class="cmp-d"><span style="color:var(--red2);font-weight:700">&#9888;</span> <b>'+g.away.team+' '+(g.neutral_site?'vs':'@')+' '+g.home.team
+      det+='<div class="cmp-d"><span style="color:var(--red2);font-weight:700">&#9888;</span> <b>'+g.away.team+' at '+g.home.team
         +'</b> &mdash; not allowed in <b style="color:var(--red2)">'+b.state+'</b> <span style="color:var(--txt3)">('+b.team+' is based there)</span></div>';
     });
+    if(g.neutral_site){
+      det+='<div class="cmp-d"><span style="color:var(--amb);font-weight:700">&#9888;</span> <b>'+g.away.team+' vs '+g.home.team
+        +'</b> &mdash; <b style="color:var(--amb)">NEUTRAL COURT</b>: not allowed in '
+        +CBK_NEUTRAL_BLOCK.join(', ')+'. <span style="color:var(--txt3)">Check the venue \u2014 the host state may add a further restriction.</span></div>';
+    }
   });
   box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">Daily Compliance Sheet</div>'
-    +'<div style="font-size:11px;color:var(--txt3)">'+date+' &middot; '+_cmpGames.length+' game'+(_cmpGames.length===1?'':'s')+' &middot; '+flagged+' restricted</div></div>'
-    +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
+    +'<div style="font-size:11px;color:var(--txt3)">'+date+' &middot; '+_cmpGames.length+' game'+(_cmpGames.length===1?'':'s')
+    +' &middot; '+flagged+' restricted &middot; '+neut+' neutral court</div></div>'
+    +cbkBtns('compliance')+'</div>'
     +'<table class="tbl cmp-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>'
     +(det?'<div class="cbk-detail"><div class="cbk-detail-t">RESTRICTED GAMES</div>'+det+'</div>'
-        :'<div class="cbk-legend" style="color:var(--grn2)">No games restricted on this date.</div>')
-    +'<div class="cbk-legend">A game cannot be offered in a state where either participant is based. '
+        :'<div class="cbk-legend" style="color:var(--grn2);font-size:12px">No restrictions on this date.</div>')
+    +'<div class="cbk-legend"><b style="color:var(--red2)">NO</b> = a participant is based in that state. '
+    +'<b style="color:var(--amb)">N</b> = neutral-court game, and that state allows none. '
     +'DC Washington DC &middot; DE Delaware &middot; ME Maine &middot; NE Nebraska &middot; RI Rhode Island &middot; IL Illinois &middot; '
     +'MA Massachusetts &middot; NJ New Jersey &middot; VA Virginia &middot; NY New York &middot; WA Washington State.</div>';
 }/* ================= CONFERENCE MATRIX GRID ================= */
@@ -5733,7 +5833,7 @@ function mtxRender(){
   });
   box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">'+conf+' &mdash; Projected Spreads</div>'
     +'<div style="font-size:11px;color:var(--txt3)">'+ts.length+' teams &middot; each card is that team at HOME against the rest of the league &middot; home court included</div></div>'
-    +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
+    +cbkBtns('conf-matrix')+'</div>'
     +'<div class="mtx-grid">'+cards+'</div>'
     +'<div class="cbk-legend">Each card lists that team\u2019s home line against every league opponent, sorted by opponent strength. '
     +'Green means they are favoured at home, red means they are the home underdog. '
@@ -5797,7 +5897,7 @@ function msRender(){
   });
   box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">Biggest Misses</div>'
     +'<div style="font-size:11px;color:var(--txt3)">'+rows.length+' games scored \u00b7 MAE '+mae.toFixed(2)+' \u00b7 bias '+(bias>=0?'+':'\u2212')+Math.abs(bias).toFixed(2)+' \u00b7 showing worst '+top.length+'</div></div>'
-    +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
+    +cbkBtns('biggest-misses')+'</div>'
     +'<table class="tbl"><thead><tr><th>#</th><th>DATE</th><th>AWAY</th><th></th><th>HOME</th><th>SCORE</th><th>OUR LINE</th><th>ACTUAL</th><th>MISS</th></tr></thead><tbody>'
     +h+'</tbody></table>'
     +'<div class="cbk-legend">MISS is actual margin minus our predicted margin, from the home team\u2019s side. '
@@ -5819,40 +5919,66 @@ function initAlt(){
 }
 function altSetHold(v){document.getElementById('alt-hold-val').textContent=(parseFloat(v)*100).toFixed(1)+'%';altRender();}
 function altLoad(){altRender();}
+function altClearMkt(){document.getElementById('alt-mkt').value='';altRender();}
 function altRender(){
   var gid=document.getElementById('alt-game').value;
   var box=document.getElementById('alt-body');
-  if(!gid){box.innerHTML='<div style="padding:20px;color:var(--txt3);font-size:12px">Pick a game.</div>';return;}
+  if(!gid){box.innerHTML='<div class="cbk-empty">Pick a game to price the ladder.</div>';return;}
   var g=_altGames.filter(function(x){return String(x.id)===String(gid);})[0];
   if(!g)return;
   var hold=parseFloat(document.getElementById('alt-hold').value);
   var S=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
   var base=Math.round(S*2)/2;
+  var mraw=document.getElementById('alt-mkt').value;
+  var M=(mraw!==''&&!isNaN(parseFloat(mraw)))?parseFloat(mraw):null;
+  var hasM=(M!==null);
   var rows='';
   for(var k=-12;k<=12;k++){
     var L=base+k;
     var p=cbkAltPrice(S,L,hold);
     var isCore=Math.abs(L-base)<0.001;
-    var pushTxt=p.push>0.001?(p.push*100).toFixed(1)+'%':'\u2014';
-    rows+='<tr'+(isCore?' class="cbk-alt-core"':'')+'>'
+    var isMkt=hasM&&Math.abs(L-M)<0.001;
+    var cls=isCore?' class="cbk-alt-core"':(isMkt?' class="cbk-alt-mkt"':'');
+    rows+='<tr'+cls+'>'
       +'<td class="tnum bold">'+(L>0?'-':'+')+Math.abs(L).toFixed(1)+'</td>'
       +'<td class="tnum" style="color:var(--acc);font-weight:700">'+p.home+'</td>'
       +'<td class="tnum" style="color:var(--acc);font-weight:700">'+p.away+'</td>'
-      +'<td class="tnum muted">'+(p.pHome*100).toFixed(1)+'%</td>'
-      +'<td class="tnum muted">'+(p.pAway*100).toFixed(1)+'%</td>'
-      +'<td class="tnum muted">'+pushTxt+'</td>'
-      +(isCore?'<td style="font-size:10px;color:var(--acc);font-weight:700">OUR NUMBER</td>':'<td></td>')
+      +'<td class="tnum muted">'+(p.pHome*100).toFixed(1)+'%</td>';
+    if(hasM){
+      var pm=cbkAltPrice(M,L,hold);
+      var edge=(p.pHome-pm.pHome)*100;
+      var ec=Math.abs(edge)<0.05?'var(--txt3)':(edge>0?'var(--grn2)':'var(--red2)');
+      rows+='<td class="tnum brk-sep">'+pm.home+'</td>'
+        +'<td class="tnum">'+pm.away+'</td>'
+        +'<td class="tnum muted">'+(pm.pHome*100).toFixed(1)+'%</td>'
+        +'<td class="tnum alt-edge" style="color:'+ec+'">'+(edge>=0?'+':'\u2212')+Math.abs(edge).toFixed(1)+'</td>';
+    }
+    rows+=(isCore?'<td class="tnum" style="font-size:9px;color:var(--acc);font-weight:700">OURS</td>'
+          :(isMkt?'<td class="tnum" style="font-size:9px;color:var(--amb);font-weight:700">MARKET</td>':'<td></td>'))
       +'</tr>';
   }
   var v=cbkVol(S,g.game_date,cbkIsBuy(g),null);
-  box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">'+TL(g.away.team)+' '+(g.neutral_site?'vs':'@')+' '+TL(g.home.team)+'</div>'
-    +'<div style="font-size:11px;color:var(--txt3)">'+g.game_date+' \u00b7 our number '+(S>0?TL(g.home.team):TL(g.away.team))+' '+fmtSp(-Math.abs(S))
-    +' \u00b7 <span style="color:'+v.col+';font-weight:700">'+v.lvl+' variance</span></div></div>'
-    +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
-    +'<table class="tbl"><thead><tr><th>LINE (HOME)</th><th>'+TL(g.home.team)+'</th><th>'+TL(g.away.team)+'</th><th>P(HOME)</th><th>P(AWAY)</th><th>PUSH</th><th></th></tr></thead><tbody>'
-    +rows+'</tbody></table>'
-    +'<div class="cbk-legend">Priced from a normal margin distribution with sigma 11.37, fitted and validated on 5,544 games of 2025-26 results '
-    +'(model push rate 3.5% vs 3.8% observed). Hold is applied proportionally across both sides. Line column is from the home team\u2019s perspective.</div>';
+  var head='<tr><th>LINE (HOME)</th><th>'+g.home.team+'</th><th>'+g.away.team+'</th><th>P(HOME)</th>';
+  if(hasM)head+='<th class="brk-sep">'+g.home.team+'</th><th>'+g.away.team+'</th><th>P(HOME)</th><th>EDGE</th>';
+  head+='<th></th></tr>';
+  var grp='';
+  if(hasM){
+    grp='<tr><th></th><th colspan="3" style="text-align:center;color:var(--acc)">OUR NUMBER '+((base>0?'-':'+')+Math.abs(base).toFixed(1))+'</th>'
+      +'<th colspan="4" class="brk-sep" style="text-align:center;color:var(--amb)">MARKET '+((M>0?'-':'+')+Math.abs(M).toFixed(1))+'</th><th></th></tr>';
+  }
+  var diff=hasM?(base-M):null;
+  box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">'+g.away.team+' '+(g.neutral_site?'vs':'@')+' '+g.home.team+'</div>'
+    +'<div class="alt-hd"><span>'+g.game_date+'</span>'
+    +'<span>ours <b>'+(base>0?g.home.team:g.away.team)+' '+fmtSp(-Math.abs(base))+'</b></span>'
+    +(hasM?'<span>market <b>'+(M>0?g.home.team:g.away.team)+' '+fmtSp(-Math.abs(M))+'</b></span>'
+          +'<span>gap <b style="color:'+(Math.abs(diff)>=1?'var(--red2)':'var(--grn2)')+'">'+(diff>=0?'+':'\u2212')+Math.abs(diff).toFixed(1)+'</b></span>':'')
+    +'<span style="color:'+v.col+';font-weight:700">'+v.lvl+' variance</span></div></div>'
+    +cbkBtns('alt-lines')+'</div>'
+    +'<table class="tbl alt-mkt"><thead>'+grp+head+'</thead><tbody>'+rows+'</tbody></table>'
+    +'<div class="cbk-legend">'
+    +(hasM?'<b>EDGE</b> is our win probability minus the market\u2019s at the same line, in percentage points. Positive means we make the home side more likely than the market does. A gap of a point or more on the core number is where you would actually be off. '
+          :'Enter the market number above to compare our ladder against theirs. ')
+    +'Priced from a normal margin distribution with sigma 11.37, fitted and validated on 5,544 games of 2025-26 results (model push rate 3.5% vs 3.8% observed).</div>';
 }
 
 /* ================= NUMBER ARCHIVE ================= */
@@ -5945,19 +6071,15 @@ function brkShort(k){return k==='CH'?'FINAL':(k==='SF'?'SF':(k==='QF'?'QF':k));}
 function brkRender(){
   var box=document.getElementById('brk-body');
   var ev=(typeof MTE_EVENTS!=='undefined')?MTE_EVENTS[_brkEvent]:null;
-  if(!ev){box.innerHTML='<div style="padding:24px;color:var(--txt3)">Pick an event.</div>';return;}
+  if(!ev){box.innerHTML='<div class="cbk-empty">Pick an event.</div>';return;}
   var filled=Object.keys(_brkSlots).length;
   if(filled<ev.count){
-    box.innerHTML='<div style="padding:24px;color:var(--txt3);font-size:12px">'
-      +'<b>'+ev.name+' \u2014 '+ev.subtitle+'</b><br><br>'+filled+' of '+ev.count+' slots filled.<br>'
-      +'Set the field on the <b>MTEs</b> tab and it will price here automatically.</div>';return;
+    box.innerHTML='<div class="cbk-empty"><b>'+ev.name+' \u2014 '+ev.subtitle+'</b><br>'
+      +filled+' of '+ev.count+' slots filled.<br>Set the field on the <b>MTEs</b> tab and it prices here automatically.</div>';return;
   }
   var hold=parseFloat(document.getElementById('brk-hold').value||'1.18');
   var dist={};
-  function sideDist(sd){
-    if(sd.slot!=null){var d={};d[sd.slot]=1;return d;}
-    return dist[sd.win];
-  }
+  function sideDist(sd){if(sd.slot!=null){var d={};d[sd.slot]=1;return d;}return dist[sd.win];}
   ev.rounds.forEach(function(rd){
     rd.games.forEach(function(gm){
       var A=sideDist(gm.a),B=sideDist(gm.b),out={};
@@ -5979,13 +6101,12 @@ function brkRender(){
   var cols=ev.rounds.map(function(rd,i){return (i+1<ev.rounds.length)?brkShort(ev.rounds[i+1].key):'WIN';});
   var order=Object.keys(_brkSlots).sort(function(a,b){return (champ[b]||0)-(champ[a]||0);});
   var head='<tr><th>#</th><th>SEED</th><th>TEAM</th><th>CONF</th><th>PR</th>';
-  cols.forEach(function(c){head+='<th>'+c+'</th>';});
-  head+='<th>ODDS</th></tr>';
+  cols.forEach(function(c,i){head+='<th'+(i===0?' class="brk-sep"':'')+'>'+c+'</th>';});
+  cols.forEach(function(c,i){head+='<th class="brk-od-c'+(i===0?' brk-sep':'')+'">'+c+' ODDS</th>';});
+  head+='</tr>';
   var rows='';
   order.forEach(function(k,i){
     var t=_brkSlots[k];
-    var wp=champ[k]||0;
-    var am=roundML(cbkProbToAm(Math.min(0.985,wp*hold)));
     rows+='<tr><td class="muted tnum">'+(i+1)+'</td>'
       +'<td class="tnum muted">'+(parseInt(k,10)+1)+'</td>'
       +'<td><span class="cbk-cbar" style="background:'+cbkTeamColor(t.team,t.conference)+'"></span><b>'+t.team+'</b></td>'
@@ -5994,17 +6115,21 @@ function brkRender(){
     surv.forEach(function(s,ri){
       var v=(s[k]||0)*100;
       var last=(ri===surv.length-1);
-      rows+='<td class="tnum'+(last?' bold':'')+'"'+(last?' style="color:var(--acc)"':'')+'>'+v.toFixed(1)+'%</td>';
+      rows+='<td class="tnum'+(last?' bold':'')+(ri===0?' brk-sep':'')+'"'+(last?' style="color:var(--txt1)"':'')+'>'+v.toFixed(1)+'%</td>';
     });
-    rows+='<td class="tnum bold" style="color:var(--acc)">'+am+'</td></tr>';
+    surv.forEach(function(s,ri){
+      var p=(s[k]||0);
+      var am=p<=0?'\u2014':roundML(cbkProbToAm(Math.min(0.985,p*hold)));
+      rows+='<td class="tnum brk-od-c'+(ri===0?' brk-sep':'')+'">'+am+'</td>';
+    });
+    rows+='</tr>';
   });
   var r0=ev.rounds[0];
   var open='';
   r0.games.forEach(function(gm){
     var a=_brkSlots[gm.a.slot],b=_brkSlots[gm.b.slot];
     if(!a||!b)return;
-    var p=brkWinP(a,b);
-    var sp=a.pr-b.pr;
+    var p=brkWinP(a,b),sp=a.pr-b.pr;
     var amA=roundML(cbkProbToAm(Math.min(0.985,p*1.045))),amB=roundML(cbkProbToAm(Math.min(0.985,(1-p)*1.045)));
     open+='<div class="brk-g">'
       +'<div class="brk-side"><span class="cbk-cbar" style="background:'+cbkTeamColor(a.team,a.conference)+'"></span>'+a.team+'</div>'
@@ -6015,15 +6140,14 @@ function brkRender(){
       +'</div>';
   });
   box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">'+ev.name+' \u2014 '+ev.subtitle+'</div>'
-    +'<div style="font-size:11px;color:var(--txt3)">field loaded from the MTEs tab &middot; exact bracket math &middot; neutral court &middot; '
-    +((hold-1)*100).toFixed(0)+'% hold on the outright</div></div>'
-    +'<div class="cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT / SAVE PDF</button></div></div>'
+    +'<div style="font-size:11px;color:var(--txt3)">field from the MTEs tab &middot; exact bracket math &middot; neutral court &middot; '
+    +((hold-1)*100).toFixed(0)+'% hold on every price</div></div>'
+    +cbkBtns('mte-bracket')+'</div>'
     +'<table class="tbl brk-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>'
     +'<div class="brk-open"><div class="cbk-detail-t">'+r0.name.toUpperCase()+' \u2014 PRICED MATCHUPS</div>'+open+'</div>'
-    +'<div class="cbk-legend">Percentage columns are the chance of <b>reaching</b> that round; the last one is the chance of winning the event. '
-    +'Every path is enumerated, so the WIN column sums to exactly 100%. '
-    +'Matchup prices use a normal margin model with sigma 11.37 and 4.5% hold; the outright uses '+((hold-1)*100).toFixed(0)+'%. '
-    +'Change the field on the MTEs tab.</div>';
+    +'<div class="cbk-legend">Percentage columns are the chance of <b>reaching</b> that round; the last is the chance of winning outright, and it sums to exactly 100% across the field. '
+    +'Gold columns are the same numbers as American prices with '+((hold-1)*100).toFixed(0)+'% hold applied \u2014 so QF ODDS is the price on that team simply to reach the quarterfinal. '
+    +'Opening-round matchups are priced at 4.5% hold. Change the field on the MTEs tab.</div>';
 }
 
 </script>
