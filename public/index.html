@@ -830,6 +830,8 @@ body.cbk-capturing .cg-hd{font-size:10.5px!important}
   body.cbk-printing .amc{font-size:8px!important}
   body.cbk-printing .alt-meth-eq{font-size:9.5px!important;padding:5px 8px!important}
 }
+
+.cmp-chk{background:rgba(230,81,0,0.10);color:var(--amb);font-weight:800}
 </style>
 </head>
 <body>
@@ -5913,7 +5915,7 @@ function cmpLoad(){
 var CBK_NEUTRAL_BLOCK=['New Jersey','Rhode Island','Washington State'];
 var CBK_ST_ABBR={'Washington DC':'DC','Delaware':'DE','Maine':'ME','Nebraska':'NE','Rhode Island':'RI','Illinois':'IL','Massachusetts':'MA','New Jersey':'NJ','Virginia':'VA','New York':'NY','Washington State':'WA'};
 var CBK_CMP_NOTES=[
- 'RI, NJ and WA do <b>not</b> allow neutral-court games.',
+ '<b>RI, NJ and WA</b> bar a neutral-court game only when it is <b>played in that state</b>. A neutral game held anywhere else is fine in all three \u2014 check the venue before switching anything off.',
  'RI and MA schools <b>can</b> be offered for tournaments.',
  'NE schools can be offered for an MTE as long as the event is <b>not</b> played in NE.'
 ];
@@ -5946,9 +5948,10 @@ function cmpRender(){
       +'<td class="cmp-n '+(isN?'cmp-neu':'cbk-ok')+'">'+(isN?'YES':'&middot;')+'</td>';
     ST.forEach(function(s){
       var byTeam=bs.indexOf(s)>=0, byNeut=isN&&CBK_NEUTRAL_BLOCK.indexOf(s)>=0;
-      var cls=byTeam?'cbk-no':(byNeut?'cmp-neu':'cbk-ok');
-      var txt=byTeam?'NO':(byNeut?'N':'&middot;');
-      var ti=byTeam?(s+' \u2014 team based there'):(byNeut?(s+' \u2014 no neutral-court games'):'');
+      var cls=byTeam?'cbk-no':(byNeut?'cmp-chk':'cbk-ok');
+      var txt=byTeam?'NO':(byNeut?'?':'&middot;');
+      var ti=byTeam?(s+' \u2014 team based there, cannot offer')
+             :(byNeut?(s+' \u2014 neutral game: only blocked if it is being PLAYED in '+s+'. Check the venue.'):'');
       rows+='<td class="cmp-c '+cls+'"'+(ti?' title="'+ti+'"':'')+'>'+txt+'</td>';
     });
     rows+='</tr>';
@@ -5959,11 +5962,6 @@ function cmpRender(){
       det+='<div class="cmp-d"><span style="color:var(--red2);font-weight:700">&#9888;</span> <b>'+g.away.team+' at '+g.home.team
         +'</b> &mdash; not allowed in <b style="color:var(--red2)">'+b.state+'</b> <span style="color:var(--txt3)">('+b.team+' is based there)</span></div>';
     });
-    if(g.neutral_site){
-      det+='<div class="cmp-d"><span style="color:var(--amb);font-weight:700">&#9888;</span> <b>'+g.away.team+' vs '+g.home.team
-        +'</b> &mdash; <b style="color:var(--amb)">NEUTRAL COURT</b>: not allowed in RI, NJ, WA. '
-        +'<span style="color:var(--txt3)">Check the venue \u2014 the host state may add its own restriction.</span></div>';
-    }
   });
   box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">Daily Compliance Sheet</div>'
     +'<div style="font-size:11px;color:var(--txt3)">'+date+' &middot; '+_cmpGames.length+' game'+(_cmpGames.length===1?'':'s')
@@ -5973,7 +5971,7 @@ function cmpRender(){
     +(det?'<div class="cbk-detail"><div class="cbk-detail-t">RESTRICTED GAMES</div>'+det+'</div>':'')
     +'<table class="tbl cmp-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>'
     +'<div class="cbk-legend"><b style="color:var(--red2)">NO</b> = a participant is based in that state. '
-    +'<b style="color:var(--amb)">N</b> = neutral-court game and that state allows none. '
+    +'<b style="color:var(--amb)">?</b> = neutral-court game \u2014 blocked in that state <i>only</i> if the game is being played there. Check the venue. '
     +'DC Washington DC &middot; DE Delaware &middot; ME Maine &middot; NE Nebraska &middot; RI Rhode Island &middot; IL Illinois &middot; '
     +'MA Massachusetts &middot; NJ New Jersey &middot; VA Virginia &middot; NY New York &middot; WA Washington State.</div>';
 }/* ================= CONFERENCE MATRIX GRID ================= */
