@@ -775,6 +775,36 @@ body.cbk-capturing .sg-nm{font-size:8px!important}
 body.cbk-capturing .sg-row,body.cbk-capturing .cg-row{font-size:8px!important}
 body.cbk-capturing .sg-t{font-size:8px!important}
 body.cbk-capturing .sg-c{font-size:6.5px!important}
+
+/* ---- v4: strip remaining chrome from print/PDF, larger school names ---- */
+@media print{
+  body.cbk-printing .seg,
+  body.cbk-printing .cbk-pagelbl,
+  body.cbk-printing #admin-badge,
+  body.cbk-printing #viewonly-logout,
+  body.cbk-printing #fav-team-wrap,
+  body.cbk-printing #cbk-theme-toggle{display:none!important}
+  body.cbk-printing .sg-row{font-size:9px!important;padding:1px 6px!important;line-height:1.5}
+  body.cbk-printing .sg-t{font-size:9px!important;font-weight:600}
+  body.cbk-printing .sg-c{font-size:7px!important}
+  body.cbk-printing .sg-ab{font-size:12px!important}
+  body.cbk-printing .sg-nm{font-size:9px!important}
+  body.cbk-printing .sg-ct{font-size:8px!important}
+  body.cbk-printing .sg-warn{font-size:7.5px!important;padding:2px 6px!important}
+  body.cbk-printing .cg-row{font-size:9px!important;padding:1px 6px!important;line-height:1.5}
+  body.cbk-printing .cg-hd{font-size:9.5px!important}
+  body.cbk-printing .cbk-cbar{height:8px;width:2.5px}
+}
+body.cbk-capturing .seg,
+body.cbk-capturing .cbk-pagelbl,
+body.cbk-capturing #admin-badge,
+body.cbk-capturing #viewonly-logout{display:none!important}
+body.cbk-capturing .sg-row{font-size:9px!important;padding:1px 6px!important;line-height:1.5}
+body.cbk-capturing .sg-t{font-size:9px!important;font-weight:600}
+body.cbk-capturing .sg-c{font-size:7px!important}
+body.cbk-capturing .sg-ab{font-size:12px!important}
+body.cbk-capturing .sg-nm{font-size:9px!important}
+body.cbk-capturing .cg-row{font-size:9px!important;padding:1px 6px!important}
 </style>
 </head>
 <body>
@@ -1269,7 +1299,7 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
 <div id="bt-status" style="margin-top:12px"></div>
 </div>
 <div id="page-specials" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">PLAYER SPECIALS</div>
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">PLAYER SPECIALS</div>
 <div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button><button class="seg-btn" onclick="spSwitchMode('props',this)">GAME PROPS</button><button class="seg-btn" onclick="spSwitchMode('first3',this)">FIRST 3PT</button><button class="seg-btn" onclick="spSwitchMode('firstsc',this)">FIRST SCORER</button><button class="seg-btn" onclick="spSwitchMode('gamespec',this)">GAME SPECIALS</button></div>
 <div id="cbk-restrict-slot"></div>
 <div id="sp-game-view"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game. Loads the top 7 scorers per team and prices who leads the game.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select></div></div>
@@ -1309,7 +1339,7 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
 </div>
 </div>
 <div id="page-linesheet" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">LINE SHEET</div>
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">LINE SHEET</div>
 <div class="search-bar" style="gap:10px;align-items:center;margin-bottom:12px">
 <input type="date" class="field" id="ls-date" style="max-width:170px" onchange="lsLoad()">
 <button class="btn" onclick="lsLoad()">LOAD</button>
@@ -1318,7 +1348,7 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
 <div class="panel"><div id="ls-body"></div></div>
 </div>
 <div id="page-compliance" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">COMPLIANCE</div>
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">COMPLIANCE</div>
 <div class="seg" id="cmp-seg" style="margin-bottom:12px"><button class="seg-btn active" onclick="cmpSwitch('daily',this)">DAILY COMPLIANCE</button><button class="seg-btn" onclick="cmpSwitch('conf',this)">CONF GRID</button><button class="seg-btn" onclick="cmpSwitch('state',this)">STATE GRID</button></div>
 <div class="search-bar" id="cmp-daily-bar" style="gap:10px;align-items:center;margin-bottom:12px">
 <input type="date" class="field" id="cmp-date" style="max-width:170px" onchange="cmpLoad()">
@@ -1328,7 +1358,7 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
 <div class="panel"><div id="cmp-body"></div><div id="cmp-conf-body" style="display:none"></div><div id="cmp-state-body" style="display:none"></div></div>
 </div>
 <div id="page-matrix" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">CONFERENCE MATRIX</div>
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">CONFERENCE MATRIX</div>
 <div class="search-bar" style="gap:10px;align-items:center;margin-bottom:12px">
 <select class="field" id="mtx-conf" style="max-width:220px" onchange="mtxRender()"><option value="">Loading...</option></select>
 <span style="font-size:11px;color:var(--txt3)">Projected spread for every matchup in the league.</span>
@@ -1336,7 +1366,7 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
 <div class="panel"><div id="mtx-body"></div></div>
 </div>
 <div id="page-altlines" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">ALT LINES</div>
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">ALT LINES</div>
 <div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
 <select class="field" id="alt-game" style="max-width:340px" onchange="altLoad()"><option value="">Select a game...</option></select>
 <div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--txt3)">HOLD</span>
@@ -1347,7 +1377,7 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
 <div class="panel"><div id="alt-body"><div style="padding:20px;color:var(--txt3);font-size:12px">Pick a game.</div></div></div>
 </div>
 <div id="page-misses" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">BIGGEST MISSES</div>
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">BIGGEST MISSES</div>
 <div class="search-bar" style="gap:10px;align-items:center;margin-bottom:12px">
 <select class="field" id="ms-conf" style="max-width:200px" onchange="msRender()"><option value="">All conferences</option></select>
 <select class="field" id="ms-dir" style="max-width:190px" onchange="msRender()">
@@ -1357,7 +1387,7 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
 <div class="panel"><div id="ms-body"></div></div>
 </div>
 <div id="page-archive" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">NUMBER ARCHIVE</div>
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">NUMBER ARCHIVE</div>
 <div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
 <input type="date" class="field" id="arc-date" style="max-width:170px">
 <button class="btn primary" onclick="arcSaveToday()">SNAPSHOT THIS DATE</button>
@@ -1367,7 +1397,7 @@ body.cbk-capturing .sg-c{font-size:6.5px!important}
 <div class="panel"><div id="arc-body"></div></div>
 </div>
 <div id="page-bracket" style="display:none">
-<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">MTE BRACKET</div>
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">MTE BRACKET</div>
 <div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
 <select class="field" id="brk-event" style="max-width:300px" onchange="brkLoad()"><option value="">Loading events...</option></select>
 <div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--txt3)">HOLD</span>
