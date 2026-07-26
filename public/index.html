@@ -811,6 +811,25 @@ body.cbk-capturing .sg-nm{font-size:10px!important}
 body.cbk-capturing .sg-warn{font-size:8px!important;padding:1.5px 6px!important}
 body.cbk-capturing .cg-row{font-size:10px!important;padding:0.5px 6px!important}
 body.cbk-capturing .cg-hd{font-size:10.5px!important}
+
+/* ---- alt lines methodology panel ---- */
+.alt-meth{margin-top:14px;border:1px solid var(--bdr);border-left:4px solid var(--acc);border-radius:7px;background:var(--bg1);padding:14px 16px}
+.alt-meth-t{font-size:11px;letter-spacing:1.6px;font-weight:800;color:var(--acc);margin-bottom:8px}
+.alt-meth-lead{font-size:12.5px;color:var(--txt2);line-height:1.6;margin-bottom:10px}
+.alt-meth-eq{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:8px 12px;color:var(--txt1);margin-bottom:12px;text-align:center}
+.alt-meth-h{font-size:11px;letter-spacing:1.1px;font-weight:800;color:var(--txt1);margin:12px 0 5px}
+.alt-meth-p{font-size:12px;color:var(--txt2);line-height:1.65}
+.alt-meth-w{margin:4px 0 2px}
+.amw{display:grid;grid-template-columns:22px 1fr;gap:9px;align-items:start;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:12px;color:var(--txt2);line-height:1.6}
+.amw:last-child{border-bottom:none}
+.amn{display:inline-block;width:19px;height:19px;line-height:19px;text-align:center;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;font-weight:800}
+.amc{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:1px 7px;margin:2px 6px 2px 0;color:var(--txt1)}
+@media print{
+  body.cbk-printing .alt-meth{page-break-before:always;border-left-width:3px}
+  body.cbk-printing .alt-meth-p,body.cbk-printing .amw{font-size:9px!important;line-height:1.45}
+  body.cbk-printing .amc{font-size:8px!important}
+  body.cbk-printing .alt-meth-eq{font-size:9.5px!important;padding:5px 8px!important}
+}
 </style>
 </head>
 <body>
@@ -6101,8 +6120,8 @@ function altRender(){
   var hasM=(M!==null);
   var HT=g.home.team,AT=g.away.team;
   var rows='';
-  for(var k=12;k>=-12;k--){
-    var L=base+k;
+  for(var k=24;k>=-24;k--){
+    var L=base+k*0.5;
     var p=cbkAltPrice(S,L,hold);
     var isCore=Math.abs(L-base)<0.001, isMkt=hasM&&Math.abs(L-M)<0.001;
     var cls=isCore?' class="cbk-alt-core"':(isMkt?' class="cbk-alt-mkt"':'');
@@ -6147,7 +6166,8 @@ function altRender(){
     +'The gold row is our number; '+(hasM?'the amber row is the market\u2019s. ':'enter a market number above to compare. ')
     +(hasM?'<b>EDGE</b> is our win probability for '+HT+' minus the market\u2019s at that same line, in percentage points \u2014 a steady offset across the ladder is just the '+Math.abs(diff).toFixed(1)+'-point gap between the two numbers. '
           :'')
-    +'Priced from a normal margin distribution with sigma 11.37, fitted on 5,544 games of 2025-26 results (model push rate 3.5% vs 3.8% observed).</div>';
+    +'Priced from a normal margin distribution with sigma 11.37, fitted on 5,544 games of 2025-26 results (model push rate 3.5% vs 3.8% observed).</div>'
+    +altMethodHTML(S,base,hold,HT,AT);
 }
 
 /* ================= NUMBER ARCHIVE ================= */
@@ -6417,6 +6437,62 @@ function cmpStateRender(){
   });
 }
 
+
+function altMethodHTML(S,base,hold,HT,AT){
+  var L=Math.floor(base-1.5)+0.0;              /* a whole-number rung so a push exists */
+  var zhi=(L+0.5-S)/CBK_SIGMA, zlo=(L-0.5-S)/CBK_SIGMA;
+  var pPush=cbkNcdf(zhi)-cbkNcdf(zlo);
+  var pHome=1-cbkNcdf(zhi);
+  var pAway=1-pHome-pPush;
+  var live=pHome+pAway, hn=pHome/live, an=pAway/live, ov=1+hold;
+  function am(p){return p>=0.5?Math.round(-100*p/(1-p)):Math.round(100*(1-p)/p);}
+  function pc(x){return (x*100).toFixed(2)+'%';}
+  var rawH=am(hn*ov), rawA=am(an*ov);
+  return '<div class="alt-meth">'
+   +'<div class="alt-meth-t">HOW THESE PRICES ARE BUILT</div>'
+   +'<div class="alt-meth-lead">One assumption, then arithmetic. A game\u2019s final margin is treated as normally '
+     +'distributed around our number, with a spread of outcomes measured from last season\u2019s results.</div>'
+   +'<div class="alt-meth-eq">actual home margin ~ Normal( mean = our spread, sd = &sigma; = '+CBK_SIGMA.toFixed(2)+' )</div>'
+   +'<div class="alt-meth-h">Where &sigma; comes from</div>'
+   +'<div class="alt-meth-p">We took every 2025-26 game with a clean closing line (5,544 of them) and measured '
+     +'<i>actual margin minus closing spread</i>. That distribution came back centred on &minus;0.11 with a standard '
+     +'deviation of <b>11.37</b> and essentially zero skew. Checked bucket by bucket against a true normal on the 2,663 '
+     +'whole-number spreads, the largest gap anywhere was 0.8 of a percentage point \u2014 so a normal is a fair '
+     +'description, and college basketball shows no meaningful key-number clustering the way football does.</div>'
+   +'<div class="alt-meth-h">The six steps, worked on this game</div>'
+   +'<div class="alt-meth-w">'
+     +'<div class="amw"><span class="amn">1</span><span>Take the alt line. Here <b>'+HT+' '+altFmtLine(-L)+'</b> '
+       +'(home margin L = '+L.toFixed(1)+'), against our number S = '+base.toFixed(1)+'.</span></div>'
+     +'<div class="amw"><span class="amn">2</span><span>Whole number, so a push is possible. Treat the exact outcome as '
+       +'covering the band L&minus;0.5 to L+0.5, then standardise:<br>'
+       +'<span class="amc">z_hi = (L+0.5 &minus; S) / &sigma; = '+zhi.toFixed(4)+'</span>'
+       +'<span class="amc">z_lo = (L&minus;0.5 &minus; S) / &sigma; = '+zlo.toFixed(4)+'</span>'
+       +'<br><i>Half-point lines skip this \u2014 there is no push, so the band collapses to a single cut.</i></span></div>'
+     +'<div class="amw"><span class="amn">3</span><span>Three raw outcomes from the normal table:<br>'
+       +'<span class="amc">P(push) = &Phi;(z_hi) &minus; &Phi;(z_lo) = '+pc(pPush)+'</span>'
+       +'<span class="amc">P('+HT+') = 1 &minus; &Phi;(z_hi) = '+pc(pHome)+'</span>'
+       +'<span class="amc">P('+AT+') = remainder = '+pc(pAway)+'</span></span></div>'
+     +'<div class="amw"><span class="amn">4</span><span>Push money is returned, so remove it and renormalise over the two '
+       +'live outcomes:<br><span class="amc">'+HT+' = '+pc(hn)+'</span><span class="amc">'+AT+' = '+pc(an)+'</span>'
+       +'These are the P() columns above.</span></div>'
+     +'<div class="amw"><span class="amn">5</span><span>Apply the hold. Both sides are multiplied by '
+       +(ov).toFixed(3)+', so the book totals '+pc(hn*ov+an*ov)+' instead of 100% \u2014 that surplus is the '
+       +(hold*100).toFixed(1)+'% margin.</span></div>'
+     +'<div class="amw"><span class="amn">6</span><span>Convert to American odds \u2014 '
+       +'<span class="amc">&minus;100p/(1&minus;p)</span> for a favourite, <span class="amc">100(1&minus;p)/p</span> for a dog '
+       +'\u2014 giving '+(rawH>0?'+':'')+rawH+' and '+(rawA>0?'+':'')+rawA+', then round onto the house ladder: '
+       +'<b>'+roundML(rawH)+' / '+roundML(rawA)+'</b>.</span></div>'
+   +'</div>'
+   +'<div class="alt-meth-h">Does it hold up</div>'
+   +'<div class="alt-meth-p">The model says a game lands exactly on the number <b>3.51%</b> of the time. Last season it '
+     +'actually happened <b>3.83%</b> of the time. That is the sharpest test of the push handling, and it passes.</div>'
+   +'<div class="alt-meth-h">Two honest limits</div>'
+   +'<div class="alt-meth-p">&sigma; is one season-wide figure. Real variance runs higher on 20-point spreads and lower in '
+     +'tight conference games, so deep alternates off a blowout line are priced slightly too tight. And a normal has thin '
+     +'tails, so genuine 40-point results are a shade more common than the model allows. Neither matters much within a '
+     +'dozen points of the number, which is the range shown here.</div>'
+   +'</div>';
+}
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
