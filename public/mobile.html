@@ -18,7 +18,8 @@ html{height:100%}
 body{margin:0;padding:0;background:var(--bg0);color:var(--txt1);
 font:15px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 -webkit-font-smoothing:antialiased;overscroll-behavior:none;
-position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;overflow:hidden}
+position:fixed;top:0;left:0;right:0;width:100%;
+height:var(--vh,100vh);display:flex;flex-direction:column;overflow:hidden}
 .hd{flex:0 0 auto;z-index:20;background:rgba(18,16,12,.94);backdrop-filter:blur(14px);
 border-bottom:1px solid var(--bdr);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px}
 .hd h1{margin:0;font-size:13px;letter-spacing:2.2px;color:var(--acc);font-weight:800}
@@ -54,7 +55,7 @@ padding:9px 11px;font:14px inherit;-webkit-appearance:none;flex:1;min-width:0}
 .line{font:700 15px ui-monospace,Menlo,monospace;color:var(--acc)}
 .tabs{flex:0 0 auto;z-index:30;display:flex;
 background:rgba(18,16,12,.96);backdrop-filter:blur(18px);border-top:1px solid var(--bdr);
-padding-bottom:max(env(safe-area-inset-bottom) - 16px, 0px)}
+padding-bottom:var(--tabpad,0px)}
 .tab{flex:1;text-align:center;padding:7px 4px 6px;font:700 9.5px inherit;letter-spacing:1px;
 color:var(--txt3);background:0;border:0}
 .tab.on{color:var(--acc)}
@@ -280,7 +281,30 @@ function openApp(){
   }
   boot();
 }
+
+/* --- viewport fitter: iOS reports height inconsistently in standalone mode, so measure it --- */
+function fitVH(){
+  var vv=window.visualViewport;
+  var h=vv?Math.round(vv.height):window.innerHeight;
+  document.documentElement.style.setProperty('--vh',h+'px');
+  /* home-indicator clearance only when the device actually has one */
+  var probe=document.getElementById('sa-probe');
+  if(!probe){
+    probe=document.createElement('div'); probe.id='sa-probe';
+    probe.style.cssText='position:fixed;bottom:0;left:0;width:0;height:env(safe-area-inset-bottom);pointer-events:none;visibility:hidden';
+    document.body.appendChild(probe);
+  }
+  var sa=probe.offsetHeight||0;
+  document.documentElement.style.setProperty('--tabpad',(sa>0?Math.max(sa-20,4):0)+'px');
+}
+fitVH();
+window.addEventListener('resize',fitVH);
+window.addEventListener('orientationchange',function(){setTimeout(fitVH,120);});
+if(window.visualViewport){window.visualViewport.addEventListener('resize',fitVH);}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fitVH,60);});
+
 document.addEventListener('DOMContentLoaded',function(){
+  fitVH();
   const p=document.getElementById('gp');
   if(p) p.addEventListener('keydown',function(e){ if(e.key==='Enter') tryLogin(); });
   const u=document.getElementById('gu');
