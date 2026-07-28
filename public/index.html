@@ -904,6 +904,10 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 .doc-note b{color:var(--txt1)}
 
 .doc-note2{border-left-color:var(--amb);margin-top:10px}
+
+.doc-mini2{max-width:400px}
+.doc-mini2 th{font-size:9px;letter-spacing:1px;color:var(--acc);padding:5px 10px!important}
+.doc-mini2 td{padding:4px 10px!important}
 </style>
 </head>
 <body>
@@ -1560,28 +1564,23 @@ occasional; the exposure we are accepting is large and guaranteed.</p>
 <div class="doc-h2">Objections, answered</div>
 
 <div class="doc-obj">
-<div class="doc-q">&ldquo;DraftKings only uses half-points and never stops on a whole number. Why should we?&rdquo;</div>
-<div class="doc-a2"><p>Because they are not doing our job, and the reason is worth understanding rather than dismissing.</p>
-<p><b>A push costs a balanced book its vig.</b> If our two sides are even and the game pushes, we return every
-stake and keep nothing &mdash; we forfeit the 4.55% we would otherwise have earned. Never pushing is worth about
-<b>0.17 units per 100 of handle on every game they take</b>. Across their volume that is a serious number, and
-it is why the policy exists.</p>
-<p>But that logic holds only while you are balanced. <b>We are not balanced &mdash; being one-sided is the entire
-problem we are solving.</b> On a one-sided book the push stops being forfeited vig and becomes insurance: it saves
-the whole payout instead of costing us the margin. The same feature is a cost to them and a protection to us,
-because we are in opposite positions.</p>
-<p>Two more things let them live with it. To be middled, <b>the same book must hold both tickets</b> &mdash; someone
-betting the favourite with them and the dog elsewhere has not middled them at all. And anyone who systematically
-works their bounces gets limited within weeks. Their two sides arrive from uncorrelated recreational flow at
-different hours. Ours would arrive from the same account that already has the other side.</p></div>
-</div>
-
-<div class="doc-obj">
-<div class="doc-q">&ldquo;Moving just invites the sharp to bet us again at a better number.&rdquo;</div>
-<div class="doc-a2"><p>Sometimes, and it is a fair worry. Two answers. They already have their position &mdash; the second bet is a
-smaller marginal problem than the first one we failed to react to. And if they do come again, that is information
-we would never have got from juicing: it tells us the number is still wrong, which is the single most valuable
-thing anyone can tell us.</p></div>
+<div class="doc-q">&ldquo;Moving just invites the sharp to bet us again at &minus;110.&rdquo;</div>
+<div class="doc-a2">
+<p>They can fire again, but never at a <i>better</i> number. Moving away from them makes their side more expensive
+every single step. Say the number really belongs at 7 and they opened us up at &minus;5.5:</p>
+<table class="tbl doc-mini doc-mini2"><thead><tr><th>THEY LAY</th><th>THEIR EDGE</th><th>WORTH TO THEM</th></tr></thead><tbody>
+<tr><td>&minus;5.5</td><td>1.5 pts</td><td class="doc-mv">+5.47%</td></tr>
+<tr><td>&minus;6.0</td><td>1.0 pts</td><td class="doc-mv">+2.30%</td></tr>
+<tr><td>&minus;6.5</td><td>0.5 pts</td><td class="doc-mv">&minus;1.20%</td></tr>
+<tr><td>&minus;7.0</td><td>none</td><td class="doc-mv">&minus;4.39%</td></tr>
+</tbody></table>
+<p>Each bite is worth less than half the one before it, and by &minus;6.5 they are betting into a losing price
+<b>even though we are still short of the true number</b>. The vig does that work for us as we climb.</p>
+<p>Standing still is the version that hands them everything. If we never move they do not need to bet again &mdash;
+they already hold the &minus;5.5 ticket at +5.47%, the best price we will ever show, and we have simply decided
+to live with it.</p>
+<p>And if they do come back at &minus;6, that is a free read: it tells us we are still short and we should keep
+walking. If they go quiet, we have found the number. Juice would never have told us either way.</p></div>
 </div>
 
 <div class="doc-obj">
