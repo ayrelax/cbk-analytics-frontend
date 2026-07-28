@@ -908,6 +908,10 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 .doc-mini2{max-width:400px}
 .doc-mini2 th{font-size:9px;letter-spacing:1px;color:var(--acc);padding:5px 10px!important}
 .doc-mini2 td{padding:4px 10px!important}
+
+.plays-pend{border:1px solid var(--acc);border-radius:8px;overflow:hidden;margin:10px 0 14px;background:var(--bg1)}
+.plays-pend-h{background:rgba(139,105,20,.14);color:var(--acc);font-size:10px;letter-spacing:1.4px;font-weight:800;padding:7px 12px;border-bottom:1px solid var(--bdr)}
+.plays-done-h{font-size:10px;letter-spacing:1.4px;font-weight:800;color:var(--txt3);margin:4px 2px 6px}
 </style>
 </head>
 <body>
@@ -3626,16 +3630,31 @@ function playsRender(){
     playsStat('HANDLE',playsFmtMoney(a.handle),'var(--txt1)')+
     playsStat('HOLD %',a.hold!==null?playsFmtPct(a.hold):'--',holdColor)+
     playsStat('PLAYS',String(a.n),'var(--txt1)')+(function(){var cs=rows.map(playsCLV).filter(function(x){return x!==null;});if(!cs.length)return '';var avg=cs.reduce(function(x,y){return x+y;},0)/cs.length;var col=avg>0?'var(--grn2)':(avg<0?'var(--red2)':'var(--txt1)');return playsStat('AVG CLV',(avg>0?'+':'')+avg.toFixed(2),col);})()+'</div>';
-  // table
+  // table -- pending plays first, graded history below
+  var pend=rows.filter(function(r){return !r.result;});
+  var done=rows.filter(function(r){return !!r.result;});
   if(!rows.length){document.getElementById('plays-table').innerHTML='<div style="color:var(--txt3);padding:20px;text-align:center;font-size:12px">No plays for this filter.</div>';return;}
-  var h='';if(isAdmin)h+='<div style="margin:10px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="btn primary" style="font-size:10px;padding:5px 12px" onclick="playsAutoGrade()">AUTO-GRADE SPREADS vs BOL#</button><span id="plays-ag-status" style="font-size:10px;color:var(--txt3)"></span></div>';h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>DATE</th><th>EVENT</th><th>PERSON</th><th>TYPE</th><th>SIDE</th><th>OUR#</th><th>BOL#</th><th>OPEN</th><th>CLOSE</th><th>CLV</th><th>W/L</th><th>HANDLE</th><th>P/L</th><th>HOLD%</th>'+(isAdmin?'<th></th>':'')+'</tr></thead><tbody>';
-  rows.forEach(function(r){var win=r.result==='W';var loss=r.result==='L';var rowbg=win?'background:#eaf6ea':loss?'background:#fbeaea':'';var hold=playsHold(r.pl,r.handle);var plc=(parseFloat(r.pl)||0)>=0?'var(--grn2)':'var(--red2)';
+  var h='';
+  if(pend.length){
+    h+='<div class="plays-pend"><div class="plays-pend-h">ON THE BOARD \u00b7 '+pend.length+' play'+(pend.length===1?'':'s')+' not yet graded</div>'
+      +'<div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>DATE</th><th>EVENT</th><th>PERSON</th><th>TYPE</th><th>SIDE</th><th>OUR#</th><th>BOL#</th>'+(isAdmin?'<th></th>':'')+'</tr></thead><tbody>';
+    pend.forEach(function(r){
+      h+='<tr><td class="muted">'+r.play_date+'</td><td class="bold">'+(r.event_name||'')+'</td><td>'+r.person+'</td>'
+       +'<td style="text-transform:uppercase">'+r.bet_type+'</td><td class="bold" style="color:var(--acc)">'+(r.side||'')+'</td>'
+       +'<td>'+(r.our_number!=null?r.our_number:'--')+'</td><td>'+(r.market_number!=null?r.market_number:'--')+'</td>'
+       +(isAdmin?'<td><button class="btn" style="padding:2px 8px;font-size:10px" onclick="playsDelete('+r.id+')">\u00d7</button></td>':'')+'</tr>';
+    });
+    h+='</tbody></table></div></div>';
+  }
+  if(!done.length){h+='<div style="color:var(--txt3);padding:16px 4px;font-size:12px">Nothing graded yet for this filter \u2014 results appear here once a play is settled.</div>';document.getElementById('plays-table').innerHTML=h;return;}
+if(isAdmin)h+='<div style="margin:10px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="btn primary" style="font-size:10px;padding:5px 12px" onclick="playsAutoGrade()">AUTO-GRADE SPREADS vs BOL#</button><span id="plays-ag-status" style="font-size:10px;color:var(--txt3)"></span></div>';h+='<div class="plays-done-h">RESULTS</div><div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>DATE</th><th>EVENT</th><th>PERSON</th><th>TYPE</th><th>SIDE</th><th>OUR#</th><th>BOL#</th><th>OPEN</th><th>CLOSE</th><th>CLV</th><th>W/L</th><th>HANDLE</th><th>P/L</th><th>HOLD%</th>'+(isAdmin?'<th></th>':'')+'</tr></thead><tbody>';
+  done.forEach(function(r){var win=r.result==='W';var loss=r.result==='L';var rowbg=win?'background:#eaf6ea':loss?'background:#fbeaea':'';var hold=playsHold(r.pl,r.handle);var plc=(parseFloat(r.pl)||0)>=0?'var(--grn2)':'var(--red2)';
     h+='<tr style="'+rowbg+'"><td class="muted">'+r.play_date+'</td><td class="bold">'+(r.event_name||'')+'</td><td>'+r.person+'</td><td style="text-transform:uppercase">'+r.bet_type+'</td><td>'+(r.side||'')+'</td><td>'+(r.our_number!==null?r.our_number:'')+'</td><td>'+(r.market_number!==null?r.market_number:'')+'</td>'+(isAdmin?'<td><input type="number" step="0.5" value="'+(r.opening_number!=null?r.opening_number:'')+'" onchange="playsSetOpen('+r.id+',this.value)" style="width:58px;font-size:10px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px"></td>':'<td>'+(r.opening_number!=null?r.opening_number:'--')+'</td>')+(isAdmin?'<td><input type="number" step="0.5" value="'+(r.closing_number!=null?r.closing_number:'')+'" onchange="playsSetClose('+r.id+',this.value)" style="width:58px;font-size:10px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px"></td>':'<td>'+(r.closing_number!=null?r.closing_number:'--')+'</td>')+(function(){var c=playsCLV(r);if(c===null)return '<td class="muted">--</td>';var col=c>0?'var(--grn2)':(c<0?'var(--red2)':'var(--txt3)');return '<td style="font-weight:700;color:'+col+'">'+(c>0?'+':'')+c.toFixed(1)+'</td>';})()+
     '<td style="font-weight:800;color:'+(win?'var(--grn2)':loss?'var(--red2)':'var(--txt3)')+'">'+(r.result||'--')+'</td>'+
     '<td>'+playsFmtMoney(r.handle)+'</td><td style="font-weight:700;color:'+plc+'">'+playsFmtMoney(r.pl)+'</td><td style="color:'+plc+'">'+(hold!==null?playsFmtPct(hold):'--')+'</td>'+
     (isAdmin?'<td><button class="btn" style="padding:2px 8px;font-size:10px" onclick="playsDelete('+r.id+')">\u00d7</button></td>':'')+'</tr>';});
   h+='</tbody></table></div></div>';
-  h+=playsLineReport(rows);
+  h+=playsLineReport(done);
   document.getElementById('plays-table').innerHTML=h;
 }
 function playsStat(label,val,color){return'<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:8px 14px;min-width:90px"><div style="font-size:9px;color:var(--txt3);letter-spacing:1px;font-weight:700">'+label+'</div><div style="font-size:16px;font-weight:800;color:'+color+';margin-top:2px">'+val+'</div></div>';}
