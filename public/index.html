@@ -832,6 +832,78 @@ body.cbk-capturing .cg-hd{font-size:10.5px!important}
 }
 
 .cmp-chk{background:rgba(230,81,0,0.10);color:var(--amb);font-weight:800}
+/* ---- line movement doctrine ---- */
+#doc-panel{padding:16px 20px 20px}
+.doc-thesis{background:var(--bg2);border-left:4px solid var(--acc);border-radius:6px;padding:13px 16px;margin:4px 0 20px}
+.doc-thesis-t{font-size:10px;letter-spacing:2px;font-weight:800;color:var(--acc);margin-bottom:6px}
+.doc-thesis-b{font-size:14px;line-height:1.65;color:var(--txt1)}
+.doc-h{font-size:12px;letter-spacing:1.4px;font-weight:800;color:var(--acc);margin:22px 0 6px}
+.doc-h2{font-size:15px;font-weight:800;color:var(--txt1);margin:6px 0 14px}
+.doc-p{font-size:12.5px;color:var(--txt2);line-height:1.6;margin-bottom:11px;max-width:900px}
+.doc-ctrl{display:grid;grid-template-columns:repeat(3,minmax(150px,190px)) 1fr;gap:12px;align-items:end;margin-bottom:14px}
+.doc-f label{display:block;font-size:10px;letter-spacing:.6px;color:var(--txt3);margin-bottom:4px;font-weight:700}
+.doc-f-wide{min-width:210px}
+.doc-f input[type=range]{width:100%}
+.doc-tbl{width:100%;max-width:820px;margin-bottom:8px}
+.doc-tbl th{font-size:10px;letter-spacing:1px;color:var(--acc);text-align:center!important;padding:7px 10px!important}
+.doc-tbl th:first-child{text-align:left!important}
+.doc-tbl td{padding:7px 10px!important;font-size:12.5px}
+.doc-lbl{color:var(--txt2)}
+.doc-a,.doc-b{text-align:center!important;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
+.doc-a{color:var(--grn2);background:rgba(46,125,79,0.07)}
+.doc-b{color:var(--red2);background:rgba(198,40,40,0.07)}
+.doc-hl td{border-top:2px solid var(--bdr);font-size:14px!important}
+.doc-tag{font-size:8px;letter-spacing:1px;padding:1px 5px;border-radius:3px;font-family:inherit;vertical-align:2px}
+.doc-good{background:var(--grn2);color:#fff}
+.doc-bad{background:var(--red2);color:#fff}
+.doc-verdict{font-size:13px;line-height:1.6;color:var(--txt1);background:var(--bg2);border-radius:5px;padding:10px 13px;max-width:820px;margin-bottom:6px}
+.doc-rule{height:1px;background:var(--bdr);margin:26px 0 20px}
+.doc-arg{display:grid;grid-template-columns:34px 1fr;gap:14px;margin-bottom:20px;max-width:920px}
+.doc-num{width:28px;height:28px;line-height:28px;text-align:center;border-radius:50%;background:var(--acc);color:#fff;font-weight:800;font-size:13px}
+.doc-argt{font-size:14px;font-weight:800;color:var(--txt1);margin-bottom:6px;line-height:1.4}
+.doc-argb p{font-size:12.5px;color:var(--txt2);line-height:1.68;margin:0 0 9px}
+.doc-pull{border-left:3px solid var(--acc);padding-left:11px;color:var(--txt1)!important;font-size:13px!important}
+.doc-mini{max-width:430px;margin:4px 0 10px}
+.doc-mini td{padding:4px 10px!important;font-size:12px}
+.doc-mv{text-align:right!important;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:var(--acc)}
+.doc-obj{margin-bottom:18px;max-width:920px;border:1px solid var(--bdr);border-radius:7px;overflow:hidden}
+.doc-q{background:var(--bg2);padding:9px 14px;font-size:13px;font-weight:700;color:var(--txt1);font-style:italic}
+.doc-a2{padding:11px 14px}
+.doc-a2 p{font-size:12.5px;color:var(--txt2);line-height:1.68;margin:0 0 9px}
+.doc-a2 p:last-child{margin-bottom:0}
+.doc-src{max-width:920px}
+.doc-src p{font-size:11.5px;color:var(--txt3);line-height:1.65;margin:0 0 8px}
+.doc-src b{color:var(--txt2)}
+@media print{
+  body.cbk-printing .doc-ctrl{display:none!important}
+  body.cbk-printing .doc-thesis{border-left-width:3px;padding:8px 11px!important}
+  body.cbk-printing .doc-thesis-b{font-size:10.5px!important}
+  body.cbk-printing .doc-p,body.cbk-printing .doc-argb p,body.cbk-printing .doc-a2 p{font-size:9px!important;line-height:1.5}
+  body.cbk-printing .doc-argt{font-size:10.5px!important}
+  body.cbk-printing .doc-q{font-size:9.5px!important;padding:5px 9px!important}
+  body.cbk-printing .doc-tbl td,body.cbk-printing .doc-tbl th{padding:3px 7px!important;font-size:9px!important}
+  body.cbk-printing .doc-verdict{font-size:9.5px!important;padding:6px 9px!important}
+  body.cbk-printing .doc-src p{font-size:8px!important}
+  body.cbk-printing .doc-arg,body.cbk-printing .doc-obj{break-inside:avoid;page-break-inside:avoid}
+  body.cbk-printing .doc-rule{margin:12px 0 10px!important}
+  body.cbk-printing .doc-h{margin:12px 0 4px!important;font-size:10px!important}
+}
+body.cbk-capturing .doc-ctrl{display:none!important}
+body.cbk-capturing .doc-p,body.cbk-capturing .doc-argb p,body.cbk-capturing .doc-a2 p{font-size:9.5px!important;line-height:1.5}
+body.cbk-capturing .doc-tbl td,body.cbk-capturing .doc-tbl th{padding:3px 7px!important;font-size:9.5px!important}
+body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
+
+.doc-tbl3{max-width:920px}
+.doc-tbl3 td,.doc-tbl3 th{text-align:center!important}
+.doc-tbl3 td.doc-lbl,.doc-tbl3 th:first-child{text-align:left!important}
+.doc-hcol{color:var(--grn2)!important}
+
+.doc-brk{margin-top:14px}
+.doc-brk th{font-size:9.5px}
+.doc-note{font-size:12.5px;line-height:1.65;color:var(--txt2);border-left:3px solid var(--acc);padding:9px 13px;max-width:820px;margin-top:8px;background:var(--bg1)}
+.doc-note b{color:var(--txt1)}
+
+.doc-note2{border-left-color:var(--amb);margin-top:10px}
 </style>
 </head>
 <body>
@@ -871,6 +943,7 @@ body.cbk-capturing .cg-hd{font-size:10.5px!important}
   <button class="nav-btn" onclick="showPage('plays',this)">TEAM PLAYS</button>
   <button class="nav-btn" onclick="showPage('altlines',this)">ALT LINES</button>
   <button class="nav-btn" onclick="showPage('linesheet',this)">LINE SHEET</button>
+  <button class="nav-btn" onclick="showPage('doctrine',this)">LINE MOVEMENT</button>
   <button class="nav-btn" onclick="showPage('compliance',this)">COMPLIANCE</button>
   <button class="nav-btn" onclick="showPage('matrix',this)">CONF MATRIX</button>
   <button class="nav-btn" onclick="showPage('powerindex',this)">POWER INDEX</button>
@@ -1381,6 +1454,178 @@ body.cbk-capturing .cg-hd{font-size:10.5px!important}
 </div>
 <div class="panel"><div id="ls-body"></div></div>
 </div>
+<div id="page-doctrine" style="display:none">
+<div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">LINE MOVEMENT</div>
+<div class="panel" id="doc-panel">
+<div class="cbk-sheet-hdr">
+<div><div style="font-size:16px;font-weight:700">Moving the Number</div>
+<div style="font-size:11px;color:var(--txt3)">when to move, where to stop, and why juice is not a substitute &middot; measured on 5,544 games</div></div>
+<div class="cbk-btns cbk-noprint"><button class="btn" onclick="cbkPrint()">PRINT</button><button class="btn primary" onclick="cbkSavePDF('line-movement')">SAVE AS PDF</button></div>
+</div>
+
+<div class="doc-thesis">
+<div class="doc-thesis-t">THE POSITION</div>
+<div class="doc-thesis-b">When money comes in one-sided, <b>move the number</b>. Do not sit still and raise the juice.
+But move in steps, and <b>land on the whole numbers</b> rather than stepping over them &mdash; a whole number is
+free insurance against losing both sides of the same game.</div>
+</div>
+
+<div class="doc-h">Try it on a real position</div>
+<div class="doc-p">Set the line the early money came in at, where you think the number really belongs, and how much of the
+handle is already committed. Everything below recalculates.</div>
+<div class="doc-ctrl">
+  <div class="doc-f"><label>Early money came in at</label>
+    <input class="field" id="doc-a" type="number" step="0.5" value="-5.5" oninput="docRun()"></div>
+  <div class="doc-f"><label>Where the number really belongs</label>
+    <input class="field" id="doc-true" type="number" step="0.5" value="6" oninput="docRun()"></div>
+  <div class="doc-f"><label>Price both sides at</label>
+    <select class="field" id="doc-odds" onchange="docRun()">
+      <option value="-110">&minus;110</option><option value="-105">&minus;105</option><option value="-115">&minus;115</option></select></div>
+  <div class="doc-f doc-f-wide"><label>Share of handle already on the early side &mdash; <span id="doc-split-val">50% / 50%</span></label>
+    <input type="range" id="doc-split" min="10" max="90" step="5" value="50" oninput="docRun()"></div>
+</div>
+<div id="doc-calc-out"></div>
+
+<div class="doc-h">The same choice, priced as juice instead</div>
+<div class="doc-p">The usual objection to moving is &ldquo;leave the number alone and just raise the juice.&rdquo; Both versions of
+that are priced below &mdash; a light touch to &minus;115, which puts the dog at &minus;105, and a heavier &minus;120,
+which puts the dog at +100.</div>
+<div id="doc-juice-out"></div>
+
+<div class="doc-rule"></div>
+<div class="doc-h2">The case, in four parts</div>
+
+<div class="doc-arg">
+<div class="doc-num">1</div>
+<div class="doc-argb">
+<div class="doc-argt">Juice hands away the margin on the side you actually write</div>
+<p>Raising the favourite to &minus;120 pushes the dog to +100. A dog at +100 carries <b>zero margin</b> &mdash; we keep
+nothing on it, win or lose. And the dog is the side we are trying to attract: the recreational money that arrives
+after the early money is already down, typically 80 to 95 percent of everything we write on the game.</p>
+<p>So the trade is this. We collect extra juice on the small slice that is already in, most of which was written
+<i>before</i> we juiced, and in exchange we write the overwhelming majority of our handle at no margin at all.
+Move the number instead and both sides sit at &minus;110, and we keep 4.55% of every dollar that comes in.</p>
+<p>Even the light version leaks. Going to &minus;115 puts the dog at &minus;105, where we keep 2.38% instead of
+4.55% &mdash; we have halved the margin on the majority of the handle to add a point and a bit to the minority.</p>
+<p class="doc-pull">At a 15/85 split, moving holds <b>4.55</b> per hundred. Juicing to &minus;115 holds <b>3.00</b>.
+Juicing to &minus;120 holds <b>1.25</b>.</p>
+</div></div>
+
+<div class="doc-arg">
+<div class="doc-num">2</div>
+<div class="doc-argb">
+<div class="doc-argt">Juice does not change what we are rooting for</div>
+<p>This is the part that gets missed. Juice is a charge on the <i>next</i> customer. It does not touch the position
+we already hold. If we are long the favourite, we are long the favourite at &minus;110 and we are still long the
+favourite at &minus;120 &mdash; identical exposure, we have simply made the bet more expensive for someone who
+was never our problem.</p>
+<p>Moving the number changes what we need to happen for us to win. That is the job. Juice is a pricing tool;
+the number is the position.</p>
+</div></div>
+
+<div class="doc-arg">
+<div class="doc-num">3</div>
+<div class="doc-argb">
+<div class="doc-argt">A whole number stops us losing both sides</div>
+<p>Say the early money took the favourite at &minus;5.5 and we now need dog money. If we write it at +6 and the
+game lands on exactly 6, the favourite ticket wins and the dog ticket <b>pushes</b> &mdash; we pay one side.
+If we write it at +6.5 instead, both tickets win and we pay <b>both</b>. Same game, same number, twice the damage.</p>
+<p>That is a middle, and a middle costs roughly 2.1&times; an ordinary losing side because we pay two winners
+and keep nothing. Games land exactly on a whole number <b>3.83%</b> of the time. Stopping on the number takes
+that risk to zero; stepping over it accepts it in full, for nothing in return.</p>
+<p class="doc-pull">Whole numbers keep working as you go. +7 is no worse than +6.5, because the 7 pushes and
+stops the window again.</p>
+<p>Which is why the rule is to <b>walk</b> rather than jump. Writing at +6, then +6.5, then +7 spreads the exposure
+across three prices, and only the tickets at +6.5 and beyond can be middled at all. Jumping straight from
+&minus;5.5 to &minus;7 puts every dog ticket inside the same window.</p>
+</div></div>
+
+<div class="doc-arg">
+<div class="doc-num">4</div>
+<div class="doc-argb">
+<div class="doc-argt">So there is no excuse for freezing</div>
+<p>The instinct against moving is fear of getting caught on the wrong number. The data does not support the fear.</p>
+<table class="tbl doc-mini"><tbody>
+<tr><td>Decided within 1 point of the close</td><td class="doc-mv">8.4%</td></tr>
+<tr><td>Within 2 points</td><td class="doc-mv">15.2%</td></tr>
+<tr><td>Within 3 points</td><td class="doc-mv">22.5%</td></tr>
+<tr class="doc-hl"><td><b>Never in play &mdash; decided by more than 3 points</b></td><td class="doc-mv"><b>77.5%</b></td></tr>
+</tbody></table>
+<p>Three games in four are settled nowhere near our number. Refusing to move protects us against a three percent
+event while leaving us carrying a one-sided position that is certain. The exposure we are avoiding is small and
+occasional; the exposure we are accepting is large and guaranteed.</p>
+</div></div>
+
+<div class="doc-rule"></div>
+<div class="doc-h2">Objections, answered</div>
+
+<div class="doc-obj">
+<div class="doc-q">&ldquo;DraftKings only uses half-points and never stops on a whole number. Why should we?&rdquo;</div>
+<div class="doc-a2"><p>Because they are not doing our job, and the reason is worth understanding rather than dismissing.</p>
+<p><b>A push costs a balanced book its vig.</b> If our two sides are even and the game pushes, we return every
+stake and keep nothing &mdash; we forfeit the 4.55% we would otherwise have earned. Never pushing is worth about
+<b>0.17 units per 100 of handle on every game they take</b>. Across their volume that is a serious number, and
+it is why the policy exists.</p>
+<p>But that logic holds only while you are balanced. <b>We are not balanced &mdash; being one-sided is the entire
+problem we are solving.</b> On a one-sided book the push stops being forfeited vig and becomes insurance: it saves
+the whole payout instead of costing us the margin. The same feature is a cost to them and a protection to us,
+because we are in opposite positions.</p>
+<p>Two more things let them live with it. To be middled, <b>the same book must hold both tickets</b> &mdash; someone
+betting the favourite with them and the dog elsewhere has not middled them at all. And anyone who systematically
+works their bounces gets limited within weeks. Their two sides arrive from uncorrelated recreational flow at
+different hours. Ours would arrive from the same account that already has the other side.</p></div>
+</div>
+
+<div class="doc-obj">
+<div class="doc-q">&ldquo;Moving just invites the sharp to bet us again at a better number.&rdquo;</div>
+<div class="doc-a2"><p>Sometimes, and it is a fair worry. Two answers. They already have their position &mdash; the second bet is a
+smaller marginal problem than the first one we failed to react to. And if they do come again, that is information
+we would never have got from juicing: it tells us the number is still wrong, which is the single most valuable
+thing anyone can tell us.</p></div>
+</div>
+
+<div class="doc-obj">
+<div class="doc-q">&ldquo;Juice is instant and reversible. Moving the number is sticky.&rdquo;</div>
+<div class="doc-a2"><p>True, and worth conceding plainly. Small juice adjustments are a legitimate tool for fine-tuning, and for buying
+a few minutes when we genuinely do not know yet. The argument is not that juice is never right. It is that juice
+is not a <i>substitute</i> for moving when we are actually one-sided &mdash; used that way it costs three to five
+times the hold and leaves the position untouched.</p></div>
+</div>
+
+<div class="doc-obj">
+<div class="doc-q">&ldquo;If three in four games are not close to the number, the half-point cannot matter much either.&rdquo;</div>
+<div class="doc-a2"><p>The sharpest version of the pushback, and the answer is asymmetry. Correct, the half-point rarely decides anything
+&mdash; which is precisely why moving is cheap and freezing is indefensible. But landing on the whole number is
+<b>free</b>. It costs nothing to stop there on the way past. We take a free option even when it only pays three
+percent of the time, because the alternative is not a better outcome &mdash; it is the same outcome without the
+protection.</p></div>
+</div>
+
+<div class="doc-obj">
+<div class="doc-q">&ldquo;What if we move and the other side never shows up?&rdquo;</div>
+<div class="doc-a2"><p>Modelled it. Move, and fill only 40% of the dog money we expected: we hold <b>7.51%</b> of written handle.
+Juice, same partial fill: <b>5.86%</b>. Moving still wins, because the price we write the dog at drives the result
+far more than how much of it we get.</p></div>
+</div>
+
+<div class="doc-rule"></div>
+<div class="doc-h2">Where the numbers come from</div>
+<div class="doc-src">
+<p><b>5,544 games</b> from the 2025-26 season, each matched to its sportsbook opening and closing line. One corrupt
+record was found and removed &mdash; a closing line of &minus;158 against an opener of +2, which is a moneyline
+that landed in the spread column.</p>
+<p><b>The 3.83% push rate</b> is measured on the 2,663 games that closed on a whole number. Anyone computing it
+across all games will get 1.84% instead, but that figure is diluted by the 52% of closes that are half-points,
+where landing on the number is impossible by construction. 3.83% is the correct conditional.</p>
+<p><b>The calculator</b> models final margin as normally distributed around the true number with a standard
+deviation of 11.37, fitted on those same games. It predicts a 3.51% chance of landing exactly on the number
+against 3.83% observed, so if anything it <b>understates</b> the cost of stepping over one.</p>
+<p><b>Hold figures</b> assume both sides priced at the stated odds and a fair number, so each side is a coin flip.
+The favourite covered 47.8% of the time against the closing line last season, and the average miss was 9.14 points
+when the favourite covered against 9.19 when it did not &mdash; as symmetric as a market gets.</p>
+</div>
+</div>
+</div>
 <div id="page-compliance" style="display:none">
 <div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">COMPLIANCE</div>
 <div class="seg" id="cmp-seg" style="margin-bottom:12px"><button class="seg-btn active" onclick="cmpSwitch('daily',this)">DAILY COMPLIANCE</button><button class="seg-btn" onclick="cmpSwitch('conf',this)">CONF GRID</button><button class="seg-btn" onclick="cmpSwitch('state',this)">STATE GRID</button></div>
@@ -1515,7 +1760,7 @@ function _favSet(id){_favEdit=false;try{localStorage.setItem('cbk_fav_team',id||
 function _favPick(){_favEdit=true;_favRender();}
 function _favOpen(){var id=_favGet();if(id&&typeof goToTeam==='function')goToTeam(id);}
 function _favRender(){var box=document.getElementById('fav-team-wrap');if(!box)return;_favLoadTeams(function(){var fav=_favGet();var nm=fav?_favName(fav):'';if(fav&&nm&&!_favEdit){box.innerHTML='<span class="fav-team-link" onclick="_favOpen()" title="Open '+nm+' hub \u2014 schedule, roster, stats, indicators">\u2605 '+nm+'</span><span class="fav-team-edit" onclick="_favPick()" title="Change favorite team">\u25be</span>';}else{var opts='<option value="">\u2605 Favorite team\u2026</option>';_favTeams.forEach(function(t){opts+='<option value="'+t.id+'"'+(String(t.id)===String(fav)?' selected':'')+'>'+t.team+'</option>';});box.innerHTML='<select class="fav-team-sel" onchange="_favSet(this.value)">'+opts+'</select>';}});}
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='matchups')loadMatchups();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();if(page==='linesheet')initLineSheet();if(page==='compliance')initCompliance();if(page==='matrix')initMtx();if(page==='altlines')initAlt();if(page==='bracket')initBrk();if(page==='misses')initMisses();if(page==='archive')initArchive();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='matchups')loadMatchups();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();if(page==='linesheet')initLineSheet();if(page==='compliance')initCompliance();if(page==='matrix')initMtx();if(page==='altlines')initAlt();if(page==='bracket')initBrk();if(page==='misses')initMisses();if(page==='archive')initArchive();if(page==='doctrine')initDoctrine();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -6491,6 +6736,155 @@ function altMethodHTML(S,base,hold,HT,AT){
      +'dozen points of the number, which is the range shown here.</div>'
    +'</div>';
 }
+
+/* ================= LINE MOVEMENT DOCTRINE ================= */
+var DOC_SIGMA=11.37, DOC_PUSH=0.0383, DOC_N=5544, DOC_NWHOLE=2663;
+function docN(z){var t=1/(1+0.2316419*Math.abs(z));var d=0.3989423*Math.exp(-z*z/2);
+  var p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p;}
+/* P(final margin = exactly k) when the true number is L */
+function docPExact(k,L){return docN((k+0.5-L)/DOC_SIGMA)-docN((k-0.5-L)/DOC_SIGMA);}
+function docPay(od){return od<0?100/Math.abs(od):od/100;}
+/* book EV given fav tickets at line A, dog tickets at line B, true number L */
+function docEV(A,B,Sf,Sd,L,odF,odD){
+  var pf=docPay(odF), pd=docPay(odD), ev=0;
+  for(var m=Math.round(L)-45;m<=Math.round(L)+45;m++){
+    var p=docPExact(m,L); if(p<1e-9)continue;
+    var f=(m>A)?(-Sf*pf):((m===A)?0:Sf);
+    var d=(m<B)?(-Sd*pd):((m===B)?0:Sd);
+    ev+=p*(f+d);
+  }
+  return ev;
+}
+function docMiddleSet(A,B){var out=[];for(var k=Math.ceil(A);k<=Math.floor(B);k++){if(k>A&&k<B)out.push(k);}return out;}
+
+function docSideEV(line,stake,L,isFav,od){
+  var p=docPay(od), ev=0;
+  for(var m=Math.round(L)-45;m<=Math.round(L)+45;m++){
+    var q=docPExact(m,L); if(q<1e-9)continue;
+    var v;
+    if(isFav) v=(m>line)?(-stake*p):((m===line)?0:stake);
+    else      v=(m<line)?(-stake*p):((m===line)?0:stake);
+    ev+=q*v;
+  }
+  return ev;
+}
+function docRun(){
+  var Araw=parseFloat(document.getElementById('doc-a').value);
+  var Lraw=parseFloat(document.getElementById('doc-true').value);
+  var Sf=parseFloat(document.getElementById('doc-split').value);
+  var Sd=100-Sf;
+  var od=parseInt(document.getElementById('doc-odds').value,10);
+  if(isNaN(Araw)||isNaN(Lraw)||isNaN(Sf))return;
+  var A=Math.abs(Araw), L=Math.abs(Lraw);   /* work in favourite-line magnitude */
+  document.getElementById('doc-split-val').textContent=Sf+'% / '+Sd+'%';
+  /* next stopping point above A, then one further */
+  var stop,skip;
+  if((A%1)===0){ stop=A+0.5; skip=A+1; }      /* already on a whole number */
+  else { stop=Math.ceil(A); skip=Math.ceil(A)+0.5; }
+  var evStop=docEV(A,stop,Sf,Sd,L,od,od);
+  var evSkip=docEV(A,skip,Sf,Sd,L,od,od);
+  var cost=evStop-evSkip;
+  var midStop=docMiddleSet(A,stop), midSkip=docMiddleSet(A,skip);
+  var pStop=midStop.reduce(function(s,k){return s+docPExact(k,L);},0);
+  var pSkip=midSkip.reduce(function(s,k){return s+docPExact(k,L);},0);
+  var opens=(midSkip.length>midStop.length);
+  function dog(v){return '+'+v.toFixed(1);}
+  function fav(v){return '\u2212'+v.toFixed(1);}
+  var rows=''
+   +'<tr><td class="doc-lbl">New number (favourite / dog)</td>'
+     +'<td class="doc-a">'+fav(stop)+' / '+dog(stop)+(((stop%1)===0)?'  <span class="doc-tag doc-good">SOLID</span>':'')+'</td>'
+     +'<td class="doc-b">'+fav(skip)+' / '+dog(skip)+(opens?'  <span class="doc-tag doc-bad">OPENS A MIDDLE</span>':'')+'</td></tr>'
+   +'<tr><td class="doc-lbl">Margins that beat us on both sides</td>'
+     +'<td class="doc-a">'+(midStop.length?midStop.join(', '):'<b>none</b>')+'</td>'
+     +'<td class="doc-b">'+(midSkip.length?'<b>'+midSkip.join(', ')+'</b>':'none')+'</td></tr>'
+   +'<tr><td class="doc-lbl">Chance of that happening</td>'
+     +'<td class="doc-a">'+(pStop*100).toFixed(2)+'%</td>'
+     +'<td class="doc-b">'+(pSkip*100).toFixed(2)+'%</td></tr>'
+   +'<tr class="doc-hl"><td class="doc-lbl">Expected result, per 100 units</td>'
+     +'<td class="doc-a">'+(evStop>=0?'+':'\u2212')+Math.abs(evStop).toFixed(2)+'</td>'
+     +'<td class="doc-b">'+(evSkip>=0?'+':'\u2212')+Math.abs(evSkip).toFixed(2)+'</td></tr>';
+  var pct=(evStop>0)?(100*cost/evStop):null;
+  var h1=opens?'STOP ON THE NUMBER':'MOVE ONE STEP', h2=opens?'STEP OVER IT':'MOVE TWO STEPS';
+  var verdict;
+  if(opens){
+    verdict='Early money is in at <b>'+fav(A)+'</b>. Stopping at <b>'+fav(stop)+'</b> means a game landing on '
+      +'<b>'+midSkip.join(' or ')+'</b> pushes the dog ticket \u2014 we pay one side. Going straight to <b>'+fav(skip)+'</b> '
+      +'means both tickets win and we pay twice. That costs <b>'+cost.toFixed(2)+' units per 100 of handle</b>'
+      +(pct!==null&&pct>0?' \u2014 <b>'+pct.toFixed(0)+'% of everything we expected to make on this game</b>':'')+'.';
+  }else{
+    verdict='<b>No middle opens either way here.</b> The early money is already on a number that protects us, so '
+      +'neither destination exposes both sides. The '+cost.toFixed(2)+' unit difference is simply the cost of handing '
+      +'the dog a better price than we needed to. Move if the market has moved; do not overshoot it.';
+  }
+  /* per-ticket breakdown: where the hold actually comes from */
+  var evFav=docSideEV(A,Sf,L,true,od);
+  var evDogStop=docSideEV(stop,Sd,L,false,od);
+  var evDogSkip=docSideEV(skip,Sd,L,false,od);
+  function pctOf(ev,st){return st>0?(ev/st*100).toFixed(2)+'%':'\u2014';}
+  var brk='<table class="tbl doc-tbl doc-brk"><thead><tr><th>WHERE THE HOLD COMES FROM</th>'
+    +'<th>'+h1+'</th><th>'+h2+'</th></tr></thead><tbody>'
+    +'<tr><td class="doc-lbl">Early ticket \u2014 '+Sf+' units at '+fav(A)+'</td>'
+      +'<td class="doc-a">'+pctOf(evFav,Sf)+'</td><td class="doc-b">'+pctOf(evFav,Sf)+'</td></tr>'
+    +'<tr><td class="doc-lbl">Dog ticket \u2014 '+Sd+' units</td>'
+      +'<td class="doc-a">'+pctOf(evDogStop,Sd)+'</td><td class="doc-b">'+pctOf(evDogSkip,Sd)+'</td></tr>'
+    +'<tr class="doc-hl"><td class="doc-lbl">Blended across all 100 units</td>'
+      +'<td class="doc-a">'+evStop.toFixed(2)+'%</td><td class="doc-b">'+evSkip.toFixed(2)+'%</td></tr>'
+    +'</tbody></table>';
+  var fairPct=(docSideEV(L,Sf,L,true,od)/Sf*100);
+  /* if both tickets are equally far from fair, the mix cannot help -- surface that */
+  var rFav=(Sf>0)?(evFav/Sf*100):0, rSkip=(Sd>0)?(evDogSkip/Sd*100):0;
+  var uniform=Math.abs(rFav-rSkip)<0.05;
+  var slid=uniform?('<div class="doc-note doc-note2"><b>Notice the right-hand column does not move when you change the split.</b> '
+    +'That is not a glitch. Stepping over the number leaves the early ticket half a point below fair and the dog ticket half a point '
+    +'above it \u2014 both damaged by exactly the same amount, both worth '+rFav.toFixed(2)+'%. When every ticket is equally bad, '
+    +'the mix cannot rescue us; the blended hold is '+rFav.toFixed(2)+'% at any split. '
+    +'Stop on the number instead and the dog ticket is written at full value, so the more of it we write the better we do '
+    +'\u2014 which is exactly what the left-hand column shows as you slide.</div>'):'';
+  var note='<div class="doc-note"><b>Why is this under '+fairPct.toFixed(2)+'%?</b> Because the early money already '
+    +'took a better number than fair. That first ticket is worth only <b>'+pctOf(evFav,Sf)+'</b> to us no matter what we do next '
+    +'\u2014 that damage is done, and it is the cost of having been slow, not the cost of moving. '
+    +'Moving is what lets us write a <i>second</i> ticket at <b>'+pctOf(evDogStop,Sd)+'</b>, near full value. '
+    +'Step over the number instead and that second ticket drops to <b>'+pctOf(evDogSkip,Sd)+'</b> '
+    +'\u2014 now both tickets are damaged, and the blended figure halves.</div>';
+  document.getElementById('doc-calc-out').innerHTML=
+    '<table class="tbl doc-tbl"><thead><tr><th></th><th>'+h1+'</th><th>'+h2+'</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<div class="doc-verdict">'+verdict+'</div>'+brk+note+slid;
+  document.getElementById('doc-juice-out').innerHTML=docJuice(Sf,Sd);
+}
+function docJuice(Sf,Sd){
+  function hold(od){return 0.5-0.5*docPay(od);}
+  var scen=[
+    {n:'Move the number',f:-110,d:-110,move:true},
+    {n:'Hold, juice to \u2212115',f:-115,d:-105,move:false},
+    {n:'Hold, juice to \u2212120',f:-120,d:100,move:false}
+  ];
+  scen.forEach(function(x){ x.ev=Sf*hold(x.f)+Sd*hold(x.d); });
+  var best=scen[0].ev;
+  function od(v){return v<0?'\u2212'+Math.abs(v):'+'+v;}
+  var head='<tr><th></th>'+scen.map(function(x){return'<th'+(x.move?' class="doc-hcol"':'')+'>'+x.n+'</th>';}).join('')+'</tr>';
+  function row(lbl,fn,cls){
+    return '<tr><td class="doc-lbl">'+lbl+'</td>'+scen.map(function(x){
+      return'<td class="'+(x.move?'doc-a':'doc-b')+(cls||'')+'">'+fn(x)+'</td>';}).join('')+'</tr>';
+  }
+  var html='<table class="tbl doc-tbl doc-tbl3"><thead>'+head+'</thead><tbody>'
+   +row('Favourite price',function(x){return od(x.f);})
+   +row('Dog price',function(x){return od(x.d);})
+   +row('Margin we keep on the dog side',function(x){return (hold(x.d)*100).toFixed(2)+'%';})
+   +row('Dog handle it applies to',function(x){return Sd+' units';})
+   +'<tr class="doc-hl"><td class="doc-lbl">Expected hold, per 100 units</td>'
+   +scen.map(function(x){return'<td class="'+(x.move?'doc-a':'doc-b')+'">+'+x.ev.toFixed(2)+'</td>';}).join('')
+   +'</tr>'
+   +'<tr><td class="doc-lbl">vs moving</td>'
+   +scen.map(function(x){return'<td class="'+(x.move?'doc-a':'doc-b')+'">'+(x.move?'\u2014':(best/x.ev).toFixed(1)+'\u00d7 worse')+'</td>';}).join('')
+   +'</tr></tbody></table>'
+   +'<div class="doc-verdict">Juicing to \u2212115 leaves the dog at \u2212105, where we keep only '
+   +(hold(-105)*100).toFixed(2)+'% instead of '+(hold(-110)*100).toFixed(2)+'%. Juicing to \u2212120 pushes the dog to +100 and we keep '
+   +'<b>nothing at all</b>. Either way the extra margin lands on the '+Sf+'% already written, while the '+Sd+'% still to come '
+   +'is written cheaper than it needed to be \u2014 and the position stays exactly as one-sided as it was.</div>';
+  return html;
+}
+function initDoctrine(){docRun();}
+
 </script>
 <div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f8f4ef;z-index:9999;display:flex;align-items:center;justify-content:center;">
 <div style="background:var(--bg1);border:1px solid var(--bdr2);border-radius:8px;padding:44px;width:340px;text-align:center">
