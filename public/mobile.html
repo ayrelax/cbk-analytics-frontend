@@ -14,14 +14,17 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--bg0:#12100c;--bg1:#1b1710;--bg2:#241e15;--bdr:#3a3125;--txt1:#f6f0e3;--txt2:#d8cfbc;
 --txt3:#94897a;--acc:#e0be6e;--grn:#5fcf87;--red:#f08585;--amb:#f0a94a}
-html,body{margin:0;padding:0;background:var(--bg0);color:var(--txt1);
+html{height:100%}
+body{margin:0;padding:0;background:var(--bg0);color:var(--txt1);
 font:15px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
--webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
-.hd{position:sticky;top:0;z-index:20;background:rgba(18,16,12,.94);backdrop-filter:blur(14px);
+-webkit-font-smoothing:antialiased;overscroll-behavior:none;
+height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.hd{flex:0 0 auto;z-index:20;background:rgba(18,16,12,.94);backdrop-filter:blur(14px);
 border-bottom:1px solid var(--bdr);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px}
 .hd h1{margin:0;font-size:13px;letter-spacing:2.2px;color:var(--acc);font-weight:800}
 .hd .sub{font-size:11px;color:var(--txt3);margin-top:2px}
-.wrap{padding:12px 12px calc(env(safe-area-inset-bottom) + 76px)}
+.wrap{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+overscroll-behavior:contain;padding:12px 12px 18px}
 .bar{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
 input,select{background:var(--bg2);border:1px solid var(--bdr);color:var(--txt1);border-radius:9px;
 padding:9px 11px;font:14px inherit;-webkit-appearance:none;flex:1;min-width:0}
@@ -49,7 +52,7 @@ padding:9px 11px;font:14px inherit;-webkit-appearance:none;flex:1;min-width:0}
 .p-no{background:rgba(240,133,133,.17);color:var(--red)}
 .p-chk{background:rgba(240,169,74,.15);color:var(--amb)}
 .line{font:700 15px ui-monospace,Menlo,monospace;color:var(--acc)}
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+.tabs{flex:0 0 auto;z-index:30;display:flex;
 background:rgba(18,16,12,.96);backdrop-filter:blur(18px);border-top:1px solid var(--bdr);
 padding-bottom:env(safe-area-inset-bottom)}
 .tab{flex:1;text-align:center;padding:9px 4px 8px;font:700 9.5px inherit;letter-spacing:1px;
@@ -62,7 +65,37 @@ margin-bottom:11px;font-size:12.5px;line-height:1.55;color:var(--txt2)}
 .empty{text-align:center;color:var(--txt3);padding:40px 20px;font-size:13.5px;line-height:1.6}
 .ld{text-align:center;color:var(--txt3);padding:34px;font-size:13px}
 .sec{font:800 10px inherit;letter-spacing:1.6px;color:var(--acc);margin:14px 2px 7px}
+
+#gate{position:fixed;inset:0;z-index:200;height:100vh;height:100dvh;background:var(--bg0);display:flex;align-items:center;
+justify-content:center;padding:26px;padding-top:calc(env(safe-area-inset-top) + 26px)}
+.gate-box{width:100%;max-width:330px;text-align:center}
+.gate-logo{font-size:44px;color:var(--acc);line-height:1;margin-bottom:14px}
+.gate-t{font-size:13px;letter-spacing:2px;font-weight:800;color:var(--acc);margin-bottom:5px}
+.gate-s{font-size:13px;color:var(--txt3);margin-bottom:22px}
+#gate input[type=text],#gate input[type=password]{width:100%;margin-bottom:11px;padding:14px 14px;
+font-size:16px;border-radius:11px;background:var(--bg2);border:1px solid var(--bdr);color:var(--txt1)}
+.gate-rm{display:flex;align-items:center;gap:9px;justify-content:center;margin:4px 0 16px;
+font-size:13.5px;color:var(--txt2)}
+.gate-rm input{width:20px;height:20px;accent-color:#e0be6e}
+.gate-btn{width:100%;padding:14px;border:0;border-radius:11px;background:var(--acc);color:#1a1208;
+font:800 14px inherit;letter-spacing:1.4px}
+.gate-err{display:none;margin-top:13px;font-size:13px;color:var(--red)}
+.gate-out{position:fixed;top:calc(env(safe-area-inset-top) + 8px);right:12px;z-index:25;
+background:transparent;border:1px solid var(--bdr);color:var(--txt3);border-radius:7px;
+padding:5px 9px;font:700 9px inherit;letter-spacing:1px}
 </style></head><body>
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">&#9679;</div>
+    <div class="gate-t">BERBERT'S FULL COURT PRESS</div>
+    <div class="gate-s">Sign in to continue</div>
+    <input id="gu" type="text" placeholder="Username" autocapitalize="none" autocorrect="off" spellcheck="false">
+    <input id="gp" type="password" placeholder="Password" autocapitalize="none" autocorrect="off">
+    <label class="gate-rm"><input type="checkbox" id="grm" checked><span>Keep me signed in</span></label>
+    <button class="gate-btn" onclick="tryLogin()">SIGN IN</button>
+    <div class="gate-err" id="gerr">Incorrect username or password</div>
+  </div>
+</div>
 <div class="hd"><h1>BERBERT'S FULL COURT PRESS</h1><div class="sub" id="sub">loading&hellip;</div></div>
 <div class="wrap" id="main"><div class="ld">Loading&hellip;</div></div>
 <div class="tabs">
@@ -216,5 +249,41 @@ async function renderPL(m){
   });
   document.getElementById('main').innerHTML=h;
 }
-boot();
+
+const AUTH_K='fcp_auth';
+function authed(){
+  try{ return localStorage.getItem(AUTH_K)==='1' || sessionStorage.getItem(AUTH_K)==='1'; }catch(e){ return false; }
+}
+function tryLogin(){
+  const u=document.getElementById('gu').value.trim();
+  const p=document.getElementById('gp').value;
+  const ok = (u==='CollegeHoops' && (p==='Nosfan99' || p==='CollegeHoops'));
+  if(!ok){ document.getElementById('gerr').style.display='block'; return; }
+  try{
+    if(document.getElementById('grm').checked) localStorage.setItem(AUTH_K,'1');
+    else sessionStorage.setItem(AUTH_K,'1');
+  }catch(e){}
+  openApp();
+}
+function signOut(){
+  try{ localStorage.removeItem(AUTH_K); sessionStorage.removeItem(AUTH_K); }catch(e){}
+  location.reload();
+}
+function openApp(){
+  const g=document.getElementById('gate'); if(g) g.style.display='none';
+  if(!document.getElementById('gate-out')){
+    const b=document.createElement('button');
+    b.id='gate-out'; b.className='gate-out'; b.textContent='SIGN OUT'; b.onclick=signOut;
+    document.body.appendChild(b);
+  }
+  boot();
+}
+document.addEventListener('DOMContentLoaded',function(){
+  const p=document.getElementById('gp');
+  if(p) p.addEventListener('keydown',function(e){ if(e.key==='Enter') tryLogin(); });
+  const u=document.getElementById('gu');
+  if(u) u.addEventListener('keydown',function(e){ if(e.key==='Enter'){ p&&p.focus(); } });
+  if(authed()) openApp(); else if(u) u.focus();
+});
+
 </script></body></html>
