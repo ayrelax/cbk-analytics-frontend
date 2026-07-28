@@ -3603,6 +3603,18 @@ async function loadPlays(){
 function playsSetTf(btn){_playsTf=btn.getAttribute('data-tf');var seg=document.getElementById('plays-timeframe');Array.prototype.forEach.call(seg.children,function(b){b.classList.remove('active');});btn.classList.add('active');playsRender();}
 function playsAgg(rows){var w=0,l=0,p=0,pl=0,handle=0;rows.forEach(function(r){if(r.result==='W')w++;else if(r.result==='L')l++;else if(r.result==='P')p++;pl+=parseFloat(r.pl)||0;handle+=parseFloat(r.handle)||0;});var hold=handle?pl/handle*100:null;return{w:w,l:l,p:p,pl:pl,handle:handle,hold:hold,n:rows.length};}
 function playsCLV(r){var o=parseFloat(r.our_number),m=parseFloat(r.market_number),c=parseFloat(r.closing_number);if(isNaN(o)||isNaN(m)||isNaN(c))return null;return Math.abs(m-o)-Math.abs(c-o);}
+function playsSetField(id,field,val,isNum){
+  var v;
+  if(isNum){v=parseFloat(val); if(isNaN(v))v=null;}
+  else {v=(val===''||val==null)?null:val;}
+  var patch={}; patch[field]=v;
+  sb.from('plays').update(patch).eq('id',id).then(function(res){
+    if(res&&res.error){alert('Save failed: '+res.error.message);return;}
+    var row=_playsData.filter(function(r){return r.id===id;})[0];
+    if(row)row[field]=v;
+    playsRender();
+  });
+}
 function playsSetClose(id,val){var v=parseFloat(val);sb.from('plays').update({closing_number:isNaN(v)?null:v}).eq('id',id).then(function(){var row=_playsData.filter(function(r){return r.id===id;})[0];if(row)row.closing_number=isNaN(v)?null:v;playsRender();});}
 function playsSetOpen(id,val){var v=parseFloat(val);sb.from('plays').update({opening_number:isNaN(v)?null:v}).eq('id',id).then(function(){var row=_playsData.filter(function(r){return r.id===id;})[0];if(row)row.opening_number=isNaN(v)?null:v;playsRender();});}
 async function playsAutoGrade(){var st=document.getElementById('plays-ag-status');function say(t){if(st)st.textContent=t;}function nrm(s){return String(s||'').toLowerCase().replace(/[-+]?[0-9.]+/g,'').replace(/[^a-z]/g,'');}var cand=_playsData.filter(function(r){var bt=String(r.bet_type||'').toLowerCase();return r.game_id&&r.our_number!=null&&r.market_number!=null&&bt.indexOf('total')<0&&bt.indexOf('over')<0&&bt.indexOf('under')<0&&bt.indexOf('ml')<0&&bt.indexOf('money')<0&&bt.indexOf('prop')<0;});if(!cand.length){say('No gradable spread plays (need game link + OUR# + BOL#).');return;}say('Grading '+cand.length+'\u2026');var ids=Array.from(new Set(cand.map(function(r){return r.game_id;})));var res=await sb.from('games').select('id,home_score,away_score,home:home_team_id(team),away:away_team_id(team)').in('id',ids);var G={};(res.data||[]).forEach(function(g){G[g.id]=g;});var graded=0,noscore=0,nomatch=0,flat=0;for(var i=0;i<cand.length;i++){var r=cand[i];var g=G[r.game_id];if(!g||g.home_score==null||g.away_score==null){noscore++;continue;}var sn=nrm(r.side);if(!sn){nomatch++;continue;}var hn=nrm(g.home?g.home.team:''),an=nrm(g.away?g.away.team:'');var team=null;if(hn&&sn.indexOf(hn)>=0)team='H';else if(an&&sn.indexOf(an)>=0)team='A';if(!team){nomatch++;continue;}var margin=team==='H'?(g.home_score-g.away_score):(g.away_score-g.home_score);var O=parseFloat(r.our_number),B=parseFloat(r.market_number);if(isNaN(O)||isNaN(B)){nomatch++;continue;}if(O===B){flat++;continue;}var v=(O<B)?(margin+B):(-(margin+B));var result=v>0?'W':(v<0?'L':'P');await sb.from('plays').update({result:result}).eq('id',r.id);var row=_playsData.filter(function(x){return x.id===r.id;})[0];if(row)row.result=result;graded++;}say('Graded '+graded+(flat?' \u00b7 '+flat+' flat (our#=BOL#, no edge)':'')+(noscore?' \u00b7 '+noscore+' awaiting final':'')+(nomatch?' \u00b7 '+nomatch+' side didn\u2019t match a team':''));playsRender();}
@@ -3636,13 +3648,23 @@ function playsRender(){
   if(!rows.length){document.getElementById('plays-table').innerHTML='<div style="color:var(--txt3);padding:20px;text-align:center;font-size:12px">No plays for this filter.</div>';return;}
   var h='';
   if(pend.length){
-    h+='<div class="plays-pend"><div class="plays-pend-h">ON THE BOARD \u00b7 '+pend.length+' play'+(pend.length===1?'':'s')+' not yet graded</div>'
-      +'<div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>DATE</th><th>EVENT</th><th>PERSON</th><th>TYPE</th><th>SIDE</th><th>OUR#</th><th>BOL#</th>'+(isAdmin?'<th></th>':'')+'</tr></thead><tbody>';
+    h+='<div class="plays-pend"><div class="plays-pend-h">ON THE BOARD \u00b7 '+pend.length+' play'+(pend.length===1?'':'s')+' not yet graded'
+      +(isAdmin?' <span style="color:var(--txt3);font-weight:400;letter-spacing:0;text-transform:none">\u2014 fill in any field below; setting W/L moves the play to RESULTS</span>':'')+'</div>'
+      +'<div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>DATE</th><th>EVENT</th><th>PERSON</th><th>TYPE</th><th>SIDE</th><th>OUR#</th><th>BOL#</th><th>OPEN</th><th>CLOSE</th><th>W/L</th><th>HANDLE</th><th>P/L</th>'+(isAdmin?'<th></th>':'')+'</tr></thead><tbody>';
     pend.forEach(function(r){
+      function ni(field,val,step,w){return '<input type="number" step="'+step+'" value="'+(val!=null?val:'')+'" onchange="playsSetField('+r.id+',\''+field+'\',this.value,true)" style="width:'+w+'px;font-size:10px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px">';}
       h+='<tr><td class="muted">'+r.play_date+'</td><td class="bold">'+(r.event_name||'')+'</td><td>'+r.person+'</td>'
        +'<td style="text-transform:uppercase">'+r.bet_type+'</td><td class="bold" style="color:var(--acc)">'+(r.side||'')+'</td>'
-       +'<td>'+(r.our_number!=null?r.our_number:'--')+'</td><td>'+(r.market_number!=null?r.market_number:'--')+'</td>'
-       +(isAdmin?'<td><button class="btn" style="padding:2px 8px;font-size:10px" onclick="playsDelete('+r.id+')">\u00d7</button></td>':'')+'</tr>';
+       +(isAdmin?'<td>'+ni('our_number',r.our_number,'0.5',58)+'</td><td>'+ni('market_number',r.market_number,'0.5',58)+'</td>'
+                +'<td>'+ni('opening_number',r.opening_number,'0.5',58)+'</td><td>'+ni('closing_number',r.closing_number,'0.5',58)+'</td>'
+                +'<td><select onchange="playsSetField('+r.id+',\'result\',this.value,false)" style="font-size:10px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px">'
+                +'<option value="">--</option><option value="W">W</option><option value="L">L</option><option value="P">P</option></select></td>'
+                +'<td>'+ni('handle',r.handle,'1',72)+'</td><td>'+ni('pl',r.pl,'0.01',80)+'</td>'
+                +'<td><button class="btn" style="padding:2px 8px;font-size:10px" onclick="playsDelete('+r.id+')">\u00d7</button></td>'
+         :'<td>'+(r.our_number!=null?r.our_number:'--')+'</td><td>'+(r.market_number!=null?r.market_number:'--')+'</td>'
+                +'<td>'+(r.opening_number!=null?r.opening_number:'--')+'</td><td>'+(r.closing_number!=null?r.closing_number:'--')+'</td>'
+                +'<td>--</td><td>'+playsFmtMoney(r.handle)+'</td><td>'+playsFmtMoney(r.pl)+'</td>')
+       +'</tr>';
     });
     h+='</tbody></table></div></div>';
   }
@@ -3650,8 +3672,17 @@ function playsRender(){
 if(isAdmin)h+='<div style="margin:10px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="btn primary" style="font-size:10px;padding:5px 12px" onclick="playsAutoGrade()">AUTO-GRADE SPREADS vs BOL#</button><span id="plays-ag-status" style="font-size:10px;color:var(--txt3)"></span></div>';h+='<div class="plays-done-h">RESULTS</div><div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>DATE</th><th>EVENT</th><th>PERSON</th><th>TYPE</th><th>SIDE</th><th>OUR#</th><th>BOL#</th><th>OPEN</th><th>CLOSE</th><th>CLV</th><th>W/L</th><th>HANDLE</th><th>P/L</th><th>HOLD%</th>'+(isAdmin?'<th></th>':'')+'</tr></thead><tbody>';
   done.forEach(function(r){var win=r.result==='W';var loss=r.result==='L';var rowbg=win?'background:#eaf6ea':loss?'background:#fbeaea':'';var hold=playsHold(r.pl,r.handle);var plc=(parseFloat(r.pl)||0)>=0?'var(--grn2)':'var(--red2)';
     h+='<tr style="'+rowbg+'"><td class="muted">'+r.play_date+'</td><td class="bold">'+(r.event_name||'')+'</td><td>'+r.person+'</td><td style="text-transform:uppercase">'+r.bet_type+'</td><td>'+(r.side||'')+'</td><td>'+(r.our_number!==null?r.our_number:'')+'</td><td>'+(r.market_number!==null?r.market_number:'')+'</td>'+(isAdmin?'<td><input type="number" step="0.5" value="'+(r.opening_number!=null?r.opening_number:'')+'" onchange="playsSetOpen('+r.id+',this.value)" style="width:58px;font-size:10px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px"></td>':'<td>'+(r.opening_number!=null?r.opening_number:'--')+'</td>')+(isAdmin?'<td><input type="number" step="0.5" value="'+(r.closing_number!=null?r.closing_number:'')+'" onchange="playsSetClose('+r.id+',this.value)" style="width:58px;font-size:10px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px"></td>':'<td>'+(r.closing_number!=null?r.closing_number:'--')+'</td>')+(function(){var c=playsCLV(r);if(c===null)return '<td class="muted">--</td>';var col=c>0?'var(--grn2)':(c<0?'var(--red2)':'var(--txt3)');return '<td style="font-weight:700;color:'+col+'">'+(c>0?'+':'')+c.toFixed(1)+'</td>';})()+
-    '<td style="font-weight:800;color:'+(win?'var(--grn2)':loss?'var(--red2)':'var(--txt3)')+'">'+(r.result||'--')+'</td>'+
-    '<td>'+playsFmtMoney(r.handle)+'</td><td style="font-weight:700;color:'+plc+'">'+playsFmtMoney(r.pl)+'</td><td style="color:'+plc+'">'+(hold!==null?playsFmtPct(hold):'--')+'</td>'+
+    (isAdmin?'<td><select onchange="playsSetField('+r.id+',\'result\',this.value,false)" style="font-size:10px;padding:2px 4px;font-weight:800;background:var(--bg2);color:'+(win?'var(--grn2)':loss?'var(--red2)':'var(--txt1)')+';border:1px solid var(--bdr2);border-radius:4px">'
+      +'<option value=""'+(!r.result?' selected':'')+'>--</option>'
+      +'<option value="W"'+(r.result==='W'?' selected':'')+'>W</option>'
+      +'<option value="L"'+(r.result==='L'?' selected':'')+'>L</option>'
+      +'<option value="P"'+(r.result==='P'?' selected':'')+'>P</option></select></td>'
+     :'<td style="font-weight:800;color:'+(win?'var(--grn2)':loss?'var(--red2)':'var(--txt3)')+'">'+(r.result||'--')+'</td>')+
+    (isAdmin?'<td><input type="number" step="1" value="'+(r.handle!=null?r.handle:'')+'" onchange="playsSetField('+r.id+',\'handle\',this.value,true)" style="width:72px;font-size:10px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px"></td>'
+     :'<td>'+playsFmtMoney(r.handle)+'</td>')+
+    (isAdmin?'<td><input type="number" step="0.01" value="'+(r.pl!=null?r.pl:'')+'" onchange="playsSetField('+r.id+',\'pl\',this.value,true)" style="width:82px;font-size:10px;padding:2px 4px;font-weight:700;background:var(--bg2);color:'+plc+';border:1px solid var(--bdr2);border-radius:4px"></td>'
+     :'<td style="font-weight:700;color:'+plc+'">'+playsFmtMoney(r.pl)+'</td>')+
+    '<td style="color:'+plc+'">'+(hold!==null?playsFmtPct(hold):'--')+'</td>'+
     (isAdmin?'<td><button class="btn" style="padding:2px 8px;font-size:10px" onclick="playsDelete('+r.id+')">\u00d7</button></td>':'')+'</tr>';});
   h+='</tbody></table></div></div>';
   h+=playsLineReport(done);
