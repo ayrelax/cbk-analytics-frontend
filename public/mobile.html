@@ -18,14 +18,13 @@ html{height:100%}
 body{margin:0;padding:0;background:var(--bg0);color:var(--txt1);
 font:15px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 -webkit-font-smoothing:antialiased;overscroll-behavior:none;
-position:fixed;top:0;left:0;right:0;width:100%;
-height:var(--vh,100vh);display:flex;flex-direction:column;overflow:hidden}
-.hd{flex:0 0 auto;z-index:20;background:rgba(18,16,12,.94);backdrop-filter:blur(14px);
+position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden}
+.hd{position:fixed;top:0;left:0;right:0;z-index:20;background:rgba(18,16,12,.94);backdrop-filter:blur(14px);
 border-bottom:1px solid var(--bdr);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px}
 .hd h1{margin:0;font-size:13px;letter-spacing:2.2px;color:var(--acc);font-weight:800}
 .hd .sub{font-size:11px;color:var(--txt3);margin-top:2px}
-.wrap{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-overscroll-behavior:contain;padding:12px 12px 18px}
+.wrap{position:fixed;left:0;right:0;top:var(--hdh,84px);bottom:var(--tbh,60px);
+overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:12px 12px 18px}
 .bar{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
 input,select{background:var(--bg2);border:1px solid var(--bdr);color:var(--txt1);border-radius:9px;
 padding:9px 11px;font:14px inherit;-webkit-appearance:none;flex:1;min-width:0}
@@ -53,7 +52,7 @@ padding:9px 11px;font:14px inherit;-webkit-appearance:none;flex:1;min-width:0}
 .p-no{background:rgba(240,133,133,.17);color:var(--red)}
 .p-chk{background:rgba(240,169,74,.15);color:var(--amb)}
 .line{font:700 15px ui-monospace,Menlo,monospace;color:var(--acc)}
-.tabs{flex:0 0 auto;z-index:30;display:flex;
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
 background:rgba(18,16,12,.96);backdrop-filter:blur(18px);border-top:1px solid var(--bdr);
 padding-bottom:var(--tabpad,0px)}
 .tab{flex:1;text-align:center;padding:7px 4px 6px;font:700 9.5px inherit;letter-spacing:1px;
@@ -284,10 +283,9 @@ function openApp(){
 
 /* --- viewport fitter: iOS reports height inconsistently in standalone mode, so measure it --- */
 function fitVH(){
-  var vv=window.visualViewport;
-  var h=vv?Math.round(vv.height):window.innerHeight;
-  document.documentElement.style.setProperty('--vh',h+'px');
-  /* home-indicator clearance only when the device actually has one */
+  var hd=document.querySelector('.hd'), tb=document.querySelector('.tabs');
+  if(hd) document.documentElement.style.setProperty('--hdh',Math.round(hd.getBoundingClientRect().height)+'px');
+  if(tb) document.documentElement.style.setProperty('--tbh',Math.round(tb.getBoundingClientRect().height)+'px');
   var probe=document.getElementById('sa-probe');
   if(!probe){
     probe=document.createElement('div'); probe.id='sa-probe';
@@ -298,6 +296,9 @@ function fitVH(){
   document.documentElement.style.setProperty('--tabpad',(sa>0?Math.max(sa-20,4):0)+'px');
 }
 fitVH();
+[60,200,500,1000].forEach(function(d){setTimeout(fitVH,d);});
+window.addEventListener('load',fitVH);
+window.addEventListener('pageshow',fitVH);
 window.addEventListener('resize',fitVH);
 window.addEventListener('orientationchange',function(){setTimeout(fitVH,120);});
 if(window.visualViewport){window.visualViewport.addEventListener('resize',fitVH);}
