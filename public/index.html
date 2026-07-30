@@ -1882,6 +1882,106 @@ function psComparePick(val){if(!val)return;var id=_psCompareByLabel[String(val).
 function psSetCompare(id){sb.from('player_stats').select('*').eq('id',id).single().then(function(res){var p=res.data;if(!p)return;_psCompare={name:p.player_name,team:p.team,raw:(p.all_stats&&typeof p.all_stats==='object'&&!Array.isArray(p.all_stats))?p.all_stats:{}};if(_psCurrent>=0)psViewAll(_psCurrent);});}
 function psClearCompare(){_psCompare=null;if(_psCurrent>=0)psViewAll(_psCurrent);}
 function psRadar(spokes){var n=spokes.length;if(!n)return '';var cx=175,cy=150,R=105,i;function pt(v,i){var a=(-90+i*360/n)*Math.PI/180;return [cx+Math.cos(a)*R*(v/100),cy+Math.sin(a)*R*(v/100)];}var svg='<svg viewBox="0 0 350 300" style="width:100%;max-width:440px;height:auto">';[0.25,0.5,0.75,1].forEach(function(f){svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R*f).toFixed(1)+'" fill="none" stroke="var(--bdr)" stroke-width="1"/>';});for(i=0;i<n;i++){var e=pt(100,i);svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+e[0].toFixed(1)+'" y2="'+e[1].toFixed(1)+'" stroke="var(--bdr)" stroke-width="1"/>';var lp=pt(120,i);var anc=Math.abs(lp[0]-cx)<10?'middle':(lp[0]<cx?'end':'start');svg+='<text x="'+lp[0].toFixed(1)+'" y="'+lp[1].toFixed(1)+'" font-size="10" fill="var(--txt2)" text-anchor="'+anc+'" style="letter-spacing:.3px">'+spokes[i].label+'</text>';}var pa='';for(i=0;i<n;i++){var p=pt(spokes[i].pctA==null?0:spokes[i].pctA,i);pa+=p[0].toFixed(1)+','+p[1].toFixed(1)+' ';}svg+='<polygon points="'+pa.trim()+'" fill="rgba(139,105,20,0.28)" stroke="var(--acc)" stroke-width="2"/>';for(i=0;i<n;i++){var q=pt(spokes[i].pctA==null?0:spokes[i].pctA,i);svg+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="2.6" fill="var(--acc)"/>';}if(spokes.some(function(s){return s.pctB!=null;})){var pb='';for(i=0;i<n;i++){var r2=pt(spokes[i].pctB==null?0:spokes[i].pctB,i);pb+=r2[0].toFixed(1)+','+r2[1].toFixed(1)+' ';}svg+='<polygon points="'+pb.trim()+'" fill="rgba(47,111,176,0.20)" stroke="#2f6fb0" stroke-width="2"/>';for(i=0;i<n;i++){var s2=pt(spokes[i].pctB==null?0:spokes[i].pctB,i);svg+='<circle cx="'+s2[0].toFixed(1)+'" cy="'+s2[1].toFixed(1)+'" r="2.6" fill="#2f6fb0"/>';}}svg+='</svg>';return svg;}
+/* ================= AUTO COMPARABLES (Power 5 + Gonzaga) ================= */
+var CMP_CONF=['ACC','B10','B12','BE','SEC'];
+var _cmpPool=null,_cmpLoading=false;
+function cmpNum(v){if(v==null||v==='')return null;var n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isNaN(n)?null:n;}
+function cmpHt(v){if(!v)return null;var m=String(v).match(/(\d+)\s*[-']\s*(\d+)/);if(m)return (+m[1])*12+(+m[2]);var n=parseFloat(v);return isNaN(n)?null:n;}
+var CMP_KEYS=[['Height',1.6,cmpHt],['MP',1.1,cmpNum],['USG%',1.3,cmpNum],
+ ['PPG',1.0,cmpNum],['RPG',1.0,cmpNum],['APG',0.8,cmpNum],
+ ['AST %',1.0,cmpNum],['TO %',0.7,cmpNum],['ORB%',1.1,cmpNum],['DRB%',1.1,cmpNum],
+ ['STL %',0.8,cmpNum],['BLK %',1.0,cmpNum],['3pR',1.2,cmpNum],['FTR',0.7,cmpNum],
+ ['eFG%',0.9,cmpNum],['oRTG',0.7,cmpNum]];
+function cmpVec(a){return CMP_KEYS.map(function(k){return k[2](a[k[0]]);});}
+function cmpLoadPool(cb){
+  if(_cmpPool){if(cb)cb();return;}
+  if(_cmpLoading)return;
+  _cmpLoading=true;
+  sb.from('teams').select('team,conference').range(0,9999).then(function(tr){
+    var ok={};
+    (tr.data||[]).forEach(function(x){if(CMP_CONF.indexOf(x.conference)>=0||x.team==='Gonzaga')ok[x.team]=1;});
+    psFetchAll('player_name,team,ppg,rpg,apg,all_stats',function(rows){
+      var pool=rows.filter(function(p){
+        if(!ok[p.team])return false;
+        var a=p.all_stats;
+        if(!a||typeof a!=='object')return false;
+        if(cmpNum(a['MP'])<12)return false;
+        var e=cmpNum(a['eFG%']);
+        if(e!=null&&(e<20||e>100))return false;
+        return true;
+      });
+      var n=CMP_KEYS.length,mean=[],sd=[];
+      for(var i=0;i<n;i++){
+        var vals=pool.map(function(p){return cmpVec(p.all_stats)[i];}).filter(function(v){return v!=null;});
+        var m=vals.reduce(function(a,b){return a+b;},0)/(vals.length||1);
+        var v=Math.sqrt(vals.reduce(function(a,b){return a+(b-m)*(b-m);},0)/(vals.length||1))||1;
+        mean.push(m);sd.push(v);
+      }
+      pool.forEach(function(p){
+        var raw=cmpVec(p.all_stats);
+        p._z=raw.map(function(x,i){return x==null?null:(x-mean[i])/sd[i];});
+      });
+      _cmpPool={list:pool,mean:mean,sd:sd};
+      _cmpLoading=false;
+      if(cb)cb();
+    });
+  });
+}
+function cmpFind(raw,name,team){
+  if(!_cmpPool)return null;
+  var v=cmpVec(raw);
+  var z=v.map(function(x,i){return x==null?null:(x-_cmpPool.mean[i])/_cmpPool.sd[i];});
+  var out=[];
+  _cmpPool.list.forEach(function(q){
+    if(q.player_name===name&&q.team===team)return;
+    var d=0,u=0;
+    for(var i=0;i<z.length;i++){
+      if(z[i]==null||q._z[i]==null)continue;
+      var w=CMP_KEYS[i][1];
+      d+=w*(z[i]-q._z[i])*(z[i]-q._z[i]); u+=w;
+    }
+    if(u<6)return;
+    out.push({p:q,d:Math.sqrt(d/u)});
+  });
+  out.sort(function(a,b){return a.d-b.d;});
+  return out.slice(0,3);
+}
+function cmpBlock(raw,name,team){
+  var head='<div style="font-size:10px;letter-spacing:1.4px;color:var(--acc);font-weight:800;text-transform:uppercase;margin:20px 0 8px">'
+    +'Comparable Players <span style="color:var(--txt3);font-weight:400;letter-spacing:0;text-transform:none">&mdash; power 5 + Gonzaga</span></div>';
+  if(!_cmpPool){
+    cmpLoadPool(function(){
+      var m=document.getElementById('ps-modal');
+      if(m&&m.style.display!=='none'&&_psCurrent!=null)psViewAll(_psCurrent);
+    });
+    return head+'<div style="color:var(--txt3);font-size:12px;padding:10px 2px">Finding comparables&hellip;</div>';
+  }
+  var c=cmpFind(raw,name,team);
+  if(!c||!c.length)return head+'<div style="color:var(--txt3);font-size:12px;padding:10px 2px">Not enough data to compare.</div>';
+  var rows=c.map(function(x,i){
+    var q=x.p,qa=q.all_stats||{};
+    var sim=Math.max(0,Math.round(100-x.d*24));
+    function n1(v){return (v==null||isNaN(v))?'--':(Math.round(v*10)/10).toFixed(1);}
+    return '<tr>'
+     +'<td style="color:var(--txt3);width:22px">'+(i+1)+'</td>'
+     +'<td style="font-weight:700">'+(q.player_name||'')+'</td>'
+     +'<td style="color:var(--txt2)">'+(q.team||'')+'</td>'
+     +'<td style="color:var(--txt3)">'+(qa['Role']||'')+'</td>'
+     +'<td style="color:var(--txt3)">'+(qa['Height']||'')+'</td>'
+     +'<td class="tnum">'+n1(q.ppg)+'</td><td class="tnum">'+n1(q.rpg)+'</td><td class="tnum">'+n1(q.apg)+'</td>'
+     +'<td class="tnum" style="color:var(--acc);font-weight:800">'+sim+'</td></tr>';
+  }).join('');
+  return head
+   +'<table class="data" style="font-size:11px;width:100%"><thead><tr><th></th><th>PLAYER</th><th>TEAM</th><th>ROLE</th><th>HT</th>'
+   +'<th>PPG</th><th>RPG</th><th>APG</th><th>SIM</th></tr></thead><tbody>'+rows+'</tbody></table>'
+   +'<div style="font-size:10px;color:var(--txt3);line-height:1.6;padding:8px 2px 0">'
+   +'<b style="color:var(--txt2)">How this works.</b> Sixteen measures &mdash; height, minutes, usage, scoring, rebounding, '
+   +'assist and turnover rates, offensive and defensive rebound rates, steal and block rates, three-point and free-throw rate, '
+   +'efficiency and offensive rating &mdash; are each converted to a standard score across the pool, then weighted and combined '
+   +'into a single distance. Height and usage carry the most weight, so a guard will not match a centre on production alone. '
+   +'Compared against '+_cmpPool.list.length+' players from the Power 5 and Gonzaga averaging 12+ minutes.</div>';
+}
+
 function psViewAll(i){
   var p=_psList[i];if(!p)return;_psCurrent=i;loadPsPlayers();
   if(!_psPctlReady){psEnsurePctl(function(){var m=document.getElementById('ps-modal');if(_psCurrent===i&&m&&m.style.display!=='none')psViewAll(i);});}
@@ -1933,7 +2033,7 @@ function psViewAll(i){
   var logo=teamLogo(p.team);var logoImg=logo?'<img src="'+logo+'" style="width:46px;height:46px;object-fit:contain;margin-right:14px;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.35))" onerror="this.style.display=\'none\'">':'';
   var ov=document.getElementById('ps-modal');
   if(!ov){ov=document.createElement('div');ov.id='ps-modal';ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';ov.addEventListener('click',function(e){if(e.target===ov)psCloseModal();});document.addEventListener('keydown',function(e){if(e.key==='Escape')psCloseModal();});document.body.appendChild(ov);}
-  ov.innerHTML='<div class="psm-modal-card" style="background:var(--bg0);border:1px solid var(--bdr2);border-radius:12px;width:97vw;max-width:1360px;height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,0.45)"><div style="background:linear-gradient(135deg,var(--acc),var(--acc3));color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0"><div style="display:flex;align-items:center;min-width:0">'+logoImg+'<div style="min-width:0"><div style="font-size:26px;font-weight:800;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+name+'</div>'+(sub?'<div style="font-size:11px;opacity:0.9;margin-top:4px;letter-spacing:0.5px">'+sub+'</div>':'')+'</div></div><span onclick="psCloseModal()" title="Close (Esc)" style="cursor:pointer;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;flex-shrink:0;margin-left:12px;transition:background .12s" onmouseover="this.style.background=\'rgba(255,255,255,0.38)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.22)\'">&times;</span></div><div style="flex:1;overflow-y:auto;padding:18px 20px">'+cmpCtrl+radarBlock+shotBlock+heroBlock+bsBlock+sec+'</div></div>';
+  ov.innerHTML='<div class="psm-modal-card" style="background:var(--bg0);border:1px solid var(--bdr2);border-radius:12px;width:97vw;max-width:1360px;height:94vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,0.45)"><div style="background:linear-gradient(135deg,var(--acc),var(--acc3));color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0"><div style="display:flex;align-items:center;min-width:0">'+logoImg+'<div style="min-width:0"><div style="font-size:26px;font-weight:800;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+name+'</div>'+(sub?'<div style="font-size:11px;opacity:0.9;margin-top:4px;letter-spacing:0.5px">'+sub+'</div>':'')+'</div></div><span onclick="psCloseModal()" title="Close (Esc)" style="cursor:pointer;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;flex-shrink:0;margin-left:12px;transition:background .12s" onmouseover="this.style.background=\'rgba(255,255,255,0.38)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.22)\'">&times;</span></div><div style="flex:1;overflow-y:auto;padding:18px 20px">'+cmpCtrl+radarBlock+shotBlock+heroBlock+bsBlock+sec+cmpBlock(raw,p.player_name,p.team)+'</div></div>';
   ov.style.display='flex';
   requestAnimationFrame(function(){var fs=ov.querySelectorAll('.psm-fill');for(var j=0;j<fs.length;j++){fs[j].style.width=(fs[j].getAttribute('data-w')||0)+'%';}});
 }
