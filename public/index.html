@@ -912,6 +912,8 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 .plays-pend{border:1px solid var(--acc);border-radius:8px;overflow:hidden;margin:10px 0 14px;background:var(--bg1)}
 .plays-pend-h{background:rgba(139,105,20,.14);color:var(--acc);font-size:10px;letter-spacing:1.4px;font-weight:800;padding:7px 12px;border-bottom:1px solid var(--bdr)}
 .plays-done-h{font-size:10px;letter-spacing:1.4px;font-weight:800;color:var(--txt3);margin:4px 2px 6px}
+
+.cmp-gtp{background:rgba(230,81,0,.13);color:var(--amb);font-weight:800;font-size:8.5px!important;letter-spacing:.3px}
 </style>
 </head>
 <body>
@@ -6311,6 +6313,8 @@ var CBK_ST_ABBR={'Washington DC':'DC','Delaware':'DE','Maine':'ME','Nebraska':'N
 var CBK_CMP_NOTES=[
  '<b>RI, NJ and WA</b> bar a neutral-court game only when it is <b>played in that state</b>. A neutral game held anywhere else is fine in all three \u2014 check the venue before switching anything off.',
  'RI and MA schools <b>can</b> be offered for tournaments.',
+ '<b>NE is good to offer for away games.</b> A Nebraska school playing on the road can be booked in NE '
+ +'\u2014 but it needs a <b>separate event created in GTP</b>. Only a game played <i>in</i> Nebraska is barred.',
  'NE schools can be offered for an MTE as long as the event is <b>not</b> played in NE.'
 ];
 function cmpRender(){
@@ -6332,27 +6336,48 @@ function cmpRender(){
   head+='</tr>';
   var rows='',flagged=0,neut=0;
   _cmpGames.forEach(function(g){
-    var bs=cbkGameBlocks(g.away.team,g.home.team).map(function(b){return b.state;});
+    var raw=cbkGameBlocks(g.away.team,g.home.team);
     var isN=!!g.neutral_site;
+    /* Nebraska is a VENUE rule: only barred when the game is actually played in NE */
+    var gtp=false;
+    raw=raw.filter(function(b){
+      if(b.state!=='Nebraska')return true;
+      var homeIsNE=(CBK_GAME_T2S[g.home.team]==='Nebraska');
+      if(homeIsNE&&!isN)return true;         /* played in Nebraska -> genuinely blocked */
+      gtp=true;                              /* NE school on the road -> offer, but separate GTP event */
+      return false;
+    });
+    var bs=raw.map(function(b){return b.state;});
     if(isN)neut++;
-    if(bs.length||isN)flagged++;
+    if(bs.length||isN||gtp)flagged++;
     rows+='<tr>'
       +'<td class="cmp-a"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.away.team,g.away.conference)+'"></span>'+g.away.team+'</td>'
       +'<td class="cmp-h"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.home.team,g.home.conference)+'"></span>'+g.home.team+'</td>'
       +'<td class="cmp-n '+(isN?'cmp-neu':'cbk-ok')+'">'+(isN?'YES':'&middot;')+'</td>';
     ST.forEach(function(s){
       var byTeam=bs.indexOf(s)>=0, byNeut=isN&&CBK_NEUTRAL_BLOCK.indexOf(s)>=0;
-      var cls=byTeam?'cbk-no':(byNeut?'cmp-chk':'cbk-ok');
-      var txt=byTeam?'NO':(byNeut?'?':'&middot;');
+      var byGtp=(s==='Nebraska'&&gtp);
+      var cls=byTeam?'cbk-no':(byGtp?'cmp-gtp':(byNeut?'cmp-chk':'cbk-ok'));
+      var txt=byTeam?'NO':(byGtp?'GTP':(byNeut?'?':'&middot;'));
       var ti=byTeam?(s+' \u2014 team based there, cannot offer')
-             :(byNeut?(s+' \u2014 neutral game: only blocked if it is being PLAYED in '+s+'. Check the venue.'):'');
+             :(byGtp?'Nebraska school playing away \u2014 fine to offer in NE, but create a separate event in GTP'
+             :(byNeut?(s+' \u2014 neutral game: only blocked if it is being PLAYED in '+s+'. Check the venue.'):''));
       rows+='<td class="cmp-c '+cls+'"'+(ti?' title="'+ti+'"':'')+'>'+txt+'</td>';
     });
     rows+='</tr>';
   });
   var det='';
   _cmpGames.forEach(function(g){
-    cbkGameBlocks(g.away.team,g.home.team).forEach(function(b){
+    var neAway=(CBK_GAME_T2S[g.away.team]==='Nebraska'&&CBK_GAME_T2S[g.home.team]!=='Nebraska'&&!g.neutral_site);
+    if(neAway){
+      det+='<div class="cmp-d"><span style="color:var(--amb);font-weight:700">&#9873;</span> <b>'+g.away.team+' at '+g.home.team
+        +'</b> &mdash; fine to offer in <b style="color:var(--amb)">Nebraska</b>, the game is not played there. '
+        +'<span style="color:var(--txt3)">Create a separate event in GTP for it.</span></div>';
+    }
+    cbkGameBlocks(g.away.team,g.home.team).filter(function(b){
+      if(b.state!=='Nebraska')return true;
+      return CBK_GAME_T2S[g.home.team]==='Nebraska'&&!g.neutral_site;
+    }).forEach(function(b){
       det+='<div class="cmp-d"><span style="color:var(--red2);font-weight:700">&#9888;</span> <b>'+g.away.team+' at '+g.home.team
         +'</b> &mdash; not allowed in <b style="color:var(--red2)">'+b.state+'</b> <span style="color:var(--txt3)">('+b.team+' is based there)</span></div>';
     });
@@ -6366,6 +6391,7 @@ function cmpRender(){
     +'<table class="tbl cmp-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table>'
     +'<div class="cbk-legend"><b style="color:var(--red2)">NO</b> = a participant is based in that state. '
     +'<b style="color:var(--amb)">?</b> = neutral-court game \u2014 blocked in that state <i>only</i> if the game is being played there. Check the venue. '
+    +'<b style="color:var(--amb)">GTP</b> = Nebraska school on the road \u2014 fine to offer in NE, but needs its own event in GTP. '
     +'DC Washington DC &middot; DE Delaware &middot; ME Maine &middot; NE Nebraska &middot; RI Rhode Island &middot; IL Illinois &middot; '
     +'MA Massachusetts &middot; NJ New Jersey &middot; VA Virginia &middot; NY New York &middot; WA Washington State.</div>';
 }/* ================= CONFERENCE MATRIX GRID ================= */
