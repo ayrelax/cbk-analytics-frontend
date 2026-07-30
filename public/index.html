@@ -4288,30 +4288,30 @@ function propErf(x){var t=1/(1+0.3275911*Math.abs(x));var y=1-(((((1.061405429*t
    the other way. Independence understates the tail badly: at a 50+ combined line it
    under-prices by roughly half. These are judgement values, not measured -- the
    database holds season averages only, so there are no game logs to fit them on.  */
-/* ---- MEASURED on 196,876 player-game box scores from 2025-26 (6,300 games, ESPN
-   via hoopR). Rotation players only: 10+ games, 12+ minutes. These replaced reasoned
-   guesses, two of which were badly wrong -- the guessed team-mate values for rebounds
-   (-0.20) and assists (-0.15) came out near zero. The shot-competition effect is real
-   but is almost exactly cancelled by shared pace and minutes.                      */
+/* ---- MEASURED on 126,804 player appearances from 2025-26 (6,300 games, ESPN via
+   hoopR), rotation players only: 10+ games, 12+ minutes.
+
+   NOTE: an earlier version of these numbers was computed on half the data. ESPN's
+   `active` flag does not mean "played in this game" -- 64,602 real appearances carry
+   active=false with genuine minutes and points. Filtering on minutes>0 instead doubled
+   the sample and moved every value. These are the corrected figures.               */
 var PROP_RHO={
-  pts : {opp: 0.042, team:-0.059},
-  reb : {opp: 0.017, team:-0.012},
-  ast : {opp: 0.031, team:-0.001},
-  '3pm':{opp: 0.018, team:-0.013}
+  pts : {opp: 0.018, team:-0.041},
+  reb : {opp: 0.007, team:-0.006},
+  ast : {opp: 0.014, team:0.020},
+  '3pm':{opp: 0.005, team:-0.009}
 };
 function propRho(stat,sameTeam){
   var r=PROP_RHO[stat]||PROP_RHO.pts;
   return sameTeam?r.team:r.opp;
 }
-/* ---- Game-to-game spread, measured on the same rows. The old model used
-   sd = mean x a flat factor, which is the wrong shape: the ratio falls as production
-   rises (0.80 for low scorers, 0.39 for high), so a flat factor over-disperses role
-   players and under-disperses stars. Fitted sd = A x mean^B on log-log.           */
+/* ---- Game-to-game spread on the same corrected sample. A flat mean x factor is the
+   wrong shape: the ratio falls as production rises. Fitted sd = A x mean^B, R2 ~0.63. */
 var PROP_SD={
-  pts : {A:2.030, B:0.406},
-  reb : {A:1.085, B:0.510},
-  ast : {A:1.046, B:0.517},
-  '3pm':{A:1.046, B:0.486}
+  pts : {A:2.087, B:0.423},
+  reb : {A:1.146, B:0.516},
+  ast : {A:1.092, B:0.516},
+  '3pm':{A:1.094, B:0.475}
 };
 function propSetPace(players,g){
   _propPace=1;
