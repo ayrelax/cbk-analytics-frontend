@@ -1421,11 +1421,12 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 </div>
 <div id="page-specials" style="display:none">
 <div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">PLAYER SPECIALS</div>
-<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button><button class="seg-btn" onclick="spSwitchMode('props',this)">GAME PROPS</button><button class="seg-btn" onclick="spSwitchMode('first3',this)">FIRST 3PT</button><button class="seg-btn" onclick="spSwitchMode('firstsc',this)">FIRST SCORER</button><button class="seg-btn" onclick="spSwitchMode('gamespec',this)">GAME SPECIALS</button></div>
+<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button><button class="seg-btn" onclick="spSwitchMode('props',this)">GAME PROPS</button><button class="seg-btn" onclick="spSwitchMode('first3',this)">FIRST 3PT</button><button class="seg-btn" onclick="spSwitchMode('firstsc',this)">FIRST SCORER</button><button class="seg-btn" onclick="spSwitchMode('firstbasket',this)">FIRST BASKET</button><button class="seg-btn" onclick="spSwitchMode('gamespec',this)">GAME SPECIALS</button></div>
 <div id="cbk-restrict-slot"></div>
 <div id="sp-game-view"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game. Loads the top 7 scorers per team and prices who leads the game.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select></div></div>
 <div id="sp-day-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a date. Loads the top 25 scorers among allowed teams playing that day (Power 5 + your 12 mid-majors). Uncheck to trim the field.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-day-date" class="field" style="max-width:200px" onchange="spLoadDay()"><option value="">Select a date...</option></select></div></div>
-<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select></div><div id="prop-output"></div></div><div id="sp-first3-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores the first 3-point field goal. Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from 3PM + 3PA per game and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="f3-game" class="field" style="max-width:340px" onchange="f3LoadGame()"><option value="">Select a game...</option></select></div><div id="f3-players" style="margin-bottom:14px"></div><div id="f3-output"></div></div><div id="sp-firstsc-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores first (any points, free throws count). Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from PPG, usage, FT rate and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="fs-game" class="field" style="max-width:340px" onchange="fsLoadGame()"><option value="">Select a game...</option></select></div><div id="fs-players" style="margin-bottom:14px"></div><div id="fs-output"></div></div><div id="sp-gamespec-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Fixed game specials — pick a game and the team names fill in automatically. Default odds are -10000; edit each one, uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="gs-game" class="field" style="max-width:340px" onchange="gsLoadGame()"><option value="">Select a game...</option></select></div><div id="gs-output"></div></div>
+<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select></div><div id="prop-output"></div></div><div id="sp-first3-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores the first 3-point field goal. Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from 3PM + 3PA per game and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="f3-game" class="field" style="max-width:340px" onchange="f3LoadGame()"><option value="">Select a game...</option></select></div><div id="f3-players" style="margin-bottom:14px"></div><div id="f3-output"></div></div><div id="sp-firstsc-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores first (any points, free throws count). Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from PPG, usage, FT rate and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="fs-game" class="field" style="max-width:340px" onchange="fsLoadGame()"><option value="">Select a game...</option></select></div><div id="fs-players" style="margin-bottom:14px"></div><div id="fs-output"></div></div><div id="sp-firstbasket-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Six-way market: each team by two-point field goal, three-point field goal or free throw. Priced from net efficiency (who scores first) and each team's own shot profile (how).</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="fb-game" class="field" style="max-width:340px" onchange="fbLoadGame()"><option value="">Select a game...</option></select><span style="font-size:11px;color:var(--txt3)">overround</span><input id="fb-overround" class="field" style="width:70px" value="1.20" onchange="fbRender()"></div><div id="fb-output"></div></div>
+<div id="sp-gamespec-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Fixed game specials — pick a game and the team names fill in automatically. Default odds are -10000; edit each one, uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="gs-game" class="field" style="max-width:340px" onchange="gsLoadGame()"><option value="">Select a game...</option></select></div><div id="gs-output"></div></div>
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
   <div style="min-width:240px">
     <div style="font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px">OVERROUND (HOLD) — <span id="sp-overround-val">1.20</span></div>
@@ -4226,12 +4227,12 @@ function spSwitchMode(mode,btn){
   var seg=document.getElementById('sp-mode');if(seg){Array.prototype.forEach.call(seg.children,function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');}
   document.getElementById('sp-game-view').style.display=(mode==='game')?'block':'none';
   document.getElementById('sp-day-view').style.display=(mode==='day')?'block':'none';
-  var pv=document.getElementById('sp-props-view');if(pv)pv.style.display=(mode==='props')?'block':'none';var f3v=document.getElementById('sp-first3-view');if(f3v)f3v.style.display=(mode==='first3')?'block':'none';var fsv=document.getElementById('sp-firstsc-view');if(fsv)fsv.style.display=(mode==='firstsc')?'block':'none';var gsv=document.getElementById('sp-gamespec-view');if(gsv)gsv.style.display=(mode==='gamespec')?'block':'none';
+  var pv=document.getElementById('sp-props-view');if(pv)pv.style.display=(mode==='props')?'block':'none';var f3v=document.getElementById('sp-first3-view');if(f3v)f3v.style.display=(mode==='first3')?'block':'none';var fsv=document.getElementById('sp-firstsc-view');if(fsv)fsv.style.display=(mode==='firstsc')?'block':'none';var gsv=document.getElementById('sp-gamespec-view');if(gsv)gsv.style.display=(mode==='gamespec')?'block':'none';var fbv=document.getElementById('sp-firstbasket-view');if(fbv)fbv.style.display=(mode==='firstbasket')?'block':'none';
   document.getElementById('sp-players').innerHTML='';
   document.getElementById('sp-output').innerHTML='';
   var po=document.getElementById('prop-output');if(po&&mode!=='props')po.innerHTML='';
   if(mode==='day')spInitDay();
-  if(mode==='props')initProps();if(mode==='first3')initFirst3();if(mode==='firstsc')initFirstsc();if(mode==='gamespec')initGamespec();
+  if(mode==='props')initProps();if(mode==='first3')initFirst3();if(mode==='firstsc')initFirstsc();if(mode==='gamespec')initGamespec();if(mode==='firstbasket')initFirstBasket();
   cbkPaintRestrict(mode);
 }
 async function spInitDay(){
@@ -4278,6 +4279,128 @@ async function spLoadDay(){
   cbkPaintRestrict('day');
 }
 /* =============== END DAILY LEADING SCORER =============== */
+
+/* ================= METHOD OF FIRST BASKET =================
+   Six-way market: each team by 2PT / 3PT / Free Throw.
+   Built on 6,275 games of play-by-play. League base rates:
+     2PT 62.3%   3PT 27.8%   FT 10.0%      home scores first 55.3%
+   Two fitted pieces, both validated on 1,921 held-out games:
+     WHO  logistic on the net-efficiency edge. Observed spread across the season was
+          44% (home much worse) to 69% (home much better).
+     HOW  multinomial on the SCORING team's own three-point rate and free-throw rate
+          plus the defence's three-rate allowed. Using the scorer's own profile rather
+          than the game average lifted the signal from 8.7 to 11.4 points of spread.
+   Out of sample this beat league base rates by 1.71% on log loss.                  */
+var FB_W={i:0.1533,s:0.0202};
+/* method model, five inputs in this order:
+   [scorer 3PA rate, scorer FT rate, defence 3PA-rate allowed, defence FT-rate allowed, defence foul rate]
+   Adding the two defensive terms lifted the out-of-sample edge from 1.05% to 1.41%.
+   Fouling matters: against the least-fouling defences an FT first basket runs 8.3%,
+   against the most-fouling 11.9%. The defence's FT rate allowed is a STRONGER signal
+   than the scoring team's own FT rate (5.2 vs 3.6 points of spread). */
+var FB_M={i:[2.4441,-0.8575,-1.5866],
+          c:[[-1.0751,-0.2952,-1.6835,-1.1423,0.1362],
+             [1.7301,-0.4726,1.8283,-0.6654,-0.2711],
+             [-0.6551,0.7677,-0.1448,1.8077,0.1349]]};
+var _fbProfiles=null,_fbGames=[],_fbGame=null,_fbOverrides={};
+function fbSoft(z){var m=Math.max.apply(null,z);var e=z.map(function(x){return Math.exp(x-m);});
+  var s=e.reduce(function(a,b){return a+b;},0);return e.map(function(x){return x/s;});}
+function fbMethod(o,d){
+  /* o = scoring team profile, d = defending team profile */
+  var x=[o.three_rate,o.ftr,d.d_three_rate,d.d_ftr_allowed,d.foul_rate];
+  var z=FB_M.i.map(function(b,k){
+    var v=b; for(var q=0;q<5;q++) v+=FB_M.c[k][q]*x[q];
+    return v;});
+  return fbSoft(z);
+}
+function fbWhoHome(edge){return 1/(1+Math.exp(-(FB_W.i+FB_W.s*edge)));}
+function fbLoadProfiles(cb){
+  if(_fbProfiles){if(cb)cb();return;}
+  sb.from('team_profiles').select('*').range(0,999).then(function(r){
+    _fbProfiles={};(r.data||[]).forEach(function(x){_fbProfiles[x.team]=x;});
+    if(cb)cb();
+  });
+}
+async function initFirstBasket(){
+  var sel=document.getElementById('fb-game');
+  if(sel&&sel.options.length<=1){
+    sel.innerHTML='<option value="">Loading games...</option>';
+    var r=await sb.from('games').select('id,game_date,neutral_site,home:home_team_id(id,team),away:away_team_id(id,team)')
+      .order('game_date',{ascending:true}).range(0,9999);
+    _fbGames=(r.data||[]).filter(function(g){return g.home&&g.away;});
+    sel.innerHTML='<option value="">Select a game...</option>'+_fbGames.map(function(g){
+      return'<option value="'+g.id+'">'+g.game_date+'  '+g.away.team+' @ '+g.home.team+'</option>';}).join('');
+  }
+  fbLoadProfiles(function(){fbRender();});
+  cbkPaintRestrict('firstbasket');
+}
+function fbLoadGame(){fbLoadProfiles(function(){fbRender();});}
+function fbRender(){
+  var out=document.getElementById('fb-output');
+  if(!out)return;
+  var selEl=document.getElementById('fb-game');
+  var gid=selEl?selEl.value:'';
+  if(!gid){out.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">Pick a game.</div>';return;}
+  var g=_fbGames.filter(function(x){return String(x.id)===String(gid);})[0];
+  if(!g){out.innerHTML='';return;}
+  _fbGame=g;
+  if(!_fbProfiles){out.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">Loading team profiles...</div>';return;}
+  var H=_fbProfiles[g.home.team],A=_fbProfiles[g.away.team];
+  if(!H||!A){
+    out.innerHTML='<div style="color:var(--red2);font-size:12px;padding:10px">No profile on file for <b>'
+      +(!H?g.home.team:g.away.team)+'</b>. Load the team_profiles table first.</div>';return;}
+  var ovEl=document.getElementById('fb-overround');
+  var ov=ovEl?(parseFloat(ovEl.value)||1.20):1.20;
+  var net=H.net-A.net;
+  var pw=g.neutral_site?fbWhoHome(net)-0.5*0+1/(1+Math.exp(-(FB_W.s*net))) : fbWhoHome(net);
+  if(g.neutral_site)pw=1/(1+Math.exp(-(FB_W.s*net)));
+  var hm=fbMethod(H,A);
+  var am=fbMethod(A,H);
+  var rows=[
+    {k:'h2',team:g.home.team,side:'HOME',m:'Two Point Field Goal',p:pw*hm[0]},
+    {k:'a2',team:g.away.team,side:'AWAY',m:'Two Point Field Goal',p:(1-pw)*am[0]},
+    {k:'h3',team:g.home.team,side:'HOME',m:'Three Point Field Goal',p:pw*hm[1]},
+    {k:'a3',team:g.away.team,side:'AWAY',m:'Three Point Field Goal',p:(1-pw)*am[1]},
+    {k:'hf',team:g.home.team,side:'HOME',m:'Free Throw',p:pw*hm[2]},
+    {k:'af',team:g.away.team,side:'AWAY',m:'Free Throw',p:(1-pw)*am[2]}
+  ];
+  var booked=0;
+  rows.forEach(function(r){
+    r.odds=(_fbOverrides[r.k]!==undefined)?_fbOverrides[r.k]:propRound(propAmer(r.p,ov));
+    booked+=fsImplied(r.odds);
+  });
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+   +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">METHOD OF FIRST BASKET &mdash; '
+   +esc(g.away.team)+' @ '+esc(g.home.team)+'</div>'
+   +'<div style="font-size:11px;color:var(--txt3)">book '+(booked*100).toFixed(1)+'%</div></div>';
+  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px">'
+   +'<thead><tr><th>TEAM</th><th></th><th>METHOD</th><th>FAIR%</th><th>ODDS</th>'
+   +(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
+  rows.forEach(function(r){
+    h+='<tr><td class="bold">'+esc(r.team)+'</td>'
+      +'<td class="muted" style="font-size:10px">'+r.side+'</td>'
+      +'<td>'+r.m+'</td>'
+      +'<td class="muted">'+(r.p*100).toFixed(1)+'%</td>'
+      +'<td class="bold" style="color:var(--acc)">'+r.odds+'</td>'
+      +(isAdmin?'<td><input class="psm-cinput" style="width:78px" value="'+r.odds+'" onchange="fbOverride(\''+r.k+'\',this.value)"></td>':'')
+      +'</tr>';
+  });
+  h+='</tbody></table></div></div>';
+  h+='<div style="font-size:10px;color:var(--txt3);line-height:1.6;padding:8px 2px">'
+   +'<b style="color:var(--txt2)">Inputs.</b> '+esc(g.home.team)+' net '+(H.net>=0?'+':'')+Number(H.net).toFixed(1)
+   +', 3PA rate '+(H.three_rate*100).toFixed(1)+'%, FT rate '+(H.ftr*100).toFixed(1)+'%'
+   +' &nbsp;&middot;&nbsp; '+esc(g.away.team)+' net '+(A.net>=0?'+':'')+Number(A.net).toFixed(1)
+   +', 3PA rate '+(A.three_rate*100).toFixed(1)+'%, FT rate '+(A.ftr*100).toFixed(1)+'%.<br>'
+   +'Model has '+esc(g.home.team)+' scoring first '+(pw*100).toFixed(1)+'% of the time'
+   +(g.neutral_site?' (neutral court, no home bump)':' (league average is 55.3%)')+'. '
+   +'League method split: 2PT 62.3%, 3PT 27.8%, FT 10.0%.</div>';
+  out.innerHTML=h;
+}
+function fbOverride(k,v){
+  v=String(v).trim();
+  if(v==='')delete _fbOverrides[k]; else _fbOverrides[k]=v;
+  fbRender();
+}
 
 /* ================= GAME PROP GENERATOR (Player Specials sub-view) ================= */
 var _propGame=null;var _propList=[];var _propWinProb=0.5;
