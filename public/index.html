@@ -4220,9 +4220,59 @@ async function spLoadDay(){
 /* ================= GAME PROP GENERATOR (Player Specials sub-view) ================= */
 var _propGame=null;var _propList=[];var _propWinProb=0.5;
 function propErf(x){var t=1/(1+0.3275911*Math.abs(x));var y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return x>=0?y:-y;}
-function propMSD(p,stat,half){var mean,f;if(stat==='pts'){mean=p.ppg;f=0.34;}else if(stat==='reb'){mean=p.rpg;f=0.42;}else if(stat==='ast'){mean=p.apg;f=0.48;}else{mean=p.tpm3;f=0.55;}var usgAdj=1+Math.max(0,((p.usage_pct||18)-20))/100;var sd=Math.max(stat==='pts'?3.0:1.2,mean*f*usgAdj);if(half){mean*=0.5;sd*=0.72;}return{mean:mean,sd:sd};}
+/* ---- combined-prop correlation and game pace ----------------------------------
+   Two players' scoring is not independent. Opponents share the game's pace, so a fast
+   game lifts both; team-mates share pace but compete for the same shots, which pulls
+   the other way. Independence understates the tail badly: at a 50+ combined line it
+   under-prices by roughly half. These are judgement values, not measured -- the
+   database holds season averages only, so there are no game logs to fit them on.  */
+/* Correlation is not one number -- it depends on the stat AND on whether the two
+   players share a team.
+     POINTS    opponents share the game's pace, so both rise in a fast game (+).
+               Team-mates share that pace but compete for shots, which roughly
+               cancels it and leaves a small negative.
+     REBOUNDS  strongly zero-sum between team-mates: a board one grabs is a board
+               the other cannot. Across teams, more misses means more boards for
+               everyone, so mildly positive.
+     ASSISTS   the most zero-sum of all within a team -- an assist is credited to
+               exactly one player. Across teams it is pace-driven and positive.
+     THREES    team-mates compete for attempts but share the spacing and ball
+               movement of a good shooting night, so only slightly negative.
+   These are judgement values. The database holds season averages only, so there
+   are no game logs to fit them on. */
+var PROP_RHO={
+  pts : {opp: 0.12, team:-0.05},
+  reb : {opp: 0.08, team:-0.20},
+  ast : {opp: 0.10, team:-0.15},
+  '3pm':{opp: 0.10, team:-0.05}
+};
+function propRho(stat,sameTeam){
+  var r=PROP_RHO[stat]||PROP_RHO.pts;
+  return sameTeam?r.team:r.opp;
+}
+var PROP_LEAGUE_TOTAL=147;    /* league-average game total, used when a market total exists */
+var PROP_LEAGUE_PPG=86.8;     /* league-average summed roster PPG, used as the fallback   */
+var PROP_PACE_CAP=0.10;       /* never move a player's mean by more than this             */
+var _propPace=1;
+function propSetPace(players,g){
+  _propPace=1;
+  try{
+    var t=g&&(g.closing_total!=null?g.closing_total:g.opening_total);
+    if(t!=null&&!isNaN(t)&&t>80){
+      _propPace=1+Math.max(-PROP_PACE_CAP,Math.min(PROP_PACE_CAP,(t-PROP_LEAGUE_TOTAL)/PROP_LEAGUE_TOTAL));
+      return;
+    }
+    var byT={};
+    (players||[]).forEach(function(p){if(p&&p.team)byT[p.team]=(byT[p.team]||0)+(p.ppg||0);});
+    var ks=Object.keys(byT);
+    if(ks.length<2)return;
+    var avg=(byT[ks[0]]+byT[ks[1]])/2;
+    _propPace=1+Math.max(-PROP_PACE_CAP,Math.min(PROP_PACE_CAP,(avg-PROP_LEAGUE_PPG)/PROP_LEAGUE_PPG));
+  }catch(e){_propPace=1;}
+}
+function propMSD(p,stat,half){var mean,f;if(stat==='pts'){mean=p.ppg;f=0.34;}else if(stat==='reb'){mean=p.rpg;f=0.42;}else if(stat==='ast'){mean=p.apg;f=0.48;}else{mean=p.tpm3;f=0.55;}mean=mean*(_propPace||1);var usgAdj=1+Math.max(0,((p.usage_pct||18)-20))/100;var sd=Math.max(stat==='pts'?3.0:1.2,mean*f*usgAdj);if(half){mean*=0.5;sd*=0.72;}return{mean:mean,sd:sd};}
 function propPOver(p,stat,line,half){var o=propMSD(p,stat,half);var z=((line-0.5)-o.mean)/o.sd;return 1-0.5*(1+propErf(z/Math.SQRT2));}
-function propComb(a,b,stat,line,half){var A=propMSD(a,stat,half),B=propMSD(b,stat,half);var mean=A.mean+B.mean,sd=Math.sqrt(A.sd*A.sd+B.sd*B.sd);var z=((line-0.5)-mean)/sd;return 1-0.5*(1+propErf(z/Math.SQRT2));}
+function propComb(a,b,stat,line,half){var A=propMSD(a,stat,half),B=propMSD(b,stat,half);var rho=propRho(stat,!!(a&&b&&a.team&&b.team&&a.team===b.team));var mean=A.mean+B.mean;var v=A.sd*A.sd+B.sd*B.sd+2*rho*A.sd*B.sd;var sd=Math.sqrt(Math.max(v,0.01));var z=((line-0.5)-mean)/sd;return 1-0.5*(1+propErf(z/Math.SQRT2));}
 function propAmer(prob,ov){var p=Math.min(0.985,prob*ov);if(p<=0)return 99999;if(p>=0.5)return Math.round(-100*p/(1-p));return Math.round(100*(1-p)/p);}
 function cbkBandAm(v){if(v<=1000)return v;var x=v/100,step;if(x<=30)step=100;else if(x<=50)step=500;else if(x<=100)step=1000;else if(x<=200)step=2500;else if(x<=300)step=5000;else step=10000;return Math.round(v/step)*step;}
 function propRound(n){var neg=n<0,v=Math.abs(n);if(!neg&&v>1000){v=cbkBandAm(v);}else{if(v<=300)v=Math.round(v/5)*5;else if(v<=600)v=Math.round(v/10)*10;else if(v<=1000)v=Math.round(v/25)*25;else if(v<=5000)v=Math.round(v/50)*50;else v=Math.round(v/100)*100;}return(neg?'-':'+')+v;}
@@ -4266,6 +4316,7 @@ function propTeamWinProb(g){
 function propPickFives(evalProb,fives,lo,hi,ov){var best=null;for(var i=0;i<fives.length;i++){var l=fives[i];var o=propAmer(evalProb(l),ov);var inB=(o>=lo&&o<=hi);var d=inB?0:Math.min(Math.abs(o-lo),Math.abs(o-hi));if(best===null||d<best.d||(d===best.d&&o<best.o)){best={l:l,o:o,d:d};}}return best.l;}
 function _propGenerate(players,g){
   var ov=_spOverround||1.15;
+  propSetPace(players,g);
   var byPts=players.slice().sort(function(a,b){return b.ppg-a.ppg;});
   var byReb=players.slice().sort(function(a,b){return b.rpg-a.rpg;});
   var byAst=players.slice().sort(function(a,b){return b.apg-a.apg;});
