@@ -4226,34 +4226,31 @@ function propErf(x){var t=1/(1+0.3275911*Math.abs(x));var y=1-(((((1.061405429*t
    the other way. Independence understates the tail badly: at a 50+ combined line it
    under-prices by roughly half. These are judgement values, not measured -- the
    database holds season averages only, so there are no game logs to fit them on.  */
-/* Correlation is not one number -- it depends on the stat AND on whether the two
-   players share a team.
-     POINTS    opponents share the game's pace, so both rise in a fast game (+).
-               Team-mates share that pace but compete for shots, which roughly
-               cancels it and leaves a small negative.
-     REBOUNDS  strongly zero-sum between team-mates: a board one grabs is a board
-               the other cannot. Across teams, more misses means more boards for
-               everyone, so mildly positive.
-     ASSISTS   the most zero-sum of all within a team -- an assist is credited to
-               exactly one player. Across teams it is pace-driven and positive.
-     THREES    team-mates compete for attempts but share the spacing and ball
-               movement of a good shooting night, so only slightly negative.
-   These are judgement values. The database holds season averages only, so there
-   are no game logs to fit them on. */
+/* ---- MEASURED on 196,876 player-game box scores from 2025-26 (6,300 games, ESPN
+   via hoopR). Rotation players only: 10+ games, 12+ minutes. These replaced reasoned
+   guesses, two of which were badly wrong -- the guessed team-mate values for rebounds
+   (-0.20) and assists (-0.15) came out near zero. The shot-competition effect is real
+   but is almost exactly cancelled by shared pace and minutes.                      */
 var PROP_RHO={
-  pts : {opp: 0.12, team:-0.05},
-  reb : {opp: 0.08, team:-0.20},
-  ast : {opp: 0.10, team:-0.15},
-  '3pm':{opp: 0.10, team:-0.05}
+  pts : {opp: 0.042, team:-0.059},
+  reb : {opp: 0.017, team:-0.012},
+  ast : {opp: 0.031, team:-0.001},
+  '3pm':{opp: 0.018, team:-0.013}
 };
 function propRho(stat,sameTeam){
   var r=PROP_RHO[stat]||PROP_RHO.pts;
   return sameTeam?r.team:r.opp;
 }
-var PROP_LEAGUE_TOTAL=147;    /* league-average game total, used when a market total exists */
-var PROP_LEAGUE_PPG=86.8;     /* league-average summed roster PPG, used as the fallback   */
-var PROP_PACE_CAP=0.10;       /* never move a player's mean by more than this             */
-var _propPace=1;
+/* ---- Game-to-game spread, measured on the same rows. The old model used
+   sd = mean x a flat factor, which is the wrong shape: the ratio falls as production
+   rises (0.80 for low scorers, 0.39 for high), so a flat factor over-disperses role
+   players and under-disperses stars. Fitted sd = A x mean^B on log-log.           */
+var PROP_SD={
+  pts : {A:2.030, B:0.406},
+  reb : {A:1.085, B:0.510},
+  ast : {A:1.046, B:0.517},
+  '3pm':{A:1.046, B:0.486}
+};
 function propSetPace(players,g){
   _propPace=1;
   try{
@@ -4270,7 +4267,7 @@ function propSetPace(players,g){
     _propPace=1+Math.max(-PROP_PACE_CAP,Math.min(PROP_PACE_CAP,(avg-PROP_LEAGUE_PPG)/PROP_LEAGUE_PPG));
   }catch(e){_propPace=1;}
 }
-function propMSD(p,stat,half){var mean,f;if(stat==='pts'){mean=p.ppg;f=0.34;}else if(stat==='reb'){mean=p.rpg;f=0.42;}else if(stat==='ast'){mean=p.apg;f=0.48;}else{mean=p.tpm3;f=0.55;}mean=mean*(_propPace||1);var usgAdj=1+Math.max(0,((p.usage_pct||18)-20))/100;var sd=Math.max(stat==='pts'?3.0:1.2,mean*f*usgAdj);if(half){mean*=0.5;sd*=0.72;}return{mean:mean,sd:sd};}
+function propMSD(p,stat,half){var mean,key;if(stat==='pts'){mean=p.ppg;key='pts';}else if(stat==='reb'){mean=p.rpg;key='reb';}else if(stat==='ast'){mean=p.apg;key='ast';}else{mean=p.tpm3;key='3pm';}mean=(mean||0)*(_propPace||1);var f=PROP_SD[key]||PROP_SD.pts;var sd=f.A*Math.pow(Math.max(mean,0.5),f.B);var usgAdj=1+Math.max(0,((p.usage_pct||18)-20))/200;sd=Math.max(stat==='pts'?2.0:0.9,sd*usgAdj);if(half){mean*=0.5;sd*=0.72;}return{mean:mean,sd:sd};}
 function propPOver(p,stat,line,half){var o=propMSD(p,stat,half);var z=((line-0.5)-o.mean)/o.sd;return 1-0.5*(1+propErf(z/Math.SQRT2));}
 function propComb(a,b,stat,line,half){var A=propMSD(a,stat,half),B=propMSD(b,stat,half);var rho=propRho(stat,!!(a&&b&&a.team&&b.team&&a.team===b.team));var mean=A.mean+B.mean;var v=A.sd*A.sd+B.sd*B.sd+2*rho*A.sd*B.sd;var sd=Math.sqrt(Math.max(v,0.01));var z=((line-0.5)-mean)/sd;return 1-0.5*(1+propErf(z/Math.SQRT2));}
 function propAmer(prob,ov){var p=Math.min(0.985,prob*ov);if(p<=0)return 99999;if(p>=0.5)return Math.round(-100*p/(1-p));return Math.round(100*(1-p)/p);}
