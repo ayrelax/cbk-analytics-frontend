@@ -4059,6 +4059,49 @@ function spAmerican(prob){var p=Math.min(0.985,prob);if(p<=0)return 99999;if(p>=
 function spRoundOdds(n){var neg=n<0,v=Math.abs(n);if(!neg&&v>20000){v=20000;}else if(!neg&&v>1000){v=cbkBandAm(v);if(v>20000)v=20000;}else{if(v<=300)v=Math.round(v/5)*5;else if(v<=600)v=Math.round(v/10)*10;else if(v<=1000)v=Math.round(v/25)*25;else if(v<=5000)v=Math.round(v/50)*50;else v=Math.round(v/100)*100;}return(neg?'-':'+')+v;}
 function spSD(p){var base=p.ppg*0.45;var usg=p.usage_pct||18;var mpg=p.mpg||25;var usgF=0.85+(usg/28)*0.35;var minF=Math.min(1,mpg/30);return Math.max(2.5,base*usgF*minF+p.ppg*0.12);}
 function spRandn(m,s){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+/* ================= EMPIRICAL RATES FROM BOX SCORES + PLAY-BY-PLAY =================
+   player_rates holds, per player for the season:
+     ls_1..ls_5  how many games they finished 1st..5th in scoring (both teams)
+     fs_1..fs_5  how many games they were the 1st..5th player to score
+     f3_1..f3_3  how many games they were the 1st..3rd to make a three
+   Counts come from 6,275 games of ESPN play-by-play and 62,202 player box lines.
+
+   These are blended with the existing models rather than replacing them. A player with
+   25 games is a small sample, so the observed rate is shrunk toward the model by
+   RATE_K games of prior weight. At 25 games and K=18 the empirical carries 58%.      */
+var RATE_K=18;
+var _rates=null,_ratesBy={};
+function ratesKey(name,team){return String(name||'').toLowerCase().trim()+'|'+String(team||'').toLowerCase().trim();}
+function loadRates(cb){
+  if(_rates){if(cb)cb();return;}
+  sb.from('player_rates').select('player_name,team,games,ls_1,ls_2,ls_3,fs_1,fs_2,fs_3,f3_1,f3_2,f3_3')
+    .range(0,9999).then(function(r){
+      _rates=r.data||[]; _ratesBy={};
+      _rates.forEach(function(x){_ratesBy[ratesKey(x.player_name,x.team)]=x;});
+      if(cb)cb();
+    });
+}
+function rateFor(name,team){return _ratesBy[ratesKey(name,team)]||null;}
+/* blend a model probability with an observed rate, weighted by sample size */
+function rateBlend(modelP,hits,games){
+  if(!games||games<5||hits==null)return modelP;
+  var emp=hits/games;
+  var w=games/(games+RATE_K);
+  return w*emp+(1-w)*modelP;
+}
+/* apply the blend across a field, then renormalise so the market still sums to 1 */
+function rateAdjustField(rows,getModelP,getHits,setP){
+  var any=false,tot=0;
+  rows.forEach(function(r){
+    var h=getHits(r);
+    var p=(h&&h.games)?rateBlend(getModelP(r),h.hits,h.games):getModelP(r);
+    if(h&&h.games)any=true;
+    r._bp=Math.max(1e-6,p); tot+=r._bp;
+  });
+  if(!any||tot<=0)return false;
+  rows.forEach(function(r){setP(r,r._bp/tot);});
+  return true;
+}
 function spSimulate(players,nSims){
   var lead={};players.forEach(function(p){lead[p.player_name]=0;});
   var sds=players.map(spSD);
@@ -4121,7 +4164,13 @@ function spPrice(){
 }
 function spApplyMargin(){
   if(!_spResult.length)return;
-  var flat=_spResult.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,prob:r.prob,fp:Math.pow(r.prob,_spFlatten)};});
+  if(!_rates){loadRates(function(){spApplyMargin();});}
+  var src=_spResult.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,prob:r.prob};});
+  rateAdjustField(src,function(r){return r.prob;},function(r){
+    var h=rateFor(r.player,r.team);
+    return h?{hits:h.ls_1,games:h.games}:null;
+  },function(r,p){r.prob=p;});
+  var flat=src.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,prob:r.prob,fp:Math.pow(r.prob,_spFlatten)};});
   var s=flat.reduce(function(a,b){return a+b.fp;},0);
   flat.forEach(function(r){r.fpN=r.fp/s;});
   flat.sort(function(a,b){return b.fpN-a.fpN;});
@@ -4444,6 +4493,11 @@ function f3Price(){
   });
   var total=rows.reduce(function(s,x){return s+x.w;},0);
   rows.forEach(function(r){r.prob=r.w/total;});
+  if(!_rates){loadRates(function(){f3Price();});}
+  rateAdjustField(rows,function(r){return r.prob;},function(r){
+    var h=rateFor(r.player,r.team);
+    return h?{hits:h.f3_1,games:h.games}:null;
+  },function(r,p){r.prob=p;});
   rows.sort(function(a,b){return b.prob-a.prob;});
   var booked=0;
   var body=rows.map(function(r){
@@ -4539,9 +4593,14 @@ function fsPrice(){
   var out=document.getElementById('fs-output');
   if(active.length<2){out.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">Check at least 2 players.</div>';return;}
   var ov=_spOverround||1.20;
+  if(!_rates){loadRates(function(){fsPrice();});}
   var rows=active.map(function(p){return{player:p.player_name,team:p.team,ppg:p.ppg,usage_pct:p.usage_pct,ft_rate:p.ft_rate,w:fsWeight(p)};});
   var total=rows.reduce(function(s,x){return s+x.w;},0);
   rows.forEach(function(r){r.prob=r.w/total;});
+  rateAdjustField(rows,function(r){return r.prob;},function(r){
+    var h=rateFor(r.player,r.team);
+    return h?{hits:h.fs_1,games:h.games}:null;
+  },function(r,p){r.prob=p;});
   rows.sort(function(a,b){return b.prob-a.prob;});
   var booked=0;
   var body=rows.map(function(r){
