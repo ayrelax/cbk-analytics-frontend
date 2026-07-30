@@ -4280,6 +4280,7 @@ async function spLoadDay(){
 }
 /* =============== END DAILY LEADING SCORER =============== */
 
+function fbEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 /* ================= METHOD OF FIRST BASKET =================
    Six-way market: each team by 2PT / 3PT / Free Throw.
    Built on 6,275 games of play-by-play. League base rates:
@@ -4371,13 +4372,13 @@ function fbRender(){
   });
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
    +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">METHOD OF FIRST BASKET &mdash; '
-   +esc(g.away.team)+' @ '+esc(g.home.team)+'</div>'
+   +fbEsc(g.away.team)+' @ '+fbEsc(g.home.team)+'</div>'
    +'<div style="font-size:11px;color:var(--txt3)">book '+(booked*100).toFixed(1)+'%</div></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px">'
    +'<thead><tr><th>TEAM</th><th></th><th>METHOD</th><th>FAIR%</th><th>ODDS</th>'
    +(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   rows.forEach(function(r){
-    h+='<tr><td class="bold">'+esc(r.team)+'</td>'
+    h+='<tr><td class="bold">'+fbEsc(r.team)+'</td>'
       +'<td class="muted" style="font-size:10px">'+r.side+'</td>'
       +'<td>'+r.m+'</td>'
       +'<td class="muted">'+(r.p*100).toFixed(1)+'%</td>'
@@ -4387,11 +4388,11 @@ function fbRender(){
   });
   h+='</tbody></table></div></div>';
   h+='<div style="font-size:10px;color:var(--txt3);line-height:1.6;padding:8px 2px">'
-   +'<b style="color:var(--txt2)">Inputs.</b> '+esc(g.home.team)+' net '+(H.net>=0?'+':'')+Number(H.net).toFixed(1)
+   +'<b style="color:var(--txt2)">Inputs.</b> '+fbEsc(g.home.team)+' net '+(H.net>=0?'+':'')+Number(H.net).toFixed(1)
    +', 3PA rate '+(H.three_rate*100).toFixed(1)+'%, FT rate '+(H.ftr*100).toFixed(1)+'%'
-   +' &nbsp;&middot;&nbsp; '+esc(g.away.team)+' net '+(A.net>=0?'+':'')+Number(A.net).toFixed(1)
+   +' &nbsp;&middot;&nbsp; '+fbEsc(g.away.team)+' net '+(A.net>=0?'+':'')+Number(A.net).toFixed(1)
    +', 3PA rate '+(A.three_rate*100).toFixed(1)+'%, FT rate '+(A.ftr*100).toFixed(1)+'%.<br>'
-   +'Model has '+esc(g.home.team)+' scoring first '+(pw*100).toFixed(1)+'% of the time'
+   +'Model has '+fbEsc(g.home.team)+' scoring first '+(pw*100).toFixed(1)+'% of the time'
    +(g.neutral_site?' (neutral court, no home bump)':' (league average is 55.3%)')+'. '
    +'League method split: 2PT 62.3%, 3PT 27.8%, FT 10.0%.</div>';
   out.innerHTML=h;
