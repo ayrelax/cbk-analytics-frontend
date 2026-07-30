@@ -4081,6 +4081,19 @@ function loadRates(cb){
       if(cb)cb();
     });
 }
+function rateCell(name,team,kind){
+  var h=(typeof rateFor==='function')?rateFor(name,team):null;
+  if(!h||!h.games)return '<td class="muted" title="no season history">--</td>';
+  var a,b,c,lab;
+  if(kind==='ls'){a=h.ls_1;b=h.ls_2;c=h.ls_3;lab='finished 1st / 2nd / 3rd in scoring';}
+  else if(kind==='fs'){a=h.fs_1;b=h.fs_2;c=h.fs_3;lab='was 1st / 2nd / 3rd to score';}
+  else {a=h.f3_1;b=h.f3_2;c=h.f3_3;lab='hit the 1st / 2nd / 3rd three';}
+  var pct=h.games?Math.round(100*a/h.games):0;
+  return '<td title="'+lab+', in '+h.games+' games">'
+    +'<span style="font-weight:800;color:var(--acc)">'+a+'</span>'
+    +'<span class="muted" style="font-size:10px"> / '+b+' / '+c+'</span>'
+    +'<span class="muted" style="font-size:9px;display:block;letter-spacing:.3px">'+pct+'% of '+h.games+'</span></td>';
+}
 function rateFor(name,team){return _ratesBy[ratesKey(name,team)]||null;}
 /* blend a model probability with an observed rate, weighted by sample size */
 function rateBlend(modelP,hits,games){
@@ -4181,9 +4194,9 @@ function spApplyMargin(){
     return{player:r.player,team:r.team,ppg:r.ppg,fair:r.fpN,odds:odds};
   });
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+(_spMode==='day'?'DAILY LEADING SCORER':'GAME LEADING SCORER')+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="spExportCSV()">EXPORT CSV</button></div>';
-  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>FAIR%</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
+  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>LED 1/2/3</th><th>FAIR%</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   rows.forEach(function(r){
-    h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td><td class="muted">'+(r.fair*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
+    h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td>'+rateCell(r.player,r.team,'ls')+'<td class="muted">'+(r.fair*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
     if(isAdmin)h+='<td><input class="field" style="width:90px;padding:4px 6px;font-size:11px" value="'+r.odds+'" onchange="spOverride(\''+r.player.replace(/'/g,"\\'")+'\',this.value)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fld"></td>';
     h+='</tr>';
   });
@@ -4507,9 +4520,9 @@ function f3Price(){
   });
   var g=_f3Game;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">FIRST 3PT FIELD GOAL \u2014 '+matchup+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="f3ExportCSV()">EXPORT CSV</button></div>';
-  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>3PM/g</th><th>3PA/g</th><th>PROB</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
+  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>3PM/g</th><th>3PA/g</th><th>1ST 3PT 1/2/3</th><th>PROB</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   body.forEach(function(r){
-    h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.tpm3.toFixed(1)+'</td><td>'+r.tpa3.toFixed(1)+'</td><td class="muted">'+(r.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
+    h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.tpm3.toFixed(1)+'</td><td>'+r.tpa3.toFixed(1)+'</td>'+rateCell(r.player,r.team,'f3')+'<td class="muted">'+(r.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
     if(isAdmin)h+='<td><input class="field" style="width:90px;padding:4px 6px;font-size:11px" value="'+r.odds+'" onchange="f3Override(\''+r.player.replace(/'/g,"\\'")+'\',this.value)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fld"></td>';
     h+='</tr>';
   });
@@ -4610,9 +4623,9 @@ function fsPrice(){
   });
   var g=_fsGame;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">FIRST SCORER \u2014 '+matchup+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="fsExportCSV()">EXPORT CSV</button></div>';
-  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>USG%</th><th>FT RATE</th><th>PROB</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
+  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>USG%</th><th>FT RATE</th><th>1ST 1/2/3</th><th>PROB</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   body.forEach(function(r){
-    h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td><td>'+(r.usage_pct!=null?r.usage_pct:'-')+'</td><td>'+(r.ft_rate!=null?r.ft_rate:'-')+'</td><td class="muted">'+(r.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
+    h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td><td>'+(r.usage_pct!=null?r.usage_pct:'-')+'</td><td>'+(r.ft_rate!=null?r.ft_rate:'-')+'</td>'+rateCell(r.player,r.team,'fs')+'<td class="muted">'+(r.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
     if(isAdmin)h+='<td><input class="field" style="width:90px;padding:4px 6px;font-size:11px" value="'+r.odds+'" onchange="fsOverride(\''+r.player.replace(/'/g,"\\'")+'\',this.value)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fld"></td>';
     h+='</tr>';
   });
