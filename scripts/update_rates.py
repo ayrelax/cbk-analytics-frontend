@@ -34,10 +34,14 @@ def grab(kind, file, season):
     return pd.read_parquet(io.BytesIO(r.content))
 
 def leading_scorer_counts(box):
-    b = box[(box["did_not_play"] == False) & (box["active"] == True)].copy()
+    # NOTE: do NOT filter on box["active"]. That flag does not mean "played in this
+    # game" -- more than half of all genuine appearances carry active=false with real
+    # minutes and points. minutes > 0 is the correct test.
+    b = box.copy()
     b["points"] = pd.to_numeric(b["points"], errors="coerce")
     b["minutes"] = pd.to_numeric(b["minutes"], errors="coerce")
-    b = b.dropna(subset=["points", "athlete_id"])
+    b = b[(b["minutes"] > 0) & (b["points"].notna())]
+    b = b.dropna(subset=["athlete_id"])
     b["athlete_id"] = b["athlete_id"].astype("int64")
     b["rk"] = b.groupby("game_id")["points"].rank(method="min", ascending=False)
     ls = (b[b["rk"] <= 5]
