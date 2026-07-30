@@ -4384,8 +4384,13 @@ function fbRender(){
   var booked=0;
   rows.forEach(function(r){
     r.odds=(_fbOverrides[r.k]!==undefined)?_fbOverrides[r.k]:propRound(propAmer(r.p,ov));
-    booked+=fsImplied(r.odds);
+    r.imp=fsImplied(r.odds);
+    booked+=r.imp;
   });
+  /* shortest price first. Sort on the implied probability of the odds actually shown,
+     so a manual override moves the row to where it belongs rather than leaving a
+     long price sitting above a short one. */
+  rows.sort(function(a,b){return b.imp-a.imp;});
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
    +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">METHOD OF FIRST BASKET &mdash; '
    +fbEsc(g.away.team)+' @ '+fbEsc(g.home.team)+'</div>'
