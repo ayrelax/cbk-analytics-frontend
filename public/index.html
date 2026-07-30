@@ -4292,29 +4292,44 @@ function fbEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g
           plus the defence's three-rate allowed. Using the scorer's own profile rather
           than the game average lifted the signal from 8.7 to 11.4 points of spread.
    Out of sample this beat league base rates by 1.71% on log loss.                  */
-var FB_W={i:0.1533,s:0.0202};
-/* method model, five inputs in this order:
-   [scorer 3PA rate, scorer FT rate, defence 3PA-rate allowed, defence FT-rate allowed, defence foul rate]
-   Adding the two defensive terms lifted the out-of-sample edge from 1.05% to 1.41%.
-   Fouling matters: against the least-fouling defences an FT first basket runs 8.3%,
-   against the most-fouling 11.9%. The defence's FT rate allowed is a STRONGER signal
-   than the scoring team's own FT rate (5.2 vs 3.6 points of spread). */
-var FB_M={i:[2.4441,-0.8575,-1.5866],
-          c:[[-1.0751,-0.2952,-1.6835,-1.1423,0.1362],
-             [1.7301,-0.4726,1.8283,-0.6654,-0.2711],
-             [-0.6551,0.7677,-0.1448,1.8077,0.1349]]};
+var FB_W={i:0.0950,s:0.0295};
+/* NOTE: `net` is OPPONENT-ADJUSTED efficiency margin per 100 possessions, not the raw
+   season average. Raw margin badly understates teams from strong conferences -- on the
+   2025-26 data Marquette read -0.7 raw but +5.0 adjusted, and every Big East side gained
+   4 to 6 points. The who-scores-first slope below is fitted on the adjusted scale.
+   Method model inputs, in order:
+   [scorer 3PA rate, scorer FT rate, defence 3PA allowed, defence FT rate allowed, defence foul rate]
+   Out of sample this beats league base rates by 1.54% on log loss.                  */
+var FB_M={i:[2.5569,-1.0245,-1.5324],
+          c:[[-1.2084,-0.3305,-1.7998,-1.0860,0.0626],
+             [2.0095,-0.4596,2.0417,-0.7422,-0.2718],
+             [-0.8011,0.7901,-0.2420,1.8283,0.2092]]};
 var _fbProfiles=null,_fbGames=[],_fbGame=null,_fbOverrides={};
 function fbSoft(z){var m=Math.max.apply(null,z);var e=z.map(function(x){return Math.exp(x-m);});
   var s=e.reduce(function(a,b){return a+b;},0);return e.map(function(x){return x/s;});}
 function fbMethod(o,d){
-  /* o = scoring team profile, d = defending team profile */
   var x=[o.three_rate,o.ftr,d.d_three_rate,d.d_ftr_allowed,d.foul_rate];
-  var z=FB_M.i.map(function(b,k){
-    var v=b; for(var q=0;q<5;q++) v+=FB_M.c[k][q]*x[q];
-    return v;});
+  var z=FB_M.i.map(function(b,k){var v=b;for(var q=0;q<5;q++)v+=FB_M.c[k][q]*x[q];return v;});
   return fbSoft(z);
 }
 function fbWhoHome(edge){return 1/(1+Math.exp(-(FB_W.i+FB_W.s*edge)));}
+/* ---- blending your power ratings with the measured efficiency margin ----
+   The two agree at r = 0.663 across 364 teams, so 56% of what PR carries is NOT in the
+   box scores -- roster changes, injuries, judgement. Worth using.
+   1 PR point is worth about 0.528 of adjusted net (regression slope across all teams),
+   so PR is converted to net units before blending.
+   FB_PRW is the weight on PR. I could not fit this honestly: the PR values in the
+   database were set AFTER the 2025-26 season finished, so testing them against those
+   games leaks. 0.5 is a deliberate even split of two partly-independent estimates,
+   not a fitted number. Move it if you trust one source more.                       */
+var FB_PRW=0.50;
+var FB_PR2NET=0.528;
+function fbEdge(H,A,hpr,apr){
+  var effEdge=(H.net||0)-(A.net||0);
+  if(hpr==null||apr==null)return effEdge;
+  var prEdge=FB_PR2NET*(hpr-apr);
+  return (1-FB_PRW)*effEdge+FB_PRW*prEdge;
+}
 function fbLoadProfiles(cb){
   if(_fbProfiles){if(cb)cb();return;}
   sb.from('team_profiles').select('*').range(0,999).then(function(r){
@@ -4326,7 +4341,7 @@ async function initFirstBasket(){
   var sel=document.getElementById('fb-game');
   if(sel&&sel.options.length<=1){
     sel.innerHTML='<option value="">Loading games...</option>';
-    var r=await sb.from('games').select('id,game_date,neutral_site,home:home_team_id(id,team),away:away_team_id(id,team)')
+    var r=await sb.from('games').select('id,game_date,neutral_site,home:home_team_id(id,team,pr),away:away_team_id(id,team,pr)')
       .order('game_date',{ascending:true}).range(0,9999);
     _fbGames=(r.data||[]).filter(function(g){return g.home&&g.away;});
     sel.innerHTML='<option value="">Select a game...</option>'+_fbGames.map(function(g){
@@ -4352,9 +4367,10 @@ function fbRender(){
       +(!H?g.home.team:g.away.team)+'</b>. Load the team_profiles table first.</div>';return;}
   var ovEl=document.getElementById('fb-overround');
   var ov=ovEl?(parseFloat(ovEl.value)||1.20):1.20;
-  var net=H.net-A.net;
-  var pw=g.neutral_site?fbWhoHome(net)-0.5*0+1/(1+Math.exp(-(FB_W.s*net))) : fbWhoHome(net);
-  if(g.neutral_site)pw=1/(1+Math.exp(-(FB_W.s*net)));
+  var hpr=(g.home&&g.home.pr!=null)?Number(g.home.pr):null;
+  var apr=(g.away&&g.away.pr!=null)?Number(g.away.pr):null;
+  var net=fbEdge(H,A,hpr,apr);
+  var pw=g.neutral_site?1/(1+Math.exp(-(FB_W.s*net))):fbWhoHome(net);
   var hm=fbMethod(H,A);
   var am=fbMethod(A,H);
   var rows=[
@@ -4388,13 +4404,13 @@ function fbRender(){
   });
   h+='</tbody></table></div></div>';
   h+='<div style="font-size:10px;color:var(--txt3);line-height:1.6;padding:8px 2px">'
-   +'<b style="color:var(--txt2)">Inputs.</b> '+fbEsc(g.home.team)+' net '+(H.net>=0?'+':'')+Number(H.net).toFixed(1)
+   +'<b style="color:var(--txt2)">Inputs.</b> '+fbEsc(g.home.team)+' adj net '+(H.net>=0?'+':'')+Number(H.net).toFixed(1)
    +', 3PA rate '+(H.three_rate*100).toFixed(1)+'%, FT rate '+(H.ftr*100).toFixed(1)+'%'
-   +' &nbsp;&middot;&nbsp; '+fbEsc(g.away.team)+' net '+(A.net>=0?'+':'')+Number(A.net).toFixed(1)
+   +' &nbsp;&middot;&nbsp; '+fbEsc(g.away.team)+' adj net '+(A.net>=0?'+':'')+Number(A.net).toFixed(1)
    +', 3PA rate '+(A.three_rate*100).toFixed(1)+'%, FT rate '+(A.ftr*100).toFixed(1)+'%.<br>'
-   +'Model has '+fbEsc(g.home.team)+' scoring first '+(pw*100).toFixed(1)+'% of the time'
+   +'Edge used '+(net>=0?'+':'')+net.toFixed(1)+' = '+((1-FB_PRW)*100).toFixed(0)+'% efficiency margin ('+((H.net-A.net)>=0?'+':'')+(H.net-A.net).toFixed(1)+') + '+(FB_PRW*100).toFixed(0)+'% power rating ('+(hpr!=null&&apr!=null?((hpr-apr)>=0?'+':'')+(hpr-apr).toFixed(1)+' PR':'n/a')+'). '+'Model has '+fbEsc(g.home.team)+' scoring first '+(pw*100).toFixed(1)+'% of the time'
    +(g.neutral_site?' (neutral court, no home bump)':' (league average is 55.3%)')+'. '
-   +'League method split: 2PT 62.3%, 3PT 27.8%, FT 10.0%.</div>';
+   +'Across all 6,275 games last season the first basket was a two-pointer 62.3% of the time, a three 27.8%, a free throw 10.0%.</div>';
   out.innerHTML=h;
 }
 function fbOverride(k,v){
