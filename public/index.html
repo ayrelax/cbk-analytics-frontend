@@ -1724,8 +1724,7 @@ function calcSpread(h,hc,a,n){return(h+(n?0:hc))-a;}
    A qualifying host gets extra points because our ratings under-price these spots.
    Measured on 5,544 games of 2025-26: our number missed the host by +4.01 on average
    under this exact definition (95% CI +2.83 to +5.20) while the market was unbiased at +0.06.
-   Change BUY_ADJ below to retune. A sliding adjustment by spread size was tested and
-   did NOT hold up out of sample, so it is deliberately flat.                          */
+   Tiers below are a judgement call, not a fitted curve -- see the note there.        */
 /* tiered adjustment by raw spread size. Note: the season data does NOT show a
    significant difference between bands (all variation was inside sampling noise),
    so these tiers are a judgement call rather than a fitted curve. Overall fit was +4.01. */
@@ -1759,12 +1758,12 @@ function buyApply(hTeam,hConf,aTeam,aConf,neutral,raw){
 /* convenience for the game-object shape used across the app */
 function calcSpreadG(g){
   if(!g||!g.home||!g.away)return 0;
-  var raw=calcSpreadG(g);
+  var raw=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
   return buyApply(g.home.team,g.home.conference,g.away.team,g.away.conference,g.neutral_site,raw);
 }
 function isBuyG(g){
   if(!g||!g.home||!g.away)return false;
-  var raw=calcSpreadG(g);
+  var raw=calcSpread(g.home.pr,g.home.hc,g.away.pr,g.neutral_site);
   return buyQualifies(g.home.team,g.home.conference,g.away.team,g.away.conference,g.neutral_site,raw);
 }
 function buyBadge(g){
