@@ -4319,15 +4319,35 @@ function sitR5(v){return Math.round(v/5)*5;}
    crosses even money, which a naive conversion gets wrong. */
 function sitCentsToAm(c){ return c>=0 ? -(100+c) : (100-c); }
 function sitAmToCents(am){ return am<0 ? (-am-100) : -(am-100); }
-/* Post the two sides 30 cents apart, centred on fair, rounded to 5.
-   53.5% gives -130/+100 and 56.5% gives -145/+115. */
+/* Ladder pricing. The favourite is posted at its fair price; the width of the market
+   steps out as the price lengthens, because a longer favourite needs more room:
+       up to -180   30 cents      -180/+150
+       -181 to -235 40 cents      -195/+155,  -235/+195
+       -236 to -400 50 cents      -250/+200,  -400/+350
+       beyond -400  100 cents     -500/+400
+   Near even money there is not enough juice to hang a full gap off one side, so the
+   width is split evenly instead. Everything rounds to the nearest 5. */
+function sitGapFor(favMag){
+  if(favMag<=180)return 30;
+  if(favMag<=235)return 40;
+  if(favMag<=400)return 50;
+  return 100;
+}
 function sitSplit30(p){
   p=Math.min(Math.max(p,0.0005),0.9995);
   var favFirst=p>=0.5;
   var q=favFirst?p:1-p;
-  var c=sitAmToCents(-(100*q/(1-q)));
-  var a=sitR5(sitCentsToAm(c+15));
-  var b=sitR5(sitCentsToAm(-c+15));
+  var fairMag=100*q/(1-q);
+  var g=sitGapFor(sitR5(fairMag));
+  var c=sitAmToCents(-fairMag);
+  var a,b;
+  if(c<g/2){
+    a=sitR5(sitCentsToAm(c+g/2));
+    b=sitR5(sitCentsToAm(-c+g/2));
+  }else{
+    a=sitR5(-fairMag);
+    b=sitR5(sitCentsToAm(-(sitAmToCents(a)-g)));
+  }
   return favFirst?[a,b]:[b,a];
 }
 function sitPair(p){
@@ -4359,7 +4379,7 @@ function sitRender(){
      artefact of which side happened to be listed first. Dropped from all views. */
   var T=SIT_DATA.targets, h='';
   if(_sitProp==='race'){
-    h+=sitHead('RACE TO X POINTS','Which side gets there first, from the favourite\u2019s side. The percentage is what actually happened; the price beside it is that number posted 30 cents apart and rounded to the nearest 5. '+'Notice how the edge grows with the target \u2014 an early race is close to a coin flip even for a big favourite.');
+    h+=sitHead('RACE TO X POINTS','Which side gets there first, from the favourite\u2019s side. The percentage is what actually happened; the price beside it is that number posted 30 cents apart and rounded to the nearest 5. '+'Prices widen as they lengthen: 30 cents to -180, then 40, 50 and 100. '+'Notice how the edge grows with the target \u2014 an early race is close to a coin flip even for a big favourite.');
     h+='<div class="panel" style="padding:0"><div style="overflow-x:auto"><table class="data" style="font-size:11px">'
      +'<thead><tr><th>SPREAD</th><th>N</th>'+T.map(function(t){return '<th colspan="2" style="text-align:center;border-left:1px solid var(--bdr)">TO '+t+'</th>';}).join('')+'</tr>'
      +'<tr><th></th><th></th>'+T.map(function(){return '<th style="border-left:1px solid var(--bdr)">FAV%</th><th>FAV / DOG</th>';}).join('')+'</tr></thead><tbody>';
@@ -4388,7 +4408,7 @@ function sitRender(){
     });
     h+='</tbody></table></div>';
   } else if(_sitProp==='f4'){
-    h+=sitHead('FIRST FOUR MINUTES','Score at exactly 240 seconds elapsed. The four-minute spread runs about 0.141 of the full-game number. '+'<b style="color:var(--txt2)">The moneyline</b> is built from FAV AHEAD divided by (100 minus TIED), so ties are treated as a push and removed from the pool rather than counted as a loss. '+'That two-way probability is then posted 30 cents apart and rounded to the nearest 5.');
+    h+=sitHead('FIRST FOUR MINUTES','Score at exactly 240 seconds elapsed. The four-minute spread runs about 0.141 of the full-game number. '+'<b style="color:var(--txt2)">The moneyline</b> is built from FAV AHEAD divided by (100 minus TIED), so ties are treated as a push and removed from the pool rather than counted as a loss. '+'That two-way probability is then posted on the house ladder \u2014 30 cents out to -180, then 40, 50 and 100 \u2014 rounded to the nearest 5.');
     h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px">'
      +'<thead><tr><th>SPREAD</th><th>N</th><th>AVG MARGIN</th><th>MEDIAN</th><th>SUGGESTED LINE</th>'
      +'<th>FAV AHEAD</th><th>TIED</th><th>FAV / DOG ML</th></tr></thead><tbody>';
