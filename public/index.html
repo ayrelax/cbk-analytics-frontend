@@ -4394,6 +4394,21 @@ var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 
    Race to X is split into a separate market per target rather than one combined block. */
 var _sitGames=[],_sitGame=null,_sitRows=[];
 var SIT_F4_TOTAL=14, SIT_F4_TOTAL_ODDS='-10000';
+/* Some markets read better off a wider band -- more games behind each number, less
+   bucket-to-bucket wobble. Race to X, percentage led and the four-minute moneyline
+   all use the two-point bands; the four-minute spread and largest lead stay on the
+   individual point, where the line moves meaningfully with each point of spread. */
+function sitBandRow(absSpread){
+  var b=Math.max(1,Math.floor(Math.abs(absSpread)));
+  var rows=SIT_DATA.views['2']||[];
+  for(var i=0;i<rows.length;i++){
+    var L=rows[i].label,lo,hi;
+    if(L.indexOf('+')>0){lo=parseInt(L,10);hi=999;}
+    else{var p=L.split('-');lo=parseInt(p[0],10);hi=parseInt(p[1],10);}
+    if(b>=lo&&b<=hi)return rows[i];
+  }
+  return rows[rows.length-1]||null;
+}
 function sitBucketRow(absSpread){
   /* Floor to the whole point, but never below 1. Bucket 0 is a pick'em, where there
      is no favourite -- its numbers describe whichever side the backtest happened to
@@ -4430,8 +4445,9 @@ function sitBuildRows(){
   var favHome=sp>=0;
   var fav=favHome?g.home.team:g.away.team;
   var dog=favHome?g.away.team:g.home.team;
-  var row=sitBucketRow(sp);
-  if(!row)return;
+  var row=sitBucketRow(sp);      /* individual point */
+  var band=sitBandRow(sp);       /* two-point band */
+  if(!row||!band)return;
   /* team is kept apart from any wording after it, so the work-list name can be
      swapped in at export without string matching on a concatenated label */
   function add(mkt,team,suffix,odds,line){
@@ -4441,7 +4457,7 @@ function sitBuildRows(){
   function price(p){var s=sitSplit30(p);return [sitOdds(s[0]),sitOdds(s[1])];}
   /* one market per target, two selections each */
   SIT_DATA.targets.forEach(function(t){
-    var c=row.race[String(t)];
+    var c=band.race[String(t)];
     if(!c)return;
     var pr=price(c.pct/100);
     var m='Race To '+t+' Points';
@@ -4449,9 +4465,9 @@ function sitBuildRows(){
     add(m,dog,'',pr[1],'');
   });
   /* percentage of game led */
-  var lp=price(row.led_over/100);
-  add('Percentage Of Game Led',fav,' Lead Percentage Over',lp[0],row.led_line.toFixed(1));
-  add('Percentage Of Game Led',fav,' Lead Percentage Under',lp[1],row.led_line.toFixed(1));
+  var lp=price(band.led_over/100);
+  add('Percentage Of Game Led',fav,' Lead Percentage Over',lp[0],band.led_line.toFixed(1));
+  add('Percentage Of Game Led',fav,' Lead Percentage Under',lp[1],band.led_line.toFixed(1));
   /* first four minutes, three separate markets.
      The stored line rounds to the nearest half, which lands on a whole number for
      small spreads. Ties are 8.7% of games, so a whole-number line pushes far too
@@ -4462,13 +4478,13 @@ function sitBuildRows(){
   add('1st 4 Minutes Spread',dog,'','-115',(f4>0?'+':'-')+Math.abs(f4).toFixed(1));
   add('1st 4 Minutes Total Points',null,'Over',SIT_F4_TOTAL_ODDS,SIT_F4_TOTAL.toFixed(1));
   add('1st 4 Minutes Total Points',null,'Under',SIT_F4_TOTAL_ODDS,SIT_F4_TOTAL.toFixed(1));
-  var mlp=price(row.f4_win/(100-row.f4_tie));
+  var mlp=price(band.f4_win/(100-band.f4_tie));
   add('1st 4 Minutes Money Line',fav,'',mlp[0],'');
   add('1st 4 Minutes Money Line',dog,'',mlp[1],'');
   /* largest lead, one two-way market on the favourite's number */
   add('Largest Lead Of Game',null,'Over','-110',row.ml_fav_line.toFixed(1));
   add('Largest Lead Of Game',null,'Under','-120',row.ml_fav_line.toFixed(1));
-  _sitRows._meta={spread:sp,fav:fav,dog:dog,bucket:row.label,n:row.n,neutral:!!g.neutral_site};
+  _sitRows._meta={spread:sp,fav:fav,dog:dog,bucket:row.label,n:row.n,band:band.label,bandN:band.n,neutral:!!g.neutral_site};
 }
 function sitLabel(r){return (r.team?r.team:'')+(r.suffix||'');}
 function sitGameHTML(){
@@ -4479,8 +4495,8 @@ function sitGameHTML(){
    +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'
    +fbEsc(m.fav.toUpperCase())+' -'+Math.abs(m.spread).toFixed(1)
    +'  <span style="color:var(--txt3);font-weight:400;letter-spacing:0">vs '+fbEsc(m.dog)+'</span></div>'
-   +'<div style="font-size:11px;color:var(--txt3)">'+_sitRows.length+' selections &middot; priced off the -'
-   +m.bucket+' bucket ('+m.n+' games)</div></div>';
+   +'<div style="font-size:11px;color:var(--txt3)">'+_sitRows.length+' selections &middot; band -'+m.band+' ('+m.bandN+' games) for race, led and the 4-min moneyline'
+   +' &middot; point -'+m.bucket+' ('+m.n+') for the 4-min spread and largest lead</div></div>';
   h+='<div class="panel" style="padding:0"><div style="overflow-x:auto"><table class="data" style="font-size:11px;width:100%">'
    +'<thead><tr><th style="width:200px">MARKET</th><th>SELECTION</th><th style="width:80px">LINE</th><th style="width:80px">ODDS</th></tr></thead><tbody>';
   var last='';
