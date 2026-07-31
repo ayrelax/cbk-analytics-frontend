@@ -4471,26 +4471,27 @@ function xaExport(){
   var total=0;
   XA_MARKETS.forEach(function(m){total+=(_mkRows[m.k]||[]).length;});
   if(!total){alert('Select a game and let it price first.');return;}
-  /* one file per market, in the platform's upload layout. Staggered so the browser
-     does not swallow the later downloads. */
-  var tag=_xaLabel.replace(/[^a-z0-9]+/gi,'_');
-  var done=0,delay=0;
+  /* One file. Each market keeps its own column layout -- Top Scorer carries PPG so its
+     odds sit in column G, the description markets put odds in E -- so the blocks are
+     stacked with their own header rows and a blank line between, rather than forced
+     into a single shared header that would misplace half the odds. */
+  var blocks=[],counts=[];
   XA_MARKETS.forEach(function(m){
     var rows=_mkRows[m.k]||[];
     if(!rows.length)return;
     var csv=xBuildCSV(m.k,rows);
     if(!csv)return;
-    done++;
-    setTimeout(function(){
-      xDownload(X_MKT[m.k].label.replace(/[^a-z0-9]+/gi,'_')+'_'+tag+'.csv',csv);
-    },delay);
-    delay+=350;
+    blocks.push(csv);
+    counts.push(X_MKT[m.k].label+' '+rows.length);
   });
+  if(!blocks.length){alert('Nothing priced.');return;}
+  var tag=_xaLabel.replace(/[^a-z0-9]+/gi,'_');
+  xDownload('all_markets_'+tag+'.csv', blocks.join('\n\n'));
   var out=document.getElementById('xa-output');
   if(out){
     var note=document.createElement('div');
     note.style.cssText='font-size:11px;color:var(--grn2);padding:8px 2px';
-    note.textContent=done+' files downloading \u2014 one per market.';
+    note.textContent='One file, '+total+' selections \u2014 '+counts.join(' \u00b7 ');
     out.appendChild(note);
   }
 }
