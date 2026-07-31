@@ -4600,10 +4600,10 @@ function sitRender(){
     });
     h+='</tbody></table></div>';
   } else if(_sitProp==='f4'){
-    h+=sitHead('FIRST FOUR MINUTES','Score at exactly 240 seconds elapsed. The four-minute spread runs about 0.141 of the full-game number. '+'<b style="color:var(--txt2)">The moneyline</b> is built from FAV AHEAD divided by (100 minus TIED), so ties are treated as a push and removed from the pool rather than counted as a loss. '+'That two-way probability is then posted on the house ladder \u2014 30 cents out to -180, then 40, 50 and 100 \u2014 rounded to the nearest 5.');
+    h+=sitHead('FIRST FOUR MINUTES','Score at exactly 240 seconds elapsed. The four-minute spread runs about 0.141 of the full-game number. '+'<b style="color:var(--txt2)">The three percentages sum to 100.</b> The moneyline is built from FAV AHEAD divided by (100 minus TIED) \u2014 ties push, so they leave the pool rather than counting as a dog win. Subtracting the favourite from 100 to get the dog would overstate it by the whole tie share, which runs 8 to 10% here. '+'That two-way probability is then posted on the house ladder \u2014 30 cents out to -180, then 40, 50 and 100 \u2014 rounded to the nearest 5.');
     h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px">'
      +'<thead><tr><th>SPREAD</th><th>N</th><th>AVG MARGIN</th><th>MEDIAN</th><th>SUGGESTED LINE</th>'
-     +'<th>FAV AHEAD</th><th>TIED</th><th>FAV / DOG ML</th></tr></thead><tbody>';
+     +'<th>FAV AHEAD</th><th>TIED</th><th>DOG AHEAD</th><th>FAV / DOG ML</th></tr></thead><tbody>';
     rows.forEach(function(r){
       h+='<tr><td class="bold">-'+r.label+'</td><td class="muted">'+r.n+'</td>'
         +'<td class="tnum">'+(r.f4_mean>=0?'+':'')+r.f4_mean.toFixed(2)+'</td>'
@@ -4611,6 +4611,7 @@ function sitRender(){
         +'<td class="tnum" style="color:var(--acc);font-weight:800">'+(r.f4_line>0?'-':'+')+Math.abs(r.f4_line).toFixed(1)+'</td>'
         +'<td class="tnum">'+r.f4_win.toFixed(1)+'%</td>'
         +'<td class="tnum muted">'+r.f4_tie.toFixed(1)+'%</td>'
+        +'<td class="tnum">'+(100-r.f4_win-r.f4_tie).toFixed(1)+'%</td>'
         +'<td class="tnum" style="color:var(--acc);font-weight:700;white-space:nowrap">'
           +sitPair(r.f4_win/(100-r.f4_tie))+'</td></tr>';
     });
@@ -4652,8 +4653,8 @@ function sitExportCSV(){
     lines.push('Spread,N,Median %,Mean %,25th,75th,Suggested Line,Went Over %');
     rows.forEach(function(r){lines.push('-'+r.label+','+r.n+','+r.led_med+','+r.led_mean+','+r.led_p25+','+r.led_p75+','+r.led_line+','+r.led_over);});
   } else if(_sitProp==='f4'){
-    lines.push('Spread,N,Avg Margin,Median,Suggested Line,Fav Ahead %,Tied %,Fav ML,Dog ML');
-    rows.forEach(function(r){var s2=sitSplit30(r.f4_win/(100-r.f4_tie));lines.push('-'+r.label+','+r.n+','+r.f4_mean+','+r.f4_med+','+r.f4_line+','+r.f4_win+','+r.f4_tie+','+s2[0]+','+s2[1]);});
+    lines.push('Spread,N,Avg Margin,Median,Suggested Line,Fav Ahead %,Tied %,Dog Ahead %,Fav ML,Dog ML');
+    rows.forEach(function(r){var s2=sitSplit30(r.f4_win/(100-r.f4_tie));lines.push('-'+r.label+','+r.n+','+r.f4_mean+','+r.f4_med+','+r.f4_line+','+r.f4_win+','+r.f4_tie+','+(100-r.f4_win-r.f4_tie).toFixed(1)+','+s2[0]+','+s2[1]);});
   } else {
     lines.push('Spread,N,Fav Mean,Fav Median,Fav 25th,Fav 75th,Fav Line,Fav Over %,Dog Mean,Dog Median,Dog Line');
     rows.forEach(function(r){lines.push('-'+r.label+','+r.n+','+r.ml_fav+','+r.ml_fav_med+','+r.ml_fav_p25+','+r.ml_fav_p75+','+r.ml_fav_line+','+r.ml_fav_over+','+r.ml_dog+','+r.ml_dog_med+','+r.ml_dog_line);});
