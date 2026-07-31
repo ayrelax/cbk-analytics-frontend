@@ -4314,19 +4314,20 @@ var SIT_DATA={"meta":{"games":5327,"season":"2025-26","note":"buckets are the fl
 var _sitView='1',_sitProp='race';
 function sitOdds(v){return (v>0?'+':'')+v;}
 function sitR5(v){return Math.round(v/5)*5;}
-function sitToAm(v){
-  if(v>=100||v<=-100)return sitR5(v);
-  if(v>0)return sitR5(-(10000/v));
-  return sitR5(10000/(-v));
-}
-/* Post the two sides 30 cents apart, centred on the fair price, rounded to 5.
-   p is the probability of the first side. 53.5% gives -130/+100, 56.5% gives -145/+115. */
+/* Work in "cents" off even money: 0 is even, +15 means laying -115,
+   -15 means getting +115. This keeps the sign flip correct as a price
+   crosses even money, which a naive conversion gets wrong. */
+function sitCentsToAm(c){ return c>=0 ? -(100+c) : (100-c); }
+function sitAmToCents(am){ return am<0 ? (-am-100) : -(am-100); }
+/* Post the two sides 30 cents apart, centred on fair, rounded to 5.
+   53.5% gives -130/+100 and 56.5% gives -145/+115. */
 function sitSplit30(p){
+  p=Math.min(Math.max(p,0.0005),0.9995);
   var favFirst=p>=0.5;
   var q=favFirst?p:1-p;
-  q=Math.min(Math.max(q,0.0005),0.9995);
-  var F=100*q/(1-q);
-  var a=sitR5(-(F+15)), b=sitToAm(F-15);
+  var c=sitAmToCents(-(100*q/(1-q)));
+  var a=sitR5(sitCentsToAm(c+15));
+  var b=sitR5(sitCentsToAm(-c+15));
   return favFirst?[a,b]:[b,a];
 }
 function sitPair(p){
@@ -4358,7 +4359,7 @@ function sitRender(){
      artefact of which side happened to be listed first. Dropped from all views. */
   var T=SIT_DATA.targets, h='';
   if(_sitProp==='race'){
-    h+=sitHead('RACE TO X POINTS','Which side gets there first, from the favourite\u2019s side, with the fair price. Notice how the edge grows with the target \u2014 an early race is close to a coin flip even for a big favourite.');
+    h+=sitHead('RACE TO X POINTS','Which side gets there first, from the favourite\u2019s side. The percentage is what actually happened; the price beside it is that number posted 30 cents apart and rounded to the nearest 5. '+'Notice how the edge grows with the target \u2014 an early race is close to a coin flip even for a big favourite.');
     h+='<div class="panel" style="padding:0"><div style="overflow-x:auto"><table class="data" style="font-size:11px">'
      +'<thead><tr><th>SPREAD</th><th>N</th>'+T.map(function(t){return '<th colspan="2" style="text-align:center;border-left:1px solid var(--bdr)">TO '+t+'</th>';}).join('')+'</tr>'
      +'<tr><th></th><th></th>'+T.map(function(){return '<th style="border-left:1px solid var(--bdr)">FAV%</th><th>FAV / DOG</th>';}).join('')+'</tr></thead><tbody>';
@@ -4376,18 +4377,18 @@ function sitRender(){
   } else if(_sitProp==='led'){
     h+=sitHead('PERCENTAGE OF GAME LED','Share of regulation clock the favourite was ahead. Read the median, not the mean \u2014 the average is dragged down by the minority of games they trail throughout. '+'<b style="color:var(--txt2)">25th and 75th</b> are the range the middle half of games fell inside: a quarter came in below the 25th, a quarter above the 75th.');
     h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px">'
-     +'<thead><tr><th>SPREAD</th><th>N</th><th>MEDIAN</th><th>MEAN</th><th>25th</th><th>75th</th><th>SUGGESTED</th></tr></thead><tbody>';
+     +'<thead><tr><th>SPREAD</th><th>N</th><th>MEDIAN</th><th>MEAN</th><th>25th</th><th>75th</th><th>SUGGESTED LINE</th></tr></thead><tbody>';
     rows.forEach(function(r){
       h+='<tr><td class="bold">-'+r.label+'</td><td class="muted">'+r.n+'</td>'
         +'<td class="tnum" style="color:var(--acc);font-weight:800">'+r.led_med.toFixed(1)+'%</td>'
         +'<td class="tnum">'+r.led_mean.toFixed(1)+'%</td>'
         +'<td class="tnum muted">'+r.led_p25.toFixed(1)+'%</td>'
         +'<td class="tnum muted">'+r.led_p75.toFixed(1)+'%</td>'
-        +'<td class="tnum">'+(Math.round(r.led_med/5)*5)+'%</td></tr>';
+        +'<td class="tnum" style="color:var(--acc);font-weight:800">'+(Math.round(r.led_med)+0.5).toFixed(1)+'%</td></tr>';
     });
     h+='</tbody></table></div>';
   } else if(_sitProp==='f4'){
-    h+=sitHead('FIRST FOUR MINUTES','Score at exactly 240 seconds elapsed. The four-minute spread runs about 0.141 of the full-game number. Ties are frequent, so the moneylines below already have pushes removed.');
+    h+=sitHead('FIRST FOUR MINUTES','Score at exactly 240 seconds elapsed. The four-minute spread runs about 0.141 of the full-game number. '+'<b style="color:var(--txt2)">The moneyline</b> is built from FAV AHEAD divided by (100 minus TIED), so ties are treated as a push and removed from the pool rather than counted as a loss. '+'That two-way probability is then posted 30 cents apart and rounded to the nearest 5.');
     h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px">'
      +'<thead><tr><th>SPREAD</th><th>N</th><th>AVG MARGIN</th><th>MEDIAN</th><th>SUGGESTED LINE</th>'
      +'<th>FAV AHEAD</th><th>TIED</th><th>FAV / DOG ML</th></tr></thead><tbody>';
@@ -4406,14 +4407,15 @@ function sitRender(){
     h+=sitHead('LARGEST LEAD OF GAME','Biggest margin either side held at any point. The favourite gains roughly 0.79 per point of spread; the underdog loses 0.30. Even a 20-point favourite lets the other side lead by 2.5 at some stage. '+'<b style="color:var(--txt2)">25th and 75th</b> bracket the middle half of games \u2014 a quarter finished below the 25th, a quarter above the 75th.');
     h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px">'
      +'<thead><tr><th>SPREAD</th><th>N</th><th>FAV MEAN</th><th>FAV MEDIAN</th><th>25th</th><th>75th</th>'
-     +'<th>DOG MEAN</th><th>DOG MEDIAN</th></tr></thead><tbody>';
+     +'<th>DOG MEAN</th><th>DOG MEDIAN</th><th>SUGGESTED (FAV)</th></tr></thead><tbody>';
     rows.forEach(function(r){
       h+='<tr><td class="bold">-'+r.label+'</td><td class="muted">'+r.n+'</td>'
         +'<td class="tnum" style="color:var(--acc);font-weight:800">'+r.ml_fav.toFixed(1)+'</td>'
         +'<td class="tnum">'+r.ml_fav_med+'</td>'
         +'<td class="tnum muted">'+r.ml_fav_p25+'</td><td class="tnum muted">'+r.ml_fav_p75+'</td>'
         +'<td class="tnum">'+r.ml_dog.toFixed(1)+'</td>'
-        +'<td class="tnum muted">'+r.ml_dog_med+'</td></tr>';
+        +'<td class="tnum muted">'+r.ml_dog_med+'</td>'
+        +'<td class="tnum" style="color:var(--acc);font-weight:800">'+(Math.round(r.ml_fav)+0.5).toFixed(1)+'</td></tr>';
     });
     h+='</tbody></table></div>';
   }
@@ -4433,14 +4435,14 @@ function sitExportCSV(){
     lines.push('Spread,N,'+T.map(function(t){return 'To '+t+' %,To '+t+' Fav,To '+t+' Dog';}).join(','));
     rows.forEach(function(r){lines.push('-'+r.label+','+r.n+','+T.map(function(t){var c=r.race[String(t)];if(!c)return ',,';var s2=sitSplit30(c.pct/100);return c.pct+','+s2[0]+','+s2[1];}).join(','));});
   } else if(_sitProp==='led'){
-    lines.push('Spread,N,Median %,Mean %,25th,75th');
-    rows.forEach(function(r){lines.push('-'+r.label+','+r.n+','+r.led_med+','+r.led_mean+','+r.led_p25+','+r.led_p75);});
+    lines.push('Spread,N,Median %,Mean %,25th,75th,Suggested Line');
+    rows.forEach(function(r){lines.push('-'+r.label+','+r.n+','+r.led_med+','+r.led_mean+','+r.led_p25+','+r.led_p75+','+(Math.round(r.led_med)+0.5).toFixed(1));});
   } else if(_sitProp==='f4'){
     lines.push('Spread,N,Avg Margin,Median,Suggested Line,Fav Ahead %,Tied %,Fav ML,Dog ML');
     rows.forEach(function(r){var s2=sitSplit30(r.f4_win/(100-r.f4_tie));lines.push('-'+r.label+','+r.n+','+r.f4_mean+','+r.f4_med+','+r.f4_line+','+r.f4_win+','+r.f4_tie+','+s2[0]+','+s2[1]);});
   } else {
-    lines.push('Spread,N,Fav Mean,Fav Median,Fav 25th,Fav 75th,Dog Mean,Dog Median');
-    rows.forEach(function(r){lines.push('-'+r.label+','+r.n+','+r.ml_fav+','+r.ml_fav_med+','+r.ml_fav_p25+','+r.ml_fav_p75+','+r.ml_dog+','+r.ml_dog_med);});
+    lines.push('Spread,N,Fav Mean,Fav Median,Fav 25th,Fav 75th,Dog Mean,Dog Median,Suggested Line');
+    rows.forEach(function(r){lines.push('-'+r.label+','+r.n+','+r.ml_fav+','+r.ml_fav_med+','+r.ml_fav_p25+','+r.ml_fav_p75+','+r.ml_dog+','+r.ml_dog_med+','+(Math.round(r.ml_fav)+0.5).toFixed(1));});
   }
   var blob=new Blob([lines.join('\n')],{type:'text/csv'});
   var url=URL.createObjectURL(blob);
