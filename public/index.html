@@ -4393,9 +4393,14 @@ var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 
      A Flag   B |Market|   C |Market|   D blank   E selection   F odds   G fractional   H line
    Race to X is split into a separate market per target rather than one combined block. */
 var _sitGames=[],_sitGame=null,_sitRows=[];
-var SIT_F4_TOTAL=151, SIT_F4_TOTAL_ODDS='-10000';
+var SIT_F4_TOTAL=14, SIT_F4_TOTAL_ODDS='-10000';
 function sitBucketRow(absSpread){
-  var b=Math.floor(Math.abs(absSpread));
+  /* Floor to the whole point, but never below 1. Bucket 0 is a pick'em, where there
+     is no favourite -- its numbers describe whichever side the backtest happened to
+     list first, so a -0.5 game priced off it comes out backwards (the favourite
+     showing a plus price and leading only 40% of the clock). A half-point favourite
+     behaves like a one-point favourite, so that is the row it gets. */
+  var b=Math.max(1,Math.floor(Math.abs(absSpread)));
   var rows=SIT_DATA.views['1']||[];
   var hit=rows.filter(function(r){return r.label===String(b);})[0];
   if(hit)return hit;
@@ -4447,8 +4452,12 @@ function sitBuildRows(){
   var lp=price(row.led_over/100);
   add('Percentage Of Game Led',fav,' Lead Percentage Over',lp[0],row.led_line.toFixed(1));
   add('Percentage Of Game Led',fav,' Lead Percentage Under',lp[1],row.led_line.toFixed(1));
-  /* first four minutes, three separate markets */
+  /* first four minutes, three separate markets.
+     The stored line rounds to the nearest half, which lands on a whole number for
+     small spreads. Ties are 8.7% of games, so a whole-number line pushes far too
+     often -- nudge it half a point toward the mean. */
   var f4=row.f4_line;
+  if(f4===Math.round(f4))f4=f4+(row.f4_mean>f4?0.5:-0.5);
   add('1st 4 Minutes Spread',fav,'','-115',(f4>0?'-':'+')+Math.abs(f4).toFixed(1));
   add('1st 4 Minutes Spread',dog,'','-115',(f4>0?'+':'-')+Math.abs(f4).toFixed(1));
   add('1st 4 Minutes Total Points',null,'Over',SIT_F4_TOTAL_ODDS,SIT_F4_TOTAL.toFixed(1));
@@ -4468,7 +4477,7 @@ function sitGameHTML(){
   var m=_sitRows._meta;
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px">'
    +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'
-   +fbEsc(m.fav.toUpperCase())+' '+(m.spread>=0?'-':'+')+Math.abs(m.spread).toFixed(1)
+   +fbEsc(m.fav.toUpperCase())+' -'+Math.abs(m.spread).toFixed(1)
    +'  <span style="color:var(--txt3);font-weight:400;letter-spacing:0">vs '+fbEsc(m.dog)+'</span></div>'
    +'<div style="font-size:11px;color:var(--txt3)">'+_sitRows.length+' selections &middot; priced off the -'
    +m.bucket+' bucket ('+m.n+' games)</div></div>';
@@ -4497,10 +4506,11 @@ function sitExportGame(){
   order.forEach(function(mk){
     var rows=_sitRows.filter(function(r){return r.mkt===mk;});
     var pipe='|'+mk+'|';
-    var lines=[['Flag','','','',mk,'ODDS','',''].map(xCell).join(',')];
+    /* selection sits in D, odds E, fractional F, line G -- column D is no longer blank */
+    var lines=[['Flag','','',mk,'ODDS','',''].map(xCell).join(',')];
     rows.forEach(function(r){
       var cell=(r.team?xTeam(r.team):'')+(r.suffix||'');
-      lines.push(['Y',pipe,pipe,'',cell,xAmer(r.odds),xFrac(r.odds),r.line].map(xCell).join(','));
+      lines.push(['Y',pipe,pipe,cell,xAmer(r.odds),xFrac(r.odds),r.line].map(xCell).join(','));
     });
     blocks.push(lines.join('\n'));
   });
