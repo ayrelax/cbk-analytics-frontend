@@ -4400,6 +4400,28 @@ var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 
    Race to X is split into a separate market per target rather than one combined block. */
 var _sitGames=[],_sitGame=null,_sitRows=[];
 var SIT_F4_TOTAL=14, SIT_F4_TOTAL_ODDS='-10000';
+/* Three-way version of the four-minute market: favourite, tie, dog. The tie stops
+   being a push and becomes a selection, so the raw split is used as-is rather than
+   removing ties from the pool. Overround is applied proportionally, so every side
+   carries the same share of the juice -- the tie is a genuine longshot at roughly
+   +900 to +1300 and shading it harder than the others would be the easy mistake. */
+var SIT_3W_OV=1.06;
+var _sit3way=false;
+function sit3Am(p){
+  p=Math.min(Math.max(p,0.002),0.995);
+  return p>=0.5 ? sitR5(-100*p/(1-p)) : sitR5(100*(1-p)/p);
+}
+function sit3Way(row){
+  var w=row.f4_win/100, t=row.f4_tie/100, l=1-w-t;
+  return {fav:sit3Am(w*SIT_3W_OV), tie:sit3Am(t*SIT_3W_OV), dog:sit3Am(l*SIT_3W_OV)};
+}
+function sitSet3Way(on,el){
+  _sit3way=!!on;
+  if(el&&el.parentNode)Array.prototype.forEach.call(el.parentNode.children,function(b){b.classList.remove('on');});
+  if(el)el.classList.add('on');
+  sitBuildRows();
+  sitRender();
+}
 /* Some markets read better off a wider band -- more games behind each number, less
    bucket-to-bucket wobble. Race to X, percentage led and the four-minute moneyline
    all use the two-point bands; the four-minute spread and largest lead stay on the
@@ -4484,9 +4506,16 @@ function sitBuildRows(){
   add('1st 4 Minutes Spread',dog,'','-115',(f4>0?'+':'-')+Math.abs(f4).toFixed(1));
   add('1st 4 Minutes Total Points',null,'Over',SIT_F4_TOTAL_ODDS,SIT_F4_TOTAL.toFixed(1));
   add('1st 4 Minutes Total Points',null,'Under',SIT_F4_TOTAL_ODDS,SIT_F4_TOTAL.toFixed(1));
-  var mlp=price(band.f4_win/(100-band.f4_tie));
-  add('1st 4 Minutes Money Line',fav,'',mlp[0],'');
-  add('1st 4 Minutes Money Line',dog,'',mlp[1],'');
+  if(_sit3way){
+    var t3=sit3Way(band);
+    add('1st 4 Minutes Money Line 3-Way',fav,'',sitOdds(t3.fav),'');
+    add('1st 4 Minutes Money Line 3-Way',null,'Tie',sitOdds(t3.tie),'');
+    add('1st 4 Minutes Money Line 3-Way',dog,'',sitOdds(t3.dog),'');
+  }else{
+    var mlp=price(band.f4_win/(100-band.f4_tie));
+    add('1st 4 Minutes Money Line',fav,'',mlp[0],'');
+    add('1st 4 Minutes Money Line',dog,'',mlp[1],'');
+  }
   /* largest lead, one two-way market on the favourite's number */
   add('Largest Lead Of Game',null,'Over','-110',row.ml_fav_line.toFixed(1));
   add('Largest Lead Of Game',null,'Under','-120',row.ml_fav_line.toFixed(1));
@@ -4600,10 +4629,11 @@ function sitRender(){
     });
     h+='</tbody></table></div>';
   } else if(_sitProp==='f4'){
+    h+='<div style="margin-bottom:8px"><span style="font-size:10px;color:var(--txt3);margin-right:8px">MONEYLINE</span>'+'<span class="seg" style="display:inline-flex">'+'<button class="seg-btn'+(_sit3way?'':' on')+'" onclick="sitSet3Way(false,this)">TWO-WAY (TIES PUSH)</button>'+'<button class="seg-btn'+(_sit3way?' on':'')+'" onclick="sitSet3Way(true,this)">THREE-WAY (TIE PRICED)</button>'+'</span></div>';
     h+=sitHead('FIRST FOUR MINUTES','Score at exactly 240 seconds elapsed. The four-minute spread runs about 0.141 of the full-game number. '+'<b style="color:var(--txt2)">The three percentages sum to 100.</b> The moneyline is built from FAV AHEAD divided by (100 minus TIED) \u2014 ties push, so they leave the pool rather than counting as a dog win. Subtracting the favourite from 100 to get the dog would overstate it by the whole tie share, which runs 8 to 10% here. '+'That two-way probability is then posted on the house ladder \u2014 30 cents out to -180, then 40, 50 and 100 \u2014 rounded to the nearest 5.');
     h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px">'
      +'<thead><tr><th>SPREAD</th><th>N</th><th>AVG MARGIN</th><th>MEDIAN</th><th>SUGGESTED LINE</th>'
-     +'<th>FAV AHEAD</th><th>TIED</th><th>DOG AHEAD</th><th>FAV / DOG ML</th></tr></thead><tbody>';
+     +'<th>FAV AHEAD</th><th>TIED</th><th>DOG AHEAD</th>'+(_sit3way?'<th>FAV</th><th>TIE</th><th>DOG</th>':'<th>FAV / DOG ML</th>')+'</tr></thead><tbody>';
     rows.forEach(function(r){
       h+='<tr><td class="bold">-'+r.label+'</td><td class="muted">'+r.n+'</td>'
         +'<td class="tnum">'+(r.f4_mean>=0?'+':'')+r.f4_mean.toFixed(2)+'</td>'
@@ -4612,8 +4642,13 @@ function sitRender(){
         +'<td class="tnum">'+r.f4_win.toFixed(1)+'%</td>'
         +'<td class="tnum muted">'+r.f4_tie.toFixed(1)+'%</td>'
         +'<td class="tnum">'+(100-r.f4_win-r.f4_tie).toFixed(1)+'%</td>'
-        +'<td class="tnum" style="color:var(--acc);font-weight:700;white-space:nowrap">'
-          +sitPair(r.f4_win/(100-r.f4_tie))+'</td></tr>';
+        +(_sit3way
+          ? (function(){var t=sit3Way(r);return '<td class="tnum" style="color:var(--acc);font-weight:700">'+sitOdds(t.fav)+'</td>'
+              +'<td class="tnum" style="color:var(--amb);font-weight:700">'+sitOdds(t.tie)+'</td>'
+              +'<td class="tnum" style="color:var(--acc);font-weight:700">'+sitOdds(t.dog)+'</td>';})()
+          : '<td class="tnum" style="color:var(--acc);font-weight:700;white-space:nowrap">'
+              +sitPair(r.f4_win/(100-r.f4_tie))+'</td>')
+        +'</tr>';
     });
     h+='</tbody></table></div>';
   } else {
