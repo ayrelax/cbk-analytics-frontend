@@ -1426,7 +1426,7 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 <div id="cbk-restrict-slot"></div>
 <div id="sp-game-view"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game. Loads the top 7 scorers per team and prices who leads the game.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="sp-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('sp')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-sp"><select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select><span id="sp-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div></div>
 <div id="sp-day-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a date. Loads the top 25 scorers among allowed teams playing that day (Power 5 + your 12 mid-majors). Uncheck to trim the field.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-day-date" class="field" style="max-width:200px" onchange="spLoadDay()"><option value="">Select a date...</option></select></div></div>
-<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="prop-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('prop')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-prop"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select><span id="prop-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="prop-output"></div></div><div id="sp-first3-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores the first 3-point field goal. Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from 3PM + 3PA per game and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="f3-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('f3')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-f3"><select id="f3-game" class="field" style="max-width:340px" onchange="f3LoadGame()"><option value="">Select a game...</option></select><span id="f3-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="f3-players" style="margin-bottom:14px"></div><div id="f3-output"></div></div><div id="sp-firstsc-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores first (any points, free throws count). Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from PPG, usage, FT rate and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="fs-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('fs')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fs"><select id="fs-game" class="field" style="max-width:340px" onchange="fsLoadGame()"><option value="">Select a game...</option></select><span id="fs-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="fs-players" style="margin-bottom:14px"></div><div id="fs-output"></div></div><div id="sp-sitprops-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:10px">Backtested on 5,336 games of play-by-play joined to your stored closing lines. Pick a market, then how you want the spread grouped.</div><div class="search-bar" style="gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><div class="seg" style="display:inline-flex"><button class="seg-btn on" onclick="sitSetProp('race',this)">RACE TO X</button><button class="seg-btn" onclick="sitSetProp('led',this)">% GAME LED</button><button class="seg-btn" onclick="sitSetProp('f4',this)">FIRST 4 MIN</button><button class="seg-btn" onclick="sitSetProp('max',this)">LARGEST LEAD</button></div><div class="seg" style="display:inline-flex"><button class="seg-btn on" onclick="sitSetView('1',this)">EVERY POINT</button><button class="seg-btn" onclick="sitSetView('2',this)">BANDS OF 2</button><button class="seg-btn" onclick="sitSetView('3',this)">BANDS OF 3</button></div><button class="btn" style="font-size:10px;padding:4px 12px" onclick="sitExportCSV()">EXPORT CSV</button></div><div id="sit-output"></div></div>
+<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="prop-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('prop')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-prop"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select><span id="prop-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="prop-output"></div></div><div id="sp-first3-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores the first 3-point field goal. Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from 3PM + 3PA per game and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="f3-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('f3')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-f3"><select id="f3-game" class="field" style="max-width:340px" onchange="f3LoadGame()"><option value="">Select a game...</option></select><span id="f3-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="f3-players" style="margin-bottom:14px"></div><div id="f3-output"></div></div><div id="sp-firstsc-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores first (any points, free throws count). Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from PPG, usage, FT rate and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="fs-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('fs')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fs"><select id="fs-game" class="field" style="max-width:340px" onchange="fsLoadGame()"><option value="">Select a game...</option></select><span id="fs-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="fs-players" style="margin-bottom:14px"></div><div id="fs-output"></div></div><div id="sp-sitprops-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:10px">Backtested on 5,336 games of play-by-play joined to your stored closing lines. Pick a market, then how you want the spread grouped.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><input id="sit-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('sit')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-sit"><select id="sit-game" class="field" style="max-width:320px" onchange="sitGameChange()"><option value="">Select a game...</option></select><span id="sit-gnote" style="font-size:10px;color:var(--txt3)"></span><button class="btn" style="font-size:11px;padding:4px 14px;background:var(--acc);color:#1a1208;font-weight:800" onclick="sitExportGame()">EXPORT CSV</button></div><div class="search-bar" style="gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><div class="seg" style="display:inline-flex"><button class="seg-btn on" onclick="sitSetProp('race',this)">RACE TO X</button><button class="seg-btn" onclick="sitSetProp('led',this)">% GAME LED</button><button class="seg-btn" onclick="sitSetProp('f4',this)">FIRST 4 MIN</button><button class="seg-btn" onclick="sitSetProp('max',this)">LARGEST LEAD</button></div><div class="seg" style="display:inline-flex"><button class="seg-btn on" onclick="sitSetView('1',this)">EVERY POINT</button><button class="seg-btn" onclick="sitSetView('2',this)">BANDS OF 2</button><button class="seg-btn" onclick="sitSetView('3',this)">BANDS OF 3</button></div><button class="btn" style="font-size:10px;padding:4px 12px" onclick="sitExportCSV()">EXPORT TABLE</button></div><div id="sit-output"></div></div>
 <div id="sp-exportall-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Prices every market for one game and writes them to a single CSV. Daily Top 25 is excluded, being a slate market rather than a game market.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="xa-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('xa')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-xa"><select id="xa-game" class="field" style="max-width:340px" onchange="xaBuild()"><option value="">Select a game...</option></select><span id="xa-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span><button id="xa-btn" class="btn" style="font-size:11px;padding:4px 14px;background:var(--acc);color:#1a1208;font-weight:800" onclick="xaExport()">EXPORT CSV</button></div><div id="xa-output"></div></div>
 <div id="sp-firstbasket-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Six-way market: each team by two-point field goal, three-point field goal or free throw. Priced from net efficiency (who scores first) and each team's own shot profile (how).</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="fb-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('fb')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fb"><select id="fb-game" class="field" style="max-width:340px" onchange="fbLoadGame()"><option value="">Select a game...</option></select><span id="fb-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span><span style="font-size:11px;color:var(--txt3)">overround</span><input id="fb-overround" class="field" style="width:70px" value="1.12" onchange="fbRender()"></div><div id="fb-output"></div></div>
 <div id="sp-gamespec-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Fixed game specials — pick a game and the team names fill in automatically. Default odds are -10000; edit each one, uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="gs-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('gs')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-gs"><select id="gs-game" class="field" style="max-width:340px" onchange="gsLoadGame()"><option value="">Select a game...</option></select><span id="gs-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="gs-output"></div></div>
@@ -4266,7 +4266,8 @@ var GAME_SELS={
   fs   :{sel:'fs-game',   src:function(){return _fsGames;}},
   fb   :{sel:'fb-game',   src:function(){return _fbGames;}},
   gs   :{sel:'gs-game',   src:function(){return _gsGames;}},
-  xa   :{sel:'xa-game',   src:function(){return _xaGames;}}
+  xa   :{sel:'xa-game',   src:function(){return _xaGames;}},
+  sit  :{sel:'sit-game',  src:function(){return _sitGames;}}
 };
 function gameToday(){
   var d=new Date();
@@ -4334,8 +4335,13 @@ function sitGapFor(favMag){
   if(favMag<=400)return 50;
   return 100;
 }
+/* Cap the extremes. A 47-game bucket that reads 100% is a sample artefact, not a
+   certainty -- unclamped it prices at -199900. Holding the probability inside
+   2% to 98% keeps the worst price near -2000, which is a number you could
+   actually post. */
+var SIT_PMIN=0.02, SIT_PMAX=0.98;
 function sitSplit30(p){
-  p=Math.min(Math.max(p,0.0005),0.9995);
+  p=Math.min(Math.max(p,SIT_PMIN),SIT_PMAX);
   var favFirst=p>=0.5;
   var q=favFirst?p:1-p;
   var fairMag=100*q/(1-q);
@@ -4355,7 +4361,7 @@ function sitPair(p){
   var s=sitSplit30(p);
   return sitOdds(s[0])+' / '+sitOdds(s[1]);
 }
-function initSit(){sitRender();}
+function initSit(){sitLoadGames();sitRender();}
 function sitSetView(v,el){
   _sitView=v;
   if(el&&el.parentNode)Array.prototype.forEach.call(el.parentNode.children,function(b){b.classList.remove('on');});
@@ -4381,6 +4387,121 @@ var SIT_BLOCK={
   max :['Arizona','Colorado','Delaware','Iowa','Maryland','Massachusetts','New York','Pennsylvania','Tennessee','Virginia','Washington State']
 };
 var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 Minutes',max:'Largest Lead Of Game'};
+/* ================= SITUATIONAL: PRICE ONE GAME =================
+   Takes your spread for the game, finds the matching bucket in the backtest, and
+   writes every situational selection for it. The buckets were measured against
+   CLOSING market lines, so a game where your number and the close end up far apart
+   will be priced off the wrong row -- worth a look before you post a big move. */
+var _sitGames=[],_sitGame=null,_sitRows=[];
+function sitBucketRow(absSpread){
+  var b=Math.floor(Math.abs(absSpread));
+  var rows=SIT_DATA.views['1']||[];
+  var hit=rows.filter(function(r){return r.label===String(b);})[0];
+  if(hit)return hit;
+  /* past the last individual point, fall back to the catch-all band */
+  return rows.filter(function(r){return r.label.indexOf('+')>0;})[0]||null;
+}
+async function sitLoadGames(){
+  var sel=document.getElementById('sit-game');
+  if(!sel||sel.options.length>1)return;
+  sel.innerHTML='<option value="">Loading games...</option>';
+  var r=await sb.from('games').select('id,game_date,neutral_site,home:home_team_id(id,team,pr,hc,conference),away:away_team_id(id,team,pr,hc,conference)')
+    .order('game_date',{ascending:true}).range(0,9999);
+  _sitGames=(r.data||[]).filter(function(g){return g.home&&g.away;});
+  gameFill('sit');
+}
+function sitGameChange(){
+  var sel=document.getElementById('sit-game');
+  var gid=sel?sel.value:'';
+  _sitGame=gid?_sitGames.filter(function(x){return String(x.id)===String(gid);})[0]:null;
+  sitBuildRows();
+  sitRender();
+}
+function sitBuildRows(){
+  _sitRows=[];
+  var g=_sitGame;
+  if(!g)return;
+  var sp=calcSpreadG(g);                 /* your number, home perspective */
+  var favHome=sp>=0;
+  var fav=favHome?g.home.team:g.away.team;
+  var dog=favHome?g.away.team:g.home.team;
+  var row=sitBucketRow(sp);
+  if(!row)return;
+  function push(mkt,sel,team,odds){_sitRows.push({mkt:mkt,name:sel,team:team,odds:odds});}
+  function price(p){var s=sitSplit30(p);return [sitOdds(s[0]),sitOdds(s[1])];}
+  /* race to X, both sides */
+  SIT_DATA.targets.forEach(function(t){
+    var c=row.race[String(t)];
+    if(!c)return;
+    var pr=price(c.pct/100);
+    push('race',fav+' To Reach '+t+' Points First',fav,pr[0]);
+    push('race',dog+' To Reach '+t+' Points First',dog,pr[1]);
+  });
+  /* percentage of game led -- the line is built to sit near 50/50 */
+  var lp=price(row.led_over/100);
+  push('led',fav+' To Lead Over '+row.led_line.toFixed(1)+'% Of The Game',fav,lp[0]);
+  push('led',fav+' To Lead Under '+row.led_line.toFixed(1)+'% Of The Game',fav,lp[1]);
+  /* first four minutes */
+  var f4=row.f4_line;
+  var fs=(f4>0?'-':'+')+Math.abs(f4).toFixed(1);
+  var ds=(f4>0?'+':'-')+Math.abs(f4).toFixed(1);
+  push('f4',fav+' '+fs+' First 4 Minutes',fav,'-115');
+  push('f4',dog+' '+ds+' First 4 Minutes',dog,'-115');
+  var mlp=price(row.f4_win/(100-row.f4_tie));
+  push('f4',fav+' To Win The First 4 Minutes',fav,mlp[0]);
+  push('f4',dog+' To Win The First 4 Minutes',dog,mlp[1]);
+  /* largest lead, each side */
+  var fp=price(row.ml_fav_over/100);
+  push('max',fav+' Largest Lead Over '+row.ml_fav_line.toFixed(1),fav,fp[0]);
+  push('max',fav+' Largest Lead Under '+row.ml_fav_line.toFixed(1),fav,fp[1]);
+  var dp=price(row.ml_dog_over/100);
+  push('max',dog+' Largest Lead Over '+row.ml_dog_line.toFixed(1),dog,dp[0]);
+  push('max',dog+' Largest Lead Under '+row.ml_dog_line.toFixed(1),dog,dp[1]);
+  _sitRows._meta={spread:sp,fav:fav,dog:dog,bucket:row.label,n:row.n,neutral:!!g.neutral_site};
+}
+function sitGameHTML(){
+  if(!_sitGame)return '<div style="font-size:11px;color:var(--txt3);padding:8px 2px">Pick a game to price every situational market for it.</div>';
+  if(!_sitRows.length)return '<div style="font-size:11px;color:var(--red2);padding:8px 2px">No backtest row for that spread.</div>';
+  var m=_sitRows._meta;
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px">'
+   +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'
+   +fbEsc(m.fav.toUpperCase())+' '+(m.spread>=0?'-':'+')+Math.abs(m.spread).toFixed(1)
+   +'  <span style="color:var(--txt3);font-weight:400;letter-spacing:0">vs '+fbEsc(m.dog)+'</span></div>'
+   +'<div style="font-size:11px;color:var(--txt3)">'+_sitRows.length+' selections &middot; priced off the -'
+   +m.bucket+' bucket ('+m.n+' games)</div></div>';
+  h+='<div class="panel" style="padding:0"><div style="overflow-x:auto"><table class="data" style="font-size:11px;width:100%">'
+   +'<thead><tr><th>MARKET</th><th>SELECTION</th><th style="width:150px">TEAM</th><th style="width:80px">ODDS</th></tr></thead><tbody>';
+  var last='';
+  _sitRows.forEach(function(r){
+    var lbl=(r.mkt!==last)?SIT_LABEL[r.mkt]:'';
+    last=r.mkt;
+    h+='<tr><td class="bold" style="color:var(--acc)">'+lbl+'</td>'
+      +'<td>'+fbEsc(r.name)+'</td>'
+      +'<td class="muted">'+fbEsc(xTeam(r.team))+'</td>'
+      +'<td class="tnum" style="font-weight:800;color:var(--acc)">'+r.odds+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  if(m.neutral)h+='<div style="font-size:10px;color:var(--amb);padding:6px 2px">Neutral court \u2014 the backtest buckets include neutral games, so no separate treatment is applied.</div>';
+  return h;
+}
+function sitExportGame(){
+  if(!_sitRows.length){alert('Pick a game first.');return;}
+  var m=_sitRows._meta;
+  var blocks=[];
+  ['race','led','f4','max'].forEach(function(k){
+    var rows=_sitRows.filter(function(r){return r.mkt===k;});
+    if(!rows.length)return;
+    var pipe='|'+SIT_LABEL[k]+'|';
+    var head=['Flag','','','',SIT_LABEL[k],'ODDS',''];
+    var lines=[head.map(xCell).join(',')];
+    rows.forEach(function(r){
+      lines.push([ 'Y',pipe,pipe,r.name,xTeam(r.team),xAmer(r.odds),xFrac(r.odds) ].map(xCell).join(','));
+    });
+    blocks.push(lines.join('\n'));
+  });
+  var tag=(m.dog+' at '+m.fav).replace(/[^a-z0-9]+/gi,'_');
+  xDownload('situational_'+tag+'.csv',blocks.join('\n\n'));
+}
 function sitRestrictHTML(){
   var h='<div style="margin-bottom:14px">';
   h+='<div style="font-size:10px;letter-spacing:1.2px;color:var(--acc);font-weight:800;margin-bottom:6px">COMPLIANCE REFERENCE</div>';
@@ -4411,7 +4532,7 @@ function sitRender(){
   var rows=(SIT_DATA.views[_sitView]||[]).filter(function(r){return r.label!=='0';});
   /* a pick'em has no favourite, so every one of these numbers is just a coin-flip
      artefact of which side happened to be listed first. Dropped from all views. */
-  var T=SIT_DATA.targets, h=sitRestrictHTML();
+  var T=SIT_DATA.targets, h=sitGameHTML()+sitRestrictHTML();
   if(_sitProp==='race'){
     h+=sitHead('RACE TO X POINTS','Which side gets there first, from the favourite\u2019s side. The percentage is what actually happened; the price beside it is that number posted 30 cents apart and rounded to the nearest 5. '+'Prices widen as they lengthen: 30 cents to -180, then 40, 50 and 100. '+'Notice how the edge grows with the target \u2014 an early race is close to a coin flip even for a big favourite.');
     h+='<div class="panel" style="padding:0"><div style="overflow-x:auto"><table class="data" style="font-size:11px">'
