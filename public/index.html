@@ -4196,8 +4196,8 @@ function spApplyMargin(){
     var implied=spImplied(odds);bookedTotal+=implied;
     return{player:r.player,team:r.team,ppg:r.ppg,fair:r.fpN,odds:odds};
   });
-  _mkRows.sp=rows.map(function(r){return{sel:r.player+' ('+r.team+')',odds:r.odds};});
-  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+(_spMode==='day'?'DAILY LEADING SCORER':'GAME LEADING SCORER')+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="spExportCSV()">EXPORT CSV</button></div>';
+  _mkRows.sp=rows.map(function(r){return{name:r.player,team:r.team,ppg:r.ppg.toFixed(1),odds:r.odds};});
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+(_spMode==='day'?'DAILY LEADING SCORER':'GAME LEADING SCORER')+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="xExportSp()">EXPORT CSV</button></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>LED 1/2/3</th><th>FAIR%</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   rows.forEach(function(r){
     h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td>'+rateCell(r.player,r.team,'ls')+'<td class="muted">'+(r.fair*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
@@ -4284,6 +4284,91 @@ async function spLoadDay(){
 /* =============== END DAILY LEADING SCORER =============== */
 
 function fbEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ================= UPLOAD-FORMAT CSV EXPORT =================
+   Matches the sheet layout the trading platform ingests:
+     A  Flag           always Y
+     B  |Market|       piped market name
+     C  |Market|       piped again
+     D  Selection      player name, or the full prop description
+     E  Team           player markets only; description markets put odds here
+     ...  American odds, then fractional
+   Two shapes, taken from the live files:
+     PLAYER  Flag, |M|, |M|, Player, Team, [PPG], American, Fractional
+     DESC    Flag, |M|, |M|, Description, American, Fractional
+   Top Scorer is the only one carrying PPG, which pushes its odds to column G. */
+function xAmer(o){
+  var n=parseInt(String(o).replace(/\+/g,''),10);
+  return isNaN(n)?'':n;
+}
+function xFrac(o){
+  var am=parseInt(String(o).replace(/\+/g,''),10);
+  if(isNaN(am))return '';
+  var n,d;
+  if(am>0){n=am;d=100;}else{n=100;d=Math.abs(am);}
+  function g(a,b){return b?g(b,a%b):a;}
+  var k=g(n,d)||1;
+  return (n/k)+'/'+(d/k);
+}
+function xCell(v){
+  v=(v==null)?'':String(v);
+  return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+}
+/* market definitions: label, shape, and where the title/ODDS headers sit */
+var X_MKT={
+  sp    :{label:'Top Scorer In Game',        shape:'player', ppg:true,  titleCol:4, oddsCol:6},
+  props :{label:'Player Specials',           shape:'desc',                titleCol:3, oddsCol:4},
+  f3    :{label:'First Scorer Type (3PT FG)',shape:'player', ppg:false, titleCol:4, oddsCol:5},
+  fs    :{label:'First Scorer',              shape:'player', ppg:false, titleCol:4, oddsCol:5},
+  fb    :{label:'Method Of First Basket',    shape:'desc',                titleCol:3, oddsCol:4},
+  gs    :{label:'NCAA Specials',             shape:'desc',                titleCol:3, oddsCol:4}
+};
+function xBuildCSV(key,rows){
+  var m=X_MKT[key];
+  if(!m||!rows||!rows.length)return null;
+  var pipe='|'+m.label+'|';
+  var width=Math.max(m.oddsCol+2, m.titleCol+1);
+  var head=new Array(width).fill('');
+  head[0]='Flag'; head[m.titleCol]=m.label; head[m.oddsCol]='ODDS';
+  var lines=[head.map(xCell).join(',')];
+  rows.forEach(function(r){
+    var c=new Array(width).fill('');
+    c[0]='Y'; c[1]=pipe; c[2]=pipe; c[3]=r.name;
+    if(m.shape==='player'){
+      c[4]=r.team||'';
+      if(m.ppg){ c[5]=(r.ppg==null?'':r.ppg); c[6]=xAmer(r.odds); c[7]=xFrac(r.odds); }
+      else { c[5]=xAmer(r.odds); c[6]=xFrac(r.odds); }
+    } else {
+      c[4]=xAmer(r.odds); c[5]=xFrac(r.odds);
+    }
+    lines.push(c.map(xCell).join(','));
+  });
+  return lines.join('\n');
+}
+function xDownload(name,text){
+  var blob=new Blob([text],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download=name; a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},1500);
+}
+function xExport(key,label){
+  var rows=_mkRows[key]||[];
+  if(!rows.length){alert('Nothing priced for this market yet.');return;}
+  var csv=xBuildCSV(key,rows);
+  var tag=(label||'game').replace(/[^a-z0-9]+/gi,'_');
+  xDownload(X_MKT[key].label.replace(/[^a-z0-9]+/gi,'_')+'_'+tag+'.csv',csv);
+}
+function xSelText(id){
+  var e=document.getElementById(id);
+  return (e&&e.selectedOptions&&e.selectedOptions[0])?e.selectedOptions[0].text:'';
+}
+function xExportSp(){xExport('sp',_spMode==='day'?'daily':xSelText('sp-game'));}
+function xExportProps(){xExport('props',xSelText('prop-game'));}
+function xExportF3(){xExport('f3',xSelText('f3-game'));}
+function xExportFs(){xExport('fs',xSelText('fs-game'));}
+function xExportFb(){xExport('fb',_fbLabel||xSelText('fb-game'));}
+function xExportGs(){xExport('gs',xSelText('gs-game'));}
 
 /* ================= EXPORT ALL — every market for one game =================
    Drives each sub-tab in turn: sets its game, waits for it to price, collects the rows.
@@ -4386,17 +4471,30 @@ function xaExport(){
   var total=0;
   XA_MARKETS.forEach(function(m){total+=(_mkRows[m.k]||[]).length;});
   if(!total){alert('Select a game and let it price first.');return;}
-  function cell(v){v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
-  var lines=['Selection,Odds'];
+  /* one file per market, in the platform's upload layout. Staggered so the browser
+     does not swallow the later downloads. */
+  var tag=_xaLabel.replace(/[^a-z0-9]+/gi,'_');
+  var done=0,delay=0;
   XA_MARKETS.forEach(function(m){
-    (_mkRows[m.k]||[]).forEach(function(r){lines.push(cell(r.sel)+','+cell(r.odds));});
+    var rows=_mkRows[m.k]||[];
+    if(!rows.length)return;
+    var csv=xBuildCSV(m.k,rows);
+    if(!csv)return;
+    done++;
+    setTimeout(function(){
+      xDownload(X_MKT[m.k].label.replace(/[^a-z0-9]+/gi,'_')+'_'+tag+'.csv',csv);
+    },delay);
+    delay+=350;
   });
-  var blob=new Blob([lines.join('\n')],{type:'text/csv'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download='all_markets_'+_xaLabel.replace(/[^a-z0-9]+/gi,'_')+'.csv';a.click();
-  URL.revokeObjectURL(url);
+  var out=document.getElementById('xa-output');
+  if(out){
+    var note=document.createElement('div');
+    note.style.cssText='font-size:11px;color:var(--grn2);padding:8px 2px';
+    note.textContent=done+' files downloading \u2014 one per market.';
+    out.appendChild(note);
+  }
 }
+
 /* ================= METHOD OF FIRST BASKET =================
    Six-way market: each team by 2PT / 3PT / Free Throw.
    Built on 6,275 games of play-by-play. League base rates:
@@ -4508,13 +4606,13 @@ function fbRender(){
      long price sitting above a short one. */
   rows.sort(function(a,b){return b.imp-a.imp;});
   _fbRows=rows;_fbLabel=g.away.team+' at '+g.home.team;
-  _mkRows.fb=rows.map(function(r){return{sel:r.team+' '+r.m,odds:r.odds};});
+  _mkRows.fb=rows.map(function(r){return{name:r.team+' '+r.m,odds:r.odds};});
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
    +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">METHOD OF FIRST BASKET &mdash; '
    +fbEsc(g.away.team)+' @ '+fbEsc(g.home.team)+'</div>'
    +'<div style="display:flex;align-items:center;gap:10px">'
    +'<span style="font-size:11px;color:var(--txt3)">book '+(booked*100).toFixed(1)+'%</span>'
-   +'<button class="btn" style="font-size:10px;padding:3px 10px" onclick="fbExportCSV()">EXPORT CSV</button>'
+   +'<button class="btn" style="font-size:10px;padding:3px 10px" onclick="xExportFb()">EXPORT CSV</button>'
    +'</div></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px">'
    +'<thead><tr><th>TEAM</th><th></th><th>METHOD</th><th>FAIR%</th><th>ODDS</th>'
@@ -4686,7 +4784,7 @@ function _propGenerate(players,g){
   add('Will Any Player Score A Go Ahead Field Goal With 0.0 Seconds Left In The Game',null,'+5000');
   [awayName,homeName].forEach(function(tm){byPts.filter(function(p){return p.team===tm;}).slice(0,5).forEach(function(p){add(p.player_name+' To Score A Go Ahead Field Goal With 0.0 Seconds Left In The Game',null,'+20000');});});
   _propList=props;
-  _mkRows.props=props.filter(function(p){return p.on!==false;}).map(function(p){return{sel:p.desc,odds:p.odds};});
+  _mkRows.props=props.filter(function(p){return p.on!==false;}).map(function(p){return{name:p.desc,odds:p.odds};});
   propRender();
 }
 function propReprice(){
@@ -4706,7 +4804,7 @@ function propRender(){
   var g=_propGame;
   var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
   var active=_propList.filter(function(p){return p.on;}).length;
-  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+matchup+' \u2014 '+active+' PROPS</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="propExportCSV()">EXPORT CSV</button></div>';
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+matchup+' \u2014 '+active+' PROPS</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="xExportProps()">EXPORT CSV</button></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr>'+(isAdmin?'<th></th>':'')+'<th>PROP</th><th>FAIR%</th><th>ODDS</th></tr></thead><tbody>';
   _propList.forEach(function(p,i){
     h+='<tr style="'+(p.on?'':'opacity:.4')+'">'+(isAdmin?'<td><input type="checkbox" '+(p.on?'checked':'')+' onchange="propToggle('+i+')"></td>':'')+'<td class="bold">'+p.desc+'</td><td class="muted">'+(p.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+p.odds+'</td></tr>';
@@ -4798,14 +4896,14 @@ function f3Price(){
   },function(r,p){r.prob=p;});
   rows.sort(function(a,b){return b.prob-a.prob;});
   var booked=0;
-    _mkRows.f3=rows.map(function(r){return{sel:r.player+' ('+r.team+')',odds:(_f3Overrides&&_f3Overrides[r.player]!==undefined)?_f3Overrides[r.player]:propRound(propAmer(r.prob,ov))};});
+    _mkRows.f3=rows.map(function(r){return{name:r.player,team:r.team,odds:(_f3Overrides&&_f3Overrides[r.player]!==undefined)?_f3Overrides[r.player]:propRound(propAmer(r.prob,ov))};});
 var body=rows.map(function(r){
     var odds=(_f3Overrides&&_f3Overrides[r.player]!==undefined)?_f3Overrides[r.player]:propRound(propAmer(r.prob,ov));
     booked+=f3Implied(odds);
     return{player:r.player,team:r.team,tpm3:r.tpm3,tpa3:r.tpa3,prob:r.prob,odds:odds};
   });
   var g=_f3Game;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
-  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">FIRST 3PT FIELD GOAL \u2014 '+matchup+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="f3ExportCSV()">EXPORT CSV</button></div>';
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">FIRST 3PT FIELD GOAL \u2014 '+matchup+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="xExportF3()">EXPORT CSV</button></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>3PM/g</th><th>3PA/g</th><th>1ST 3PT 1/2/3</th><th>PROB</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   body.forEach(function(r){
     h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.tpm3.toFixed(1)+'</td><td>'+r.tpa3.toFixed(1)+'</td>'+rateCell(r.player,r.team,'f3')+'<td class="muted">'+(r.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
@@ -4902,14 +5000,14 @@ function fsPrice(){
   },function(r,p){r.prob=p;});
   rows.sort(function(a,b){return b.prob-a.prob;});
   var booked=0;
-    _mkRows.fs=rows.map(function(r){return{sel:r.player+' ('+r.team+')',odds:(_fsOverrides&&_fsOverrides[r.player]!==undefined)?_fsOverrides[r.player]:propRound(propAmer(r.prob,ov))};});
+    _mkRows.fs=rows.map(function(r){return{name:r.player,team:r.team,odds:(_fsOverrides&&_fsOverrides[r.player]!==undefined)?_fsOverrides[r.player]:propRound(propAmer(r.prob,ov))};});
 var body=rows.map(function(r){
     var odds=(_fsOverrides[r.player]!==undefined)?_fsOverrides[r.player]:propRound(propAmer(r.prob,ov));
     booked+=fsImplied(odds);
     return{player:r.player,team:r.team,ppg:r.ppg,usage_pct:r.usage_pct,ft_rate:r.ft_rate,prob:r.prob,odds:odds};
   });
   var g=_fsGame;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
-  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">FIRST SCORER \u2014 '+matchup+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="fsExportCSV()">EXPORT CSV</button></div>';
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">FIRST SCORER \u2014 '+matchup+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="xExportFs()">EXPORT CSV</button></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>USG%</th><th>FT RATE</th><th>1ST 1/2/3</th><th>PROB</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   body.forEach(function(r){
     h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td><td>'+(r.usage_pct!=null?r.usage_pct:'-')+'</td><td>'+(r.ft_rate!=null?r.ft_rate:'-')+'</td>'+rateCell(r.player,r.team,'fs')+'<td class="muted">'+(r.prob*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
@@ -4985,8 +5083,8 @@ function gsLoadGame(){
 function gsRender(){
   var g=_gsGame;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
   var active=_gsList.filter(function(p){return p.on;}).length;
-  _mkRows.gs=_gsList.filter(function(p){return p.on;}).map(function(p){return{sel:p.desc,odds:p.odds};});
-  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">GAME SPECIALS \u2014 '+matchup+' ('+active+')</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="gsExportCSV()">EXPORT CSV</button></div>';
+  _mkRows.gs=_gsList.filter(function(p){return p.on;}).map(function(p){return{name:p.desc,odds:p.odds};});
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">GAME SPECIALS \u2014 '+matchup+' ('+active+')</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="xExportGs()">EXPORT CSV</button></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr>'+(isAdmin?'<th></th>':'')+'<th>SPECIAL</th><th>ODDS</th></tr></thead><tbody>';
   _gsList.forEach(function(p,i){
     h+='<tr style="'+(p.on?'':'opacity:.4')+'">'+(isAdmin?'<td><input type="checkbox" '+(p.on?'checked':'')+' onchange="gsToggle('+i+')"></td>':'')+'<td class="bold">'+p.desc+'</td>';
