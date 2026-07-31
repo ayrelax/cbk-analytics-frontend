@@ -4291,12 +4291,18 @@ function fbEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g
 var _mkRows={sp:[],props:[],f3:[],fs:[],fb:[],gs:[]};
 var _xaGames=[],_xaBusy=false,_xaLabel='';
 var XA_MARKETS=[
-  {k:'sp',   name:'Single Game (leading scorer)', sel:'sp-game',   load:function(){return spLoadGame();}},
-  {k:'props',name:'Game Props',                   sel:'prop-game', load:function(){return propLoadGame();}},
-  {k:'f3',   name:'First 3PT',                    sel:'f3-game',   load:function(){return f3LoadGame();}},
-  {k:'fs',   name:'First Scorer',                 sel:'fs-game',   load:function(){return fsLoadGame();}},
-  {k:'fb',   name:'First Basket',                 sel:'fb-game',   load:function(){fbLoadGame();return Promise.resolve();}},
-  {k:'gs',   name:'Game Specials',                sel:'gs-game',   load:function(){gsLoadGame();return Promise.resolve();}}
+  {k:'sp',   name:'Single Game (leading scorer)', sel:'sp-game',   init:function(){return initSpecials();},
+   load:function(){return spLoadGame();}},
+  {k:'props',name:'Game Props',                   sel:'prop-game', init:function(){return initProps();},
+   load:function(){return propLoadGame();}},
+  {k:'f3',   name:'First 3PT',                    sel:'f3-game',   init:function(){return initFirst3();},
+   load:function(){return f3LoadGame();}},
+  {k:'fs',   name:'First Scorer',                 sel:'fs-game',   init:function(){return initFirstsc();},
+   load:function(){return fsLoadGame();}},
+  {k:'fb',   name:'First Basket',                 sel:'fb-game',   init:function(){return initFirstBasket();},
+   load:function(){fbLoadGame();return Promise.resolve();}},
+  {k:'gs',   name:'Game Specials',                sel:'gs-game',   init:function(){return initGamespec();},
+   load:function(){gsLoadGame();return Promise.resolve();}}
 ];
 function xaWait(ms){return new Promise(function(r){setTimeout(r,ms);});}
 async function initExportAll(){
@@ -4314,9 +4320,15 @@ async function initExportAll(){
 }
 async function xaRun(m,gid){
   var sel=document.getElementById(m.sel);
-  if(!sel)return 'tab not open';
+  if(!sel)return 'panel missing';
+  /* the sub-tabs only build their game lists when opened, so run the init first.
+     Without this a market the user has never visited reports "game not in this market". */
+  if(sel.options.length<=1){
+    try{ await m.init(); }catch(e){}
+    for(var w=0;w<40&&sel.options.length<=1;w++){ await xaWait(150); }
+  }
   sel.value=String(gid);
-  if(sel.value!==String(gid))return 'game not in this market';
+  if(sel.value!==String(gid))return 'game not on this market\u2019s list';
   _mkRows[m.k]=[];
   try{ await m.load(); }catch(e){ return 'error: '+e.message; }
   for(var i=0;i<40;i++){
