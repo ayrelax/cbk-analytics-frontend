@@ -1421,11 +1421,12 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 </div>
 <div id="page-specials" style="display:none">
 <div class="cbk-pagelbl" style="font-size:12px;color:var(--txt2);margin-bottom:8px">PLAYER SPECIALS</div>
-<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button><button class="seg-btn" onclick="spSwitchMode('props',this)">GAME PROPS</button><button class="seg-btn" onclick="spSwitchMode('first3',this)">FIRST 3PT</button><button class="seg-btn" onclick="spSwitchMode('firstsc',this)">FIRST SCORER</button><button class="seg-btn" onclick="spSwitchMode('firstbasket',this)">FIRST BASKET</button><button class="seg-btn" onclick="spSwitchMode('gamespec',this)">GAME SPECIALS</button></div>
+<div class="seg" id="sp-mode" style="margin-bottom:12px"><button class="seg-btn active" onclick="spSwitchMode('game',this)">SINGLE GAME</button><button class="seg-btn" onclick="spSwitchMode('day',this)">DAILY (TOP 25)</button><button class="seg-btn" onclick="spSwitchMode('props',this)">GAME PROPS</button><button class="seg-btn" onclick="spSwitchMode('first3',this)">FIRST 3PT</button><button class="seg-btn" onclick="spSwitchMode('firstsc',this)">FIRST SCORER</button><button class="seg-btn" onclick="spSwitchMode('firstbasket',this)">FIRST BASKET</button><button class="seg-btn" onclick="spSwitchMode('gamespec',this)">GAME SPECIALS</button><button class="seg-btn" onclick="spSwitchMode('exportall',this)">EXPORT ALL</button></div>
 <div id="cbk-restrict-slot"></div>
 <div id="sp-game-view"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game. Loads the top 7 scorers per team and prices who leads the game.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select></div></div>
 <div id="sp-day-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a date. Loads the top 25 scorers among allowed teams playing that day (Power 5 + your 12 mid-majors). Uncheck to trim the field.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-day-date" class="field" style="max-width:200px" onchange="spLoadDay()"><option value="">Select a date...</option></select></div></div>
-<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select></div><div id="prop-output"></div></div><div id="sp-first3-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores the first 3-point field goal. Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from 3PM + 3PA per game and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="f3-game" class="field" style="max-width:340px" onchange="f3LoadGame()"><option value="">Select a game...</option></select></div><div id="f3-players" style="margin-bottom:14px"></div><div id="f3-output"></div></div><div id="sp-firstsc-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores first (any points, free throws count). Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from PPG, usage, FT rate and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="fs-game" class="field" style="max-width:340px" onchange="fsLoadGame()"><option value="">Select a game...</option></select></div><div id="fs-players" style="margin-bottom:14px"></div><div id="fs-output"></div></div><div id="sp-firstbasket-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Six-way market: each team by two-point field goal, three-point field goal or free throw. Priced from net efficiency (who scores first) and each team's own shot profile (how).</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="fb-game" class="field" style="max-width:340px" onchange="fbLoadGame()"><option value="">Select a game...</option></select><span style="font-size:11px;color:var(--txt3)">overround</span><input id="fb-overround" class="field" style="width:70px" value="1.20" onchange="fbRender()"></div><div id="fb-output"></div></div>
+<div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select></div><div id="prop-output"></div></div><div id="sp-first3-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores the first 3-point field goal. Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from 3PM + 3PA per game and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="f3-game" class="field" style="max-width:340px" onchange="f3LoadGame()"><option value="">Select a game...</option></select></div><div id="f3-players" style="margin-bottom:14px"></div><div id="f3-output"></div></div><div id="sp-firstsc-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores first (any points, free throws count). Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from PPG, usage, FT rate and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="fs-game" class="field" style="max-width:340px" onchange="fsLoadGame()"><option value="">Select a game...</option></select></div><div id="fs-players" style="margin-bottom:14px"></div><div id="fs-output"></div></div><div id="sp-exportall-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Prices every market for one game and writes them to a single CSV. Daily Top 25 is excluded, being a slate market rather than a game market.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="xa-game" class="field" style="max-width:340px" onchange="xaBuild()"><option value="">Select a game...</option></select><button id="xa-btn" class="btn" style="font-size:11px;padding:4px 14px;background:var(--acc);color:#1a1208;font-weight:800" onclick="xaExport()">EXPORT CSV</button></div><div id="xa-output"></div></div>
+<div id="sp-firstbasket-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Six-way market: each team by two-point field goal, three-point field goal or free throw. Priced from net efficiency (who scores first) and each team's own shot profile (how).</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="fb-game" class="field" style="max-width:340px" onchange="fbLoadGame()"><option value="">Select a game...</option></select><span style="font-size:11px;color:var(--txt3)">overround</span><input id="fb-overround" class="field" style="width:70px" value="1.20" onchange="fbRender()"></div><div id="fb-output"></div></div>
 <div id="sp-gamespec-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Fixed game specials — pick a game and the team names fill in automatically. Default odds are -10000; edit each one, uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="gs-game" class="field" style="max-width:340px" onchange="gsLoadGame()"><option value="">Select a game...</option></select></div><div id="gs-output"></div></div>
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
   <div style="min-width:240px">
@@ -4229,12 +4230,12 @@ function spSwitchMode(mode,btn){
   var seg=document.getElementById('sp-mode');if(seg){Array.prototype.forEach.call(seg.children,function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');}
   document.getElementById('sp-game-view').style.display=(mode==='game')?'block':'none';
   document.getElementById('sp-day-view').style.display=(mode==='day')?'block':'none';
-  var pv=document.getElementById('sp-props-view');if(pv)pv.style.display=(mode==='props')?'block':'none';var f3v=document.getElementById('sp-first3-view');if(f3v)f3v.style.display=(mode==='first3')?'block':'none';var fsv=document.getElementById('sp-firstsc-view');if(fsv)fsv.style.display=(mode==='firstsc')?'block':'none';var gsv=document.getElementById('sp-gamespec-view');if(gsv)gsv.style.display=(mode==='gamespec')?'block':'none';var fbv=document.getElementById('sp-firstbasket-view');if(fbv)fbv.style.display=(mode==='firstbasket')?'block':'none';
+  var pv=document.getElementById('sp-props-view');if(pv)pv.style.display=(mode==='props')?'block':'none';var f3v=document.getElementById('sp-first3-view');if(f3v)f3v.style.display=(mode==='first3')?'block':'none';var fsv=document.getElementById('sp-firstsc-view');if(fsv)fsv.style.display=(mode==='firstsc')?'block':'none';var gsv=document.getElementById('sp-gamespec-view');if(gsv)gsv.style.display=(mode==='gamespec')?'block':'none';var fbv=document.getElementById('sp-firstbasket-view');if(fbv)fbv.style.display=(mode==='firstbasket')?'block':'none';var xav=document.getElementById('sp-exportall-view');if(xav)xav.style.display=(mode==='exportall')?'block':'none';
   document.getElementById('sp-players').innerHTML='';
   document.getElementById('sp-output').innerHTML='';
   var po=document.getElementById('prop-output');if(po&&mode!=='props')po.innerHTML='';
   if(mode==='day')spInitDay();
-  if(mode==='props')initProps();if(mode==='first3')initFirst3();if(mode==='firstsc')initFirstsc();if(mode==='gamespec')initGamespec();if(mode==='firstbasket')initFirstBasket();
+  if(mode==='props')initProps();if(mode==='first3')initFirst3();if(mode==='firstsc')initFirstsc();if(mode==='gamespec')initGamespec();if(mode==='firstbasket')initFirstBasket();if(mode==='exportall')initExportAll();
   cbkPaintRestrict(mode);
 }
 async function spInitDay(){
@@ -4284,68 +4285,105 @@ async function spLoadDay(){
 
 function fbEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-/* ================= EXPORT EVERY MARKET FOR ONE GAME =================
-   Sets each sub-tab to the same game, waits for it to price, then writes one CSV.
-   Daily Top 25 is deliberately excluded -- it is a slate market, not a game market. */
-var _mkRows={sp:[],props:[],f3:[],fs:[],fb:[]};
-function mkWait(ms){return new Promise(function(r){setTimeout(r,ms);});}
-async function mkRunOne(selId,loader,key,tries){
-  var sel=document.getElementById(selId);
-  if(!sel)return false;
-  sel.value=String(_mkGameId);
-  if(sel.value!==String(_mkGameId))return false;   /* game not in this tab's list */
-  _mkRows[key]=[];
-  try{ await loader(); }catch(e){ return false; }
-  for(var i=0;i<(tries||30);i++){
-    if(_mkRows[key]&&_mkRows[key].length)return true;
-    await mkWait(200);
+/* ================= EXPORT ALL — every market for one game =================
+   Drives each sub-tab in turn: sets its game, waits for it to price, collects the rows.
+   Daily Top 25 is excluded on purpose -- it is a slate market, not a game market.   */
+var _mkRows={sp:[],props:[],f3:[],fs:[],fb:[],gs:[]};
+var _xaGames=[],_xaBusy=false,_xaLabel='';
+var XA_MARKETS=[
+  {k:'sp',   name:'Single Game (leading scorer)', sel:'sp-game',   load:function(){return spLoadGame();}},
+  {k:'props',name:'Game Props',                   sel:'prop-game', load:function(){return propLoadGame();}},
+  {k:'f3',   name:'First 3PT',                    sel:'f3-game',   load:function(){return f3LoadGame();}},
+  {k:'fs',   name:'First Scorer',                 sel:'fs-game',   load:function(){return fsLoadGame();}},
+  {k:'fb',   name:'First Basket',                 sel:'fb-game',   load:function(){fbLoadGame();return Promise.resolve();}},
+  {k:'gs',   name:'Game Specials',                sel:'gs-game',   load:function(){gsLoadGame();return Promise.resolve();}}
+];
+function xaWait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+async function initExportAll(){
+  var sel=document.getElementById('xa-game');
+  if(sel&&sel.options.length<=1){
+    sel.innerHTML='<option value="">Loading games...</option>';
+    var r=await sb.from('games').select('id,game_date,home:home_team_id(team),away:away_team_id(team)')
+      .order('game_date',{ascending:true}).range(0,9999);
+    _xaGames=(r.data||[]).filter(function(g){return g.home&&g.away;});
+    sel.innerHTML='<option value="">Select a game...</option>'+_xaGames.map(function(g){
+      return '<option value="'+g.id+'">'+g.game_date+'  '+g.away.team+' @ '+g.home.team+'</option>';}).join('');
   }
-  return (_mkRows[key]&&_mkRows[key].length)>0;
+  cbkPaintRestrict('exportall');
+  xaPaint();
 }
-var _mkGameId=null,_mkBusy=false;
-async function mkExportAll(){
-  if(_mkBusy)return;
-  var src=document.getElementById('fb-game');
-  if(!src||!src.value){alert('Pick a game first.');return;}
-  _mkGameId=src.value;
-  var g=_fbGames.filter(function(x){return String(x.id)===String(_mkGameId);})[0];
-  var label=g?(g.away.team+' at '+g.home.team):'game';
-  _mkBusy=true;
-  var btn=document.getElementById('mk-all-btn');
-  if(btn){btn.disabled=true;btn.textContent='BUILDING...';}
-  var report=[];
-  try{
-    var jobs=[
-      ['Leading Scorer','sp-game',spLoadGame,'sp'],
-      ['Game Props','prop-game',propLoadGame,'props'],
-      ['First 3PT','f3-game',f3LoadGame,'f3'],
-      ['First Scorer','fs-game',fsLoadGame,'fs'],
-      ['First Basket','fb-game',function(){fbLoadGame();return Promise.resolve();},'fb']
-    ];
-    for(var i=0;i<jobs.length;i++){
-      if(btn)btn.textContent='BUILDING '+(i+1)+'/'+jobs.length+'...';
-      var ok=await mkRunOne(jobs[i][1],jobs[i][2],jobs[i][3]);
-      report.push(jobs[i][0]+': '+(ok?_mkRows[jobs[i][3]].length+' selections':'no data'));
-    }
-    function cell(v){v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
-    var lines=['Selection,Odds'];
-    var total=0;
-    [['sp','Leading Scorer'],['props','Game Props'],['f3','First 3PT'],['fs','First Scorer'],['fb','First Basket']]
-      .forEach(function(k){
-        (_mkRows[k[0]]||[]).forEach(function(r){lines.push(cell(r.sel)+','+cell(r.odds));total++;});
-      });
-    if(!total){alert('Nothing priced. Open each tab once so its player list loads, then try again.');return;}
-    var blob=new Blob([lines.join('\n')],{type:'text/csv'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');
-    a.href=url;a.download='all_markets_'+label.replace(/[^a-z0-9]+/gi,'_')+'.csv';a.click();
-    URL.revokeObjectURL(url);
-    var out=document.getElementById('mk-all-note');
-    if(out)out.innerHTML='<b style="color:var(--grn2)">'+total+' selections exported.</b> '+report.join(' &middot; ');
-  } finally {
-    _mkBusy=false;
-    if(btn){btn.disabled=false;btn.textContent='EXPORT ALL MARKETS';}
+async function xaRun(m,gid){
+  var sel=document.getElementById(m.sel);
+  if(!sel)return 'tab not open';
+  sel.value=String(gid);
+  if(sel.value!==String(gid))return 'game not in this market';
+  _mkRows[m.k]=[];
+  try{ await m.load(); }catch(e){ return 'error: '+e.message; }
+  for(var i=0;i<40;i++){
+    if(_mkRows[m.k]&&_mkRows[m.k].length)return null;
+    await xaWait(150);
   }
+  return 'nothing priced';
+}
+async function xaBuild(){
+  if(_xaBusy)return;
+  var sel=document.getElementById('xa-game');
+  var gid=sel?sel.value:'';
+  if(!gid){document.getElementById('xa-output').innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">Pick a game.</div>';return;}
+  var g=_xaGames.filter(function(x){return String(x.id)===String(gid);})[0];
+  _xaLabel=g?(g.away.team+' at '+g.home.team):'game';
+  _xaBusy=true;
+  var out=document.getElementById('xa-output');
+  var status={};
+  for(var i=0;i<XA_MARKETS.length;i++){
+    var m=XA_MARKETS[i];
+    status[m.k]='working';
+    xaPaint(status);
+    status[m.k]=await xaRun(m,gid);
+    xaPaint(status);
+  }
+  _xaBusy=false;
+  xaPaint(status,true);
+}
+function xaPaint(status,done){
+  var out=document.getElementById('xa-output');
+  if(!out)return;
+  status=status||{};
+  var total=0;
+  var rows=XA_MARKETS.map(function(m){
+    var n=(_mkRows[m.k]||[]).length; total+=n;
+    var st=status[m.k];
+    var cell;
+    if(st==='working')cell='<span style="color:var(--amb)">pricing\u2026</span>';
+    else if(st)cell='<span style="color:var(--txt3)">'+st+'</span>';
+    else if(n)cell='<span style="color:var(--grn2);font-weight:700">'+n+' selections</span>';
+    else cell='<span style="color:var(--txt3)">\u2014</span>';
+    return '<tr><td class="bold">'+m.name+'</td><td>'+cell+'</td></tr>';
+  }).join('');
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+   +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'
+   +(_xaLabel?fbEsc(_xaLabel.toUpperCase()):'EXPORT ALL')+'</div>'
+   +'<div style="font-size:11px;color:var(--txt3)">'+total+' selections</div></div>'
+   +'<div class="panel"><table class="data" style="font-size:12px"><thead><tr><th>MARKET</th><th>STATUS</th></tr></thead>'
+   +'<tbody>'+rows+'</tbody></table></div>';
+  if(done&&total)h+='<div style="font-size:11px;color:var(--grn2);padding:8px 2px">Ready. Press EXPORT CSV.</div>';
+  if(done&&!total)h+='<div style="font-size:11px;color:var(--red2);padding:8px 2px">Nothing priced. Open each sub-tab once so its player list loads, then reselect the game.</div>';
+  out.innerHTML=h;
+}
+function xaExport(){
+  var total=0;
+  XA_MARKETS.forEach(function(m){total+=(_mkRows[m.k]||[]).length;});
+  if(!total){alert('Select a game and let it price first.');return;}
+  function cell(v){v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+  var lines=['Selection,Odds'];
+  XA_MARKETS.forEach(function(m){
+    (_mkRows[m.k]||[]).forEach(function(r){lines.push(cell(r.sel)+','+cell(r.odds));});
+  });
+  var blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='all_markets_'+_xaLabel.replace(/[^a-z0-9]+/gi,'_')+'.csv';a.click();
+  URL.revokeObjectURL(url);
 }
 /* ================= METHOD OF FIRST BASKET =================
    Six-way market: each team by 2PT / 3PT / Free Throw.
@@ -4465,7 +4503,6 @@ function fbRender(){
    +'<div style="display:flex;align-items:center;gap:10px">'
    +'<span style="font-size:11px;color:var(--txt3)">book '+(booked*100).toFixed(1)+'%</span>'
    +'<button class="btn" style="font-size:10px;padding:3px 10px" onclick="fbExportCSV()">EXPORT CSV</button>'
-   +'<button id="mk-all-btn" class="btn" style="font-size:10px;padding:3px 10px;background:var(--acc);color:#1a1208;font-weight:800" onclick="mkExportAll()">EXPORT ALL MARKETS</button>'
    +'</div></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px">'
    +'<thead><tr><th>TEAM</th><th></th><th>METHOD</th><th>FAIR%</th><th>ODDS</th>'
@@ -4480,7 +4517,6 @@ function fbRender(){
       +'</tr>';
   });
   h+='</tbody></table></div></div>';
-  h+='<div id="mk-all-note" style="font-size:10px;color:var(--txt3);padding:4px 2px"></div>';
   h+='<div style="font-size:10px;color:var(--txt3);line-height:1.6;padding:8px 2px">'
    +'<b style="color:var(--txt2)">Inputs.</b> '+fbEsc(g.home.team)+' adj net '+(H.net>=0?'+':'')+Number(H.net).toFixed(1)
    +', 3PA rate '+(H.three_rate*100).toFixed(1)+'%, FT rate '+(H.ftr*100).toFixed(1)+'%'
@@ -4937,6 +4973,7 @@ function gsLoadGame(){
 function gsRender(){
   var g=_gsGame;var matchup=g?((g.away?g.away.team:'?')+' @ '+(g.home?g.home.team:'?')):'';
   var active=_gsList.filter(function(p){return p.on;}).length;
+  _mkRows.gs=_gsList.filter(function(p){return p.on;}).map(function(p){return{sel:p.desc,odds:p.odds};});
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">GAME SPECIALS \u2014 '+matchup+' ('+active+')</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="gsExportCSV()">EXPORT CSV</button></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr>'+(isAdmin?'<th></th>':'')+'<th>SPECIAL</th><th>ODDS</th></tr></thead><tbody>';
   _gsList.forEach(function(p,i){
