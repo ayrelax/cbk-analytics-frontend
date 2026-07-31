@@ -4308,10 +4308,16 @@ function xFrac(o){
   if(am>0){n=am;d=100;}else{n=100;d=Math.abs(am);}
   function g(a,b){return b?g(b,a%b):a;}
   var k=g(n,d)||1;
-  return (n/k)+'/'+(d/k);
+  var f=(n/k)+'/'+(d/k);
+  /* Excel reads 13/5 as 13-May and 27/4 as 27-Apr -- 23 of the 35 prices in a typical
+     game are affected. Wrapping as a formula-quoted string keeps them as text.
+     Set X_FRAC_TEXT=false if the upload tool wants the bare fraction instead. */
+  return X_FRAC_TEXT ? '="'+f+'"' : f;
 }
+var X_FRAC_TEXT=true;
 function xCell(v){
   v=(v==null)?'':String(v);
+  if(v.indexOf('="')===0)return v;      /* already an Excel text-formula, leave it alone */
   return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
 }
 /* market definitions: label, shape, and where the title/ODDS headers sit */
