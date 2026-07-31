@@ -4388,17 +4388,17 @@ var SIT_BLOCK={
 };
 var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 Minutes',max:'Largest Lead Of Game'};
 /* ================= SITUATIONAL: PRICE ONE GAME =================
-   Takes your spread for the game, finds the matching bucket in the backtest, and
-   writes every situational selection for it. The buckets were measured against
-   CLOSING market lines, so a game where your number and the close end up far apart
-   will be priced off the wrong row -- worth a look before you post a big move. */
+/* Build every situational selection for one game.
+   Column layout the platform wants:
+     A Flag   B |Market|   C |Market|   D blank   E selection   F odds   G fractional   H line
+   Race to X is split into a separate market per target rather than one combined block. */
 var _sitGames=[],_sitGame=null,_sitRows=[];
+var SIT_F4_TOTAL=151, SIT_F4_TOTAL_ODDS='-10000';
 function sitBucketRow(absSpread){
   var b=Math.floor(Math.abs(absSpread));
   var rows=SIT_DATA.views['1']||[];
   var hit=rows.filter(function(r){return r.label===String(b);})[0];
   if(hit)return hit;
-  /* past the last individual point, fall back to the catch-all band */
   return rows.filter(function(r){return r.label.indexOf('+')>0;})[0]||null;
 }
 async function sitLoadGames(){
@@ -4421,44 +4421,47 @@ function sitBuildRows(){
   _sitRows=[];
   var g=_sitGame;
   if(!g)return;
-  var sp=calcSpreadG(g);                 /* your number, home perspective */
+  var sp=calcSpreadG(g);
   var favHome=sp>=0;
   var fav=favHome?g.home.team:g.away.team;
   var dog=favHome?g.away.team:g.home.team;
   var row=sitBucketRow(sp);
   if(!row)return;
-  function push(mkt,sel,team,odds){_sitRows.push({mkt:mkt,name:sel,team:team,odds:odds});}
+  /* team is kept apart from any wording after it, so the work-list name can be
+     swapped in at export without string matching on a concatenated label */
+  function add(mkt,team,suffix,odds,line){
+    _sitRows.push({mkt:mkt,team:team,suffix:suffix||'',odds:odds,line:(line==null?'':line)});
+  }
+  function label(r){return (r.team?r.team:'')+(r.suffix||'');}
   function price(p){var s=sitSplit30(p);return [sitOdds(s[0]),sitOdds(s[1])];}
-  /* race to X, both sides */
+  /* one market per target, two selections each */
   SIT_DATA.targets.forEach(function(t){
     var c=row.race[String(t)];
     if(!c)return;
     var pr=price(c.pct/100);
-    push('race',fav+' To Reach '+t+' Points First',fav,pr[0]);
-    push('race',dog+' To Reach '+t+' Points First',dog,pr[1]);
+    var m='Race To '+t+' Points';
+    add(m,fav,'',pr[0],'');
+    add(m,dog,'',pr[1],'');
   });
-  /* percentage of game led -- the line is built to sit near 50/50 */
+  /* percentage of game led */
   var lp=price(row.led_over/100);
-  push('led',fav+' To Lead Over '+row.led_line.toFixed(1)+'% Of The Game',fav,lp[0]);
-  push('led',fav+' To Lead Under '+row.led_line.toFixed(1)+'% Of The Game',fav,lp[1]);
-  /* first four minutes */
+  add('Percentage Of Game Led',fav,' Lead Percentage Over',lp[0],row.led_line.toFixed(1));
+  add('Percentage Of Game Led',fav,' Lead Percentage Under',lp[1],row.led_line.toFixed(1));
+  /* first four minutes, three separate markets */
   var f4=row.f4_line;
-  var fs=(f4>0?'-':'+')+Math.abs(f4).toFixed(1);
-  var ds=(f4>0?'+':'-')+Math.abs(f4).toFixed(1);
-  push('f4',fav+' '+fs+' First 4 Minutes',fav,'-115');
-  push('f4',dog+' '+ds+' First 4 Minutes',dog,'-115');
+  add('1st 4 Minutes Spread',fav,'','-115',(f4>0?'-':'+')+Math.abs(f4).toFixed(1));
+  add('1st 4 Minutes Spread',dog,'','-115',(f4>0?'+':'-')+Math.abs(f4).toFixed(1));
+  add('1st 4 Minutes Total Points',null,'Over',SIT_F4_TOTAL_ODDS,SIT_F4_TOTAL.toFixed(1));
+  add('1st 4 Minutes Total Points',null,'Under',SIT_F4_TOTAL_ODDS,SIT_F4_TOTAL.toFixed(1));
   var mlp=price(row.f4_win/(100-row.f4_tie));
-  push('f4',fav+' To Win The First 4 Minutes',fav,mlp[0]);
-  push('f4',dog+' To Win The First 4 Minutes',dog,mlp[1]);
-  /* largest lead, each side */
-  var fp=price(row.ml_fav_over/100);
-  push('max',fav+' Largest Lead Over '+row.ml_fav_line.toFixed(1),fav,fp[0]);
-  push('max',fav+' Largest Lead Under '+row.ml_fav_line.toFixed(1),fav,fp[1]);
-  var dp=price(row.ml_dog_over/100);
-  push('max',dog+' Largest Lead Over '+row.ml_dog_line.toFixed(1),dog,dp[0]);
-  push('max',dog+' Largest Lead Under '+row.ml_dog_line.toFixed(1),dog,dp[1]);
+  add('1st 4 Minutes Money Line',fav,'',mlp[0],'');
+  add('1st 4 Minutes Money Line',dog,'',mlp[1],'');
+  /* largest lead, one two-way market on the favourite's number */
+  add('Largest Lead Of Game',null,'Over','-110',row.ml_fav_line.toFixed(1));
+  add('Largest Lead Of Game',null,'Under','-120',row.ml_fav_line.toFixed(1));
   _sitRows._meta={spread:sp,fav:fav,dog:dog,bucket:row.label,n:row.n,neutral:!!g.neutral_site};
 }
+function sitLabel(r){return (r.team?r.team:'')+(r.suffix||'');}
 function sitGameHTML(){
   if(!_sitGame)return '<div style="font-size:11px;color:var(--txt3);padding:8px 2px">Pick a game to price every situational market for it.</div>';
   if(!_sitRows.length)return '<div style="font-size:11px;color:var(--red2);padding:8px 2px">No backtest row for that spread.</div>';
@@ -4470,14 +4473,15 @@ function sitGameHTML(){
    +'<div style="font-size:11px;color:var(--txt3)">'+_sitRows.length+' selections &middot; priced off the -'
    +m.bucket+' bucket ('+m.n+' games)</div></div>';
   h+='<div class="panel" style="padding:0"><div style="overflow-x:auto"><table class="data" style="font-size:11px;width:100%">'
-   +'<thead><tr><th>MARKET</th><th>SELECTION</th><th style="width:150px">TEAM</th><th style="width:80px">ODDS</th></tr></thead><tbody>';
+   +'<thead><tr><th style="width:200px">MARKET</th><th>SELECTION</th><th style="width:80px">LINE</th><th style="width:80px">ODDS</th></tr></thead><tbody>';
   var last='';
   _sitRows.forEach(function(r){
-    var lbl=(r.mkt!==last)?SIT_LABEL[r.mkt]:'';
+    var lbl=(r.mkt!==last)?r.mkt:'';
     last=r.mkt;
-    h+='<tr><td class="bold" style="color:var(--acc)">'+lbl+'</td>'
-      +'<td>'+fbEsc(r.name)+'</td>'
-      +'<td class="muted">'+fbEsc(xTeam(r.team))+'</td>'
+    h+='<tr'+(lbl?' style="border-top:1px solid var(--bdr)"':'')+'>'
+      +'<td class="bold" style="color:var(--acc)">'+fbEsc(lbl)+'</td>'
+      +'<td>'+fbEsc(sitLabel(r))+'</td>'
+      +'<td class="tnum muted">'+fbEsc(r.line)+'</td>'
       +'<td class="tnum" style="font-weight:800;color:var(--acc)">'+r.odds+'</td></tr>';
   });
   h+='</tbody></table></div></div>';
@@ -4487,15 +4491,16 @@ function sitGameHTML(){
 function sitExportGame(){
   if(!_sitRows.length){alert('Pick a game first.');return;}
   var m=_sitRows._meta;
+  var order=[],seen={};
+  _sitRows.forEach(function(r){if(!seen[r.mkt]){seen[r.mkt]=1;order.push(r.mkt);}});
   var blocks=[];
-  ['race','led','f4','max'].forEach(function(k){
-    var rows=_sitRows.filter(function(r){return r.mkt===k;});
-    if(!rows.length)return;
-    var pipe='|'+SIT_LABEL[k]+'|';
-    var head=['Flag','','','',SIT_LABEL[k],'ODDS',''];
-    var lines=[head.map(xCell).join(',')];
+  order.forEach(function(mk){
+    var rows=_sitRows.filter(function(r){return r.mkt===mk;});
+    var pipe='|'+mk+'|';
+    var lines=[['Flag','','','',mk,'ODDS','',''].map(xCell).join(',')];
     rows.forEach(function(r){
-      lines.push([ 'Y',pipe,pipe,r.name,xTeam(r.team),xAmer(r.odds),xFrac(r.odds) ].map(xCell).join(','));
+      var cell=(r.team?xTeam(r.team):'')+(r.suffix||'');
+      lines.push(['Y',pipe,pipe,'',cell,xAmer(r.odds),xFrac(r.odds),r.line].map(xCell).join(','));
     });
     blocks.push(lines.join('\n'));
   });
