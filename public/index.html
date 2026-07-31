@@ -4060,7 +4060,7 @@ function cbkPaintRestrict(mode){
   /* Export All has its own per-market compliance table, so the shared banner is
      suppressed there. Every market loader calls this, and Export All runs all of
      them, so the guard has to live here rather than at each call site. */
-  if(_spMode==='exportall'){el.innerHTML='';return;}
+  if(_spMode==='exportall'||_spMode==='sitprops'){el.innerHTML='';return;}
   el.innerHTML=cbkRestrictHTML(mode||_spMode||'game');
 }
 /* ================= PLAYER SPECIALS — LEADING SCORER (admin builds, all view) ================= */
@@ -4372,13 +4372,46 @@ function sitHead(t,sub){
   return '<div style="margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+t+'</div>'
    +'<div style="font-size:11px;color:var(--txt3);margin-top:2px;max-width:820px">'+sub+'</div></div>';
 }
+/* state restrictions for the four situational markets. These are game-level props,
+   so there is no home-state player rule to apply -- only the market list matters. */
+var SIT_BLOCK={
+  race:['Arizona','Delaware','Maryland','Tennessee','Virginia'],
+  led :['Colorado','Delaware','Maryland','New York','Pennsylvania','Tennessee','Virginia','Washington State'],
+  f4  :['Delaware','Maryland','Tennessee','Virginia'],
+  max :['Arizona','Colorado','Delaware','Iowa','Maryland','Massachusetts','New York','Pennsylvania','Tennessee','Virginia','Washington State']
+};
+var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 Minutes',max:'Largest Lead Of Game'};
+function sitRestrictHTML(){
+  var h='<div style="margin-bottom:14px">';
+  h+='<div style="font-size:10px;letter-spacing:1.2px;color:var(--acc);font-weight:800;margin-bottom:6px">COMPLIANCE REFERENCE</div>';
+  h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px;width:100%">'
+    +'<thead><tr><th style="width:230px">MARKET</th><th>MARKET NOT ALLOWED IN</th></tr></thead><tbody>';
+  ['race','led','f4','max'].forEach(function(k){
+    var list=SIT_BLOCK[k]||[];
+    var cell=!list.length
+      ? '<span style="color:var(--grn2);font-weight:700">Good everywhere</span>'
+      : list.map(function(st){
+          return '<span style="background:#fdeaea;color:var(--red2);border:1px solid #e8c4c4;border-radius:3px;'
+            +'padding:1px 6px;font-size:10px;margin-right:3px;display:inline-block;margin-bottom:2px">'+st+'</span>';
+        }).join('');
+    var on=(k===_sitProp);
+    h+='<tr'+(on?' style="background:rgba(224,190,110,.10)"':'')+'>'
+      +'<td class="bold">'+SIT_LABEL[k]+(on?' <span style="color:var(--acc);font-size:9px;letter-spacing:.6px">\u25c0 SHOWING</span>':'')+'</td>'
+      +'<td>'+cell+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<div style="font-size:10px;color:var(--txt3);padding:6px 2px">These are game-level markets, so the '
+    +'home-state player rule does not apply \u2014 only the market list above.</div>';
+  h+='</div>';
+  return h;
+}
 function sitRender(){
   var out=document.getElementById('sit-output');
   if(!out)return;
   var rows=(SIT_DATA.views[_sitView]||[]).filter(function(r){return r.label!=='0';});
   /* a pick'em has no favourite, so every one of these numbers is just a coin-flip
      artefact of which side happened to be listed first. Dropped from all views. */
-  var T=SIT_DATA.targets, h='';
+  var T=SIT_DATA.targets, h=sitRestrictHTML();
   if(_sitProp==='race'){
     h+=sitHead('RACE TO X POINTS','Which side gets there first, from the favourite\u2019s side. The percentage is what actually happened; the price beside it is that number posted 30 cents apart and rounded to the nearest 5. '+'Prices widen as they lengthen: 30 cents to -180, then 40, 50 and 100. '+'Notice how the edge grows with the target \u2014 an early race is close to a coin flip even for a big favourite.');
     h+='<div class="panel" style="padding:0"><div style="overflow-x:auto"><table class="data" style="font-size:11px">'
