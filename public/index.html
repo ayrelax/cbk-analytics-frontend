@@ -4329,32 +4329,38 @@ function sitAmToCents(am){ return am<0 ? (-am-100) : -(am-100); }
        beyond -400  100 cents     -500/+400
    Near even money there is not enough juice to hang a full gap off one side, so the
    width is split evenly instead. Everything rounds to the nearest 5. */
-function sitGapFor(favMag){
-  if(favMag<=180)return 30;
-  if(favMag<=235)return 40;
-  if(favMag<=400)return 50;
+/* Ladder pricing, centred on the fair number.
+
+   The fair price for a two-way market is the same magnitude on both sides: a 61.5%
+   favourite is -160 and the dog is +160. So the posted market straddles it -- half
+   the width either side -- rather than sitting the favourite at fair and taking the
+   whole width out of the dog. Posting -160/+130 hands the favourite a zero-edge
+   price and puts every cent of juice on the dog, which is the side least likely to
+   be taken by anyone who has done the work.
+
+   Width steps out as the fair price lengthens:
+       fair to -170    30 cents     -165 gives -180/+150
+       to -220         40 cents     -175 gives -195/+155,  -215 gives -235/+195
+       to -400         50 cents     -225 gives -250/+200,  -375 gives -400/+350
+       beyond          100 cents    -450 gives -500/+400
+   Probabilities clamp to 2%-98% so a small bucket reading 100% cannot price at
+   -199900. Everything rounds to the nearest 5. */
+var SIT_PMIN=0.02, SIT_PMAX=0.98;
+function sitGapFor(fairMag){
+  if(fairMag<=170)return 30;
+  if(fairMag<=220)return 40;
+  if(fairMag<=400)return 50;
   return 100;
 }
-/* Cap the extremes. A 47-game bucket that reads 100% is a sample artefact, not a
-   certainty -- unclamped it prices at -199900. Holding the probability inside
-   2% to 98% keeps the worst price near -2000, which is a number you could
-   actually post. */
-var SIT_PMIN=0.02, SIT_PMAX=0.98;
 function sitSplit30(p){
   p=Math.min(Math.max(p,SIT_PMIN),SIT_PMAX);
   var favFirst=p>=0.5;
   var q=favFirst?p:1-p;
   var fairMag=100*q/(1-q);
-  var g=sitGapFor(sitR5(fairMag));
+  var g=sitGapFor(fairMag);
   var c=sitAmToCents(-fairMag);
-  var a,b;
-  if(c<g/2){
-    a=sitR5(sitCentsToAm(c+g/2));
-    b=sitR5(sitCentsToAm(-c+g/2));
-  }else{
-    a=sitR5(-fairMag);
-    b=sitR5(sitCentsToAm(-(sitAmToCents(a)-g)));
-  }
+  var a=sitR5(sitCentsToAm(c+g/2));
+  var b=sitR5(sitCentsToAm(-c+g/2));
   return favFirst?[a,b]:[b,a];
 }
 function sitPair(p){
