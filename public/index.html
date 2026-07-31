@@ -4258,7 +4258,7 @@ function spSwitchMode(mode,btn){
   mktApplyOverround(mode);
   if(mode==='day')spInitDay();
   if(mode==='props')initProps();if(mode==='first3')initFirst3();if(mode==='firstsc')initFirstsc();if(mode==='gamespec')initGamespec();if(mode==='firstbasket')initFirstBasket();if(mode==='exportall')initExportAll();
-  cbkPaintRestrict(mode);
+  if(mode!=='exportall')cbkPaintRestrict(mode); else {var sl=document.getElementById('cbk-restrict-slot');if(sl)sl.innerHTML='';}
 }
 async function spInitDay(){
   var sel=document.getElementById('sp-day-date');
@@ -4772,7 +4772,7 @@ function xExportGs(){xExport('gs',xSelText('gs-game'));}
    Drives each sub-tab in turn: sets its game, waits for it to price, collects the rows.
    Daily Top 25 is excluded on purpose -- it is a slate market, not a game market.   */
 var _mkRows={sp:[],props:[],f3:[],fs:[],fb:[],gs:[]};
-var _xaGames=[],_xaBusy=false,_xaLabel='';
+var _xaGames=[],_xaBusy=false,_xaLabel='',_xaOv={},_xaOverride={},_mkGameId=null;
 var XA_MARKETS=[
   {k:'sp',   name:'Single Game (leading scorer)', sel:'sp-game',   init:function(){return initSpecials();},
    load:function(){return spLoadGame();}},
@@ -4839,7 +4839,8 @@ async function initExportAll(){
     sel.innerHTML='<option value="">Select a game...</option>'+_xaGames.map(function(g){
       return '<option value="'+g.id+'">'+g.game_date+'  '+g.away.team+' @ '+g.home.team+'</option>';}).join('');
   }
-  cbkPaintRestrict('exportall');
+  var slot=document.getElementById('cbk-restrict-slot');
+  if(slot)slot.innerHTML='';   /* the compliance table below replaces it */
   xaPaint();
 }
 async function xaRun(m,gid){
@@ -4869,6 +4870,8 @@ async function xaBuild(){
   var g=_xaGames.filter(function(x){return String(x.id)===String(gid);})[0];
   _xaLabel=g?(g.away.team+' at '+g.home.team):'game';
   _xaTeams=g?[g.home.team,g.away.team]:[];
+  _mkGameId=gid;
+  _xaOverride={};
   _xaBusy=true;
   var out=document.getElementById('xa-output');
   var status={};
@@ -4887,30 +4890,91 @@ function xaPaint(status,done){
   if(!out)return;
   status=status||{};
   var total=0;
-  var rows=XA_MARKETS.map(function(m){
-    var n=(_mkRows[m.k]||[]).length; total+=n;
-    var st=status[m.k];
-    var cell;
-    if(st==='working')cell='<span style="color:var(--amb)">pricing\u2026</span>';
-    else if(st)cell='<span style="color:var(--txt3)">'+st+'</span>';
-    else if(n)cell='<span style="color:var(--grn2);font-weight:700">'+n+' selections</span>';
-    else cell='<span style="color:var(--txt3)">\u2014</span>';
-    var key=({sp:'game',props:'props',f3:'first3',fs:'firstsc',fb:'firstbasket',gs:'gamespec'})[m.k];
-    var ovv=MKT_OV[key];
-    return '<tr><td class="bold">'+m.name+'</td><td>'+cell+'</td>'
-      +'<td class="muted" style="font-size:10px">'+(ovv?('hold '+((ovv-1)*100).toFixed(0)+'%'):'manual')+'</td></tr>';
-  }).join('');
-  var h=(_xaTeams&&_xaTeams.length?xaRestrictHTML():'')
-   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+  XA_MARKETS.forEach(function(m){total+=(_mkRows[m.k]||[]).length;});
+  var h=(_xaTeams&&_xaTeams.length?xaRestrictHTML():'');
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">'
    +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'
    +(_xaLabel?fbEsc(_xaLabel.toUpperCase()):'EXPORT ALL')+'</div>'
-   +'<div style="font-size:11px;color:var(--txt3)">'+total+' selections</div></div>'
-   +'<div class="panel"><table class="data" style="font-size:12px"><thead><tr><th>MARKET</th><th>STATUS</th><th>OVERROUND</th></tr></thead>'
-   +'<tbody>'+rows+'</tbody></table></div>';
-  if(done&&total)h+='<div style="font-size:11px;color:var(--grn2);padding:8px 2px">Ready. Press EXPORT CSV.</div>';
-  if(done&&!total)h+='<div style="font-size:11px;color:var(--red2);padding:8px 2px">Nothing priced. Open each sub-tab once so its player list loads, then reselect the game.</div>';
+   +'<div style="font-size:11px;color:var(--txt3)">'+total+' selections</div></div>';
+
+  XA_MARKETS.forEach(function(m){
+    var rows=_mkRows[m.k]||[];
+    var st=status[m.k];
+    var key=({sp:'game',props:'props',f3:'first3',fs:'firstsc',fb:'firstbasket',gs:'gamespec'})[m.k];
+    var ov=(_xaOv[m.k]!=null)?_xaOv[m.k]:MKT_OV[key];
+    h+='<div style="margin-bottom:14px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg1);'
+      +'border:1px solid var(--bdr);border-bottom:0;border-radius:6px 6px 0 0;padding:6px 10px">'
+      +'<div style="font-size:11px;font-weight:800;color:var(--acc);letter-spacing:.8px">'+X_MKT[m.k].label
+      +' <span style="color:var(--txt3);font-weight:400">'+rows.length+'</span></div>';
+    if(ov!=null&&m.k!=='gs'){
+      h+='<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:10px;color:var(--txt3)">overround</span>'
+        +'<input type="range" min="1.03" max="1.50" step="0.01" value="'+ov+'" style="width:120px" '
+        +'oninput="xaOvPreview(\''+m.k+'\',this.value)" onchange="xaSetOv(\''+m.k+'\',this.value)">'
+        +'<span id="xa-ov-'+m.k+'" style="font-size:11px;font-weight:800;color:var(--acc);min-width:34px">'+Number(ov).toFixed(2)+'</span>'
+        +'<span style="font-size:10px;color:var(--txt3)">hold '+((ov-1)*100).toFixed(0)+'%</span></div>';
+    } else {
+      h+='<span style="font-size:10px;color:var(--txt3)">priced by hand</span>';
+    }
+    h+='</div>';
+    if(st==='working'){
+      h+='<div class="panel" style="border-radius:0 0 6px 6px;color:var(--amb);font-size:11px;padding:10px">pricing\u2026</div>';
+    } else if(!rows.length){
+      h+='<div class="panel" style="border-radius:0 0 6px 6px;color:var(--txt3);font-size:11px;padding:10px">'+(st||'\u2014')+'</div>';
+    } else {
+      h+='<div class="panel" style="border-radius:0 0 6px 6px;padding:0"><div style="overflow-x:auto">'
+        +'<table class="data" style="font-size:11px;width:100%"><thead><tr><th>SELECTION</th>'
+        +(X_MKT[m.k].shape==='player'?'<th style="width:150px">TEAM</th>':'')
+        +'<th style="width:80px">ODDS</th>'+(isAdmin?'<th style="width:100px">OVERRIDE</th>':'')+'</tr></thead><tbody>';
+      rows.forEach(function(r,idx){
+        var ovr=(_xaOverride[m.k]&&_xaOverride[m.k][idx]!==undefined)?_xaOverride[m.k][idx]:null;
+        var shown=ovr!==null?ovr:r.odds;
+        h+='<tr><td class="bold">'+fbEsc(r.name)+'</td>'
+          +(X_MKT[m.k].shape==='player'?'<td class="muted">'+fbEsc(r.team||'')+'</td>':'')
+          +'<td style="font-weight:800;color:'+(ovr!==null?'var(--amb)':'var(--acc3)')+'">'+fbEsc(shown)+'</td>'
+          +(isAdmin?'<td><input class="psm-cinput" style="width:88px" value="'+fbEsc(shown)+'" '
+             +'onchange="xaOverride(\''+m.k+'\','+idx+',this.value)"></td>':'')
+          +'</tr>';
+      });
+      h+='</tbody></table></div></div>';
+    }
+    h+='</div>';
+  });
+  if(done&&!total)h+='<div style="font-size:11px;color:var(--red2);padding:8px 2px">Nothing priced. Reselect the game.</div>';
   out.innerHTML=h;
 }
+function xaOvPreview(k,v){
+  var el=document.getElementById('xa-ov-'+k);
+  if(el)el.textContent=Number(v).toFixed(2);
+}
+async function xaOverrideClearNote(){}
+function xaOverride(k,idx,val){
+  val=String(val).trim();
+  _xaOverride[k]=_xaOverride[k]||{};
+  if(val===''){delete _xaOverride[k][idx];}
+  else{
+    if(val[0]!=='+'&&val[0]!=='-'&&parseFloat(val)>0)val='+'+val;
+    _xaOverride[k][idx]=val;
+  }
+  xaPaint();
+}
+async function xaSetOv(k,val){
+  if(_xaBusy)return;
+  var v=parseFloat(val);
+  if(isNaN(v))return;
+  _xaOv[k]=v;
+  var m=XA_MARKETS.filter(function(x){return x.k===k;})[0];
+  if(!m||!_mkGameId)return;
+  _xaBusy=true;
+  var st={}; st[k]='working'; xaPaint(st);
+  if(k==='fb'){var fe=document.getElementById('fb-overround'); if(fe)fe.value=v.toFixed(2);}
+  else{_spOverround=v;}
+  var r=await xaRun(m,_mkGameId);
+  _xaBusy=false;
+  var st2={}; st2[k]=r; xaPaint(st2,true);
+}
+
 function xaExport(){
   var total=0;
   XA_MARKETS.forEach(function(m){total+=(_mkRows[m.k]||[]).length;});
@@ -4921,7 +4985,10 @@ function xaExport(){
      into a single shared header that would misplace half the odds. */
   var blocks=[],counts=[];
   XA_MARKETS.forEach(function(m){
-    var rows=_mkRows[m.k]||[];
+    var rows=(_mkRows[m.k]||[]).map(function(r,idx){
+      var o=(_xaOverride[m.k]&&_xaOverride[m.k][idx]!==undefined)?_xaOverride[m.k][idx]:r.odds;
+      return {name:r.name,team:r.team,ppg:r.ppg,odds:o};
+    });
     if(!rows.length)return;
     var csv=xBuildCSV(m.k,rows);
     if(!csv)return;
