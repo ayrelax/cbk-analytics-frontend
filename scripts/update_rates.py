@@ -113,9 +113,14 @@ def main():
         if c not in keep.columns: keep[c] = 0
         keep[c] = keep[c].astype(int)
 
+    # updated_at has DEFAULT now(), but a default only fires on INSERT. These rows
+    # already exist, so the upsert is an UPDATE and the column would never move --
+    # leaving no way to tell a working job from a dead one. Send it explicitly.
+    stamp = dt.datetime.now(dt.timezone.utc).isoformat()
     rows = [{"athlete_id": int(r.athlete_id), "player_name": r.player_name, "team": r.team,
              "season": season, "games": int(r.games),
              "mpg": round(float(r.mpg), 2), "ppg": round(float(r.ppg), 2),
+             "updated_at": stamp,
              **{c: int(getattr(r, c)) for c in cols}} for r in keep.itertuples()]
 
     print("upserting ...")
