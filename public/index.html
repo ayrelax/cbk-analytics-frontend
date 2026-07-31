@@ -4010,7 +4010,8 @@ var CBK_MARKET_BLOCK={
   props:['Pennsylvania','Washington'],
   first3:['Arizona','Colorado','Delaware','Iowa','Louisiana','Maryland','Massachusetts','Missouri','Mississippi','New York','Ohio','Pennsylvania','Tennessee','Virginia'],
   firstsc:[],
-  gamespec:['Arizona','Delaware','Maryland','Tennessee','Virginia']
+  gamespec:['Arizona','Delaware','Maryland','Tennessee','Virginia'],
+  firstbasket:['Arizona','Delaware','Tennessee','Virginia']
 };
 var CBK_PLAYER_BLOCK_STATES=['Illinois','Iowa','Maine','Missouri','Nebraska','New Jersey','Rhode Island','Washington State','Washington DC'];
 function cbkActiveTeams(mode){
@@ -4304,7 +4305,7 @@ var FB_M={i:[2.5569,-1.0245,-1.5324],
           c:[[-1.2084,-0.3305,-1.7998,-1.0860,0.0626],
              [2.0095,-0.4596,2.0417,-0.7422,-0.2718],
              [-0.8011,0.7901,-0.2420,1.8283,0.2092]]};
-var _fbProfiles=null,_fbGames=[],_fbGame=null,_fbOverrides={};
+var _fbProfiles=null,_fbGames=[],_fbGame=null,_fbOverrides={},_fbRows=[],_fbLabel='';
 function fbSoft(z){var m=Math.max.apply(null,z);var e=z.map(function(x){return Math.exp(x-m);});
   var s=e.reduce(function(a,b){return a+b;},0);return e.map(function(x){return x/s;});}
 function fbMethod(o,d){
@@ -4391,10 +4392,14 @@ function fbRender(){
      so a manual override moves the row to where it belongs rather than leaving a
      long price sitting above a short one. */
   rows.sort(function(a,b){return b.imp-a.imp;});
+  _fbRows=rows;_fbLabel=g.away.team+' at '+g.home.team;
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
    +'<div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">METHOD OF FIRST BASKET &mdash; '
    +fbEsc(g.away.team)+' @ '+fbEsc(g.home.team)+'</div>'
-   +'<div style="font-size:11px;color:var(--txt3)">book '+(booked*100).toFixed(1)+'%</div></div>';
+   +'<div style="display:flex;align-items:center;gap:10px">'
+   +'<span style="font-size:11px;color:var(--txt3)">book '+(booked*100).toFixed(1)+'%</span>'
+   +'<button class="btn" style="font-size:10px;padding:3px 10px" onclick="fbExportCSV()">EXPORT CSV</button>'
+   +'</div></div>';
   h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px">'
    +'<thead><tr><th>TEAM</th><th></th><th>METHOD</th><th>FAIR%</th><th>ODDS</th>'
    +(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
@@ -4417,6 +4422,19 @@ function fbRender(){
    +(g.neutral_site?' (neutral court, no home bump)':' (league average is 55.3%)')+'. '
    +'Across all 6,275 games last season the first basket was a two-pointer 62.3% of the time, a three 27.8%, a free throw 10.0%.</div>';
   out.innerHTML=h;
+}
+function fbExportCSV(){
+  if(!_fbRows||!_fbRows.length){alert('Price a game first.');return;}
+  var lines=['Selection,Odds'];
+  _fbRows.forEach(function(r){
+    var sel=r.team+' '+r.m;   /* exactly as shown on screen: "Michigan Two Point Field Goal" */
+    lines.push('"'+sel.replace(/"/g,'""')+'",'+r.odds);
+  });
+  var blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='first_basket_'+_fbLabel.replace(/[^a-z0-9]+/gi,'_')+'.csv'; a.click();
+  URL.revokeObjectURL(url);
 }
 function fbOverride(k,v){
   v=String(v).trim();
