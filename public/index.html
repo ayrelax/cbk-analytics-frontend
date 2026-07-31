@@ -5253,6 +5253,14 @@ function f3RenderPlayers(){
   box.innerHTML=h;
 }
 function f3Toggle(i){_f3Players[i]._on=!_f3Players[i]._on;f3RenderPlayers();f3Price();cbkPaintRestrict();}
+function f3Odds(r,ov){
+  if(_f3Overrides&&_f3Overrides[r.player]!==undefined)return _f3Overrides[r.player];
+  var o=propRound(propAmer(r.prob,ov));
+  /* cap at 200/1. Anything longer prices as noise on a market this thin. */
+  var n=parseInt(String(o).replace(/\+/g,''),10);
+  if(!isNaN(n)&&n>20000)return '+20000';
+  return o;
+}
 function f3Price(){
   var active=_f3Players.filter(function(p){return p._on;});
   var out=document.getElementById('f3-output');
@@ -5273,9 +5281,9 @@ function f3Price(){
   },function(r,p){r.prob=p;});
   rows.sort(function(a,b){return b.prob-a.prob;});
   var booked=0;
-    _mkRows.f3=rows.map(function(r){return{name:r.player,team:r.team,odds:(_f3Overrides&&_f3Overrides[r.player]!==undefined)?_f3Overrides[r.player]:propRound(propAmer(r.prob,ov))};});
+    _mkRows.f3=rows.map(function(r){return{name:r.player,team:r.team,odds:f3Odds(r,ov)};});
 var body=rows.map(function(r){
-    var odds=(_f3Overrides&&_f3Overrides[r.player]!==undefined)?_f3Overrides[r.player]:propRound(propAmer(r.prob,ov));
+    var odds=f3Odds(r,ov);
     booked+=f3Implied(odds);
     return{player:r.player,team:r.team,tpm3:r.tpm3,tpa3:r.tpa3,prob:r.prob,odds:odds};
   });
