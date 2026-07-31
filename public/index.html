@@ -4054,7 +4054,12 @@ function cbkRestrictHTML(mode){
 }
 function cbkPaintRestrict(mode){
   var el=document.getElementById('cbk-restrict-slot');
-  if(el)el.innerHTML=cbkRestrictHTML(mode||_spMode||'game');
+  if(!el)return;
+  /* Export All has its own per-market compliance table, so the shared banner is
+     suppressed there. Every market loader calls this, and Export All runs all of
+     them, so the guard has to live here rather than at each call site. */
+  if(_spMode==='exportall'){el.innerHTML='';return;}
+  el.innerHTML=cbkRestrictHTML(mode||_spMode||'game');
 }
 /* ================= PLAYER SPECIALS — LEADING SCORER (admin builds, all view) ================= */
 var _spGames=[];var _spPlayers=[];var _spOverround=1.20;var _spFlatten=0.85;var _spResult=[];var _spOverrides={};
@@ -4258,7 +4263,7 @@ function spSwitchMode(mode,btn){
   mktApplyOverround(mode);
   if(mode==='day')spInitDay();
   if(mode==='props')initProps();if(mode==='first3')initFirst3();if(mode==='firstsc')initFirstsc();if(mode==='gamespec')initGamespec();if(mode==='firstbasket')initFirstBasket();if(mode==='exportall')initExportAll();
-  if(mode!=='exportall')cbkPaintRestrict(mode); else {var sl=document.getElementById('cbk-restrict-slot');if(sl)sl.innerHTML='';}
+  cbkPaintRestrict(mode);
 }
 async function spInitDay(){
   var sel=document.getElementById('sp-day-date');
@@ -4839,8 +4844,7 @@ async function initExportAll(){
     sel.innerHTML='<option value="">Select a game...</option>'+_xaGames.map(function(g){
       return '<option value="'+g.id+'">'+g.game_date+'  '+g.away.team+' @ '+g.home.team+'</option>';}).join('');
   }
-  var slot=document.getElementById('cbk-restrict-slot');
-  if(slot)slot.innerHTML='';   /* the compliance table below replaces it */
+  cbkPaintRestrict('exportall');
   xaPaint();
 }
 async function xaRun(m,gid){
