@@ -4751,6 +4751,12 @@ function sitBuildRows(){
     add('Threes Made In First 5 Minutes',null,lab,sitOdds(sitR5(propAmer(t5[k],SIT_T5_HOLD))),'');
   });
   _sitRows._meta={spread:sp,fav:fav,dog:dog,bucket:row.label,n:row.n,band:band.label,bandN:band.n,neutral:!!g.neutral_site,earlyTotal:_sitEarlyTotal};
+  /* hand the same rows to Export All. They already carry their own market name,
+     so the combined file groups them exactly as the Situational export does. */
+  _mkRows.sit=_sitRows.map(function(r){
+    return {mkt:r.mkt,team:r.team,suffix:r.suffix,odds:r.odds,line:r.line,
+            name:(r.team?r.team:'')+(r.suffix||'')};
+  });
 }
 function sitLabel(r){return (r.team?r.team:'')+(r.suffix||'');}
 function sitGameHTML(){
@@ -5589,7 +5595,10 @@ var X_MKT={
   f3    :{label:'First Scorer Type (3PT FG)',shape:'player', ppg:false, titleCol:4, oddsCol:5},
   fs    :{label:'First Scorer',              shape:'player', ppg:false, titleCol:4, oddsCol:5},
   fb    :{label:'Method Of First Basket',    shape:'player', ppg:false, titleCol:4, oddsCol:5},
-  gs    :{label:'NCAA Specials',             shape:'desc',                titleCol:3, oddsCol:4}
+  gs    :{label:'NCAA Specials',             shape:'desc',                titleCol:3, oddsCol:4},
+  /* Situational rows carry their own market name per row, so this entry exists
+     only to give the status table and counters something to label. */
+  sit   :{label:'Situational',               shape:'desc',                titleCol:3, oddsCol:4}
 };
 function xBuildCSV(key,rows){
   var m=X_MKT[key];
@@ -5641,7 +5650,7 @@ function xExportGs(){xExport('gs',xSelText('gs-game'));}
 /* ================= EXPORT ALL — every market for one game =================
    Drives each sub-tab in turn: sets its game, waits for it to price, collects the rows.
    Daily Top 25 is excluded on purpose -- it is a slate market, not a game market.   */
-var _mkRows={sp:[],props:[],f3:[],fs:[],fb:[],gs:[]};
+var _mkRows={sp:[],props:[],f3:[],fs:[],fb:[],gs:[],sit:[]};
 var _xaGames=[],_xaBusy=false,_xaLabel='',_xaOv={},_xaOverride={},_mkGameId=null;
 var XA_MARKETS=[
   {k:'sp',   name:'Single Game (leading scorer)', sel:'sp-game',   init:function(){return initSpecials();},
@@ -5655,7 +5664,12 @@ var XA_MARKETS=[
   {k:'fb',   name:'First Basket',                 sel:'fb-game',   init:function(){return initFirstBasket();},
    load:function(){fbLoadGame();return Promise.resolve();}},
   {k:'gs',   name:'Game Specials',                sel:'gs-game',   init:function(){return initGamespec();},
-   load:function(){gsLoadGame();return Promise.resolve();}}
+   load:function(){gsLoadGame();return Promise.resolve();}},
+  /* Situational is different from the rest: it has no player list to load and its
+     rows carry their own market names, so it builds straight from the spread rather
+     than driving a sub-tab's game picker. */
+  {k:'sit',  name:'Situational',                 sel:'sit-game',  init:function(){return initSit();},
+   load:function(){sitGameChange();return Promise.resolve();}}
 ];
 /* per-market compliance reference for the Export All tab */
 function xaRestrictHTML(){
@@ -5855,9 +5869,28 @@ function xaExport(){
   XA_MARKETS.forEach(function(m){
     var rows=(_mkRows[m.k]||[]).map(function(r,idx){
       var o=(_xaOverride[m.k]&&_xaOverride[m.k][idx]!==undefined)?_xaOverride[m.k][idx]:r.odds;
-      return {name:r.name,team:r.team,ppg:r.ppg,odds:o};
+      return {mkt:r.mkt,name:r.name,team:r.team,suffix:r.suffix,ppg:r.ppg,odds:o,line:r.line};
     });
     if(!rows.length)return;
+    if(m.k==='sit'){
+      /* one block per situational market, each with its own piped header */
+      var order=[],seen={};
+      rows.forEach(function(r){if(!seen[r.mkt]){seen[r.mkt]=1;order.push(r.mkt);}});
+      order.forEach(function(mk){
+        var sub=rows.filter(function(r){return r.mkt===mk;});
+        var pipe='|'+mk+'|';
+        var lines=[['Flag','','',mk,'ODDS','',''].map(xCell).join(',')];
+        sub.forEach(function(r){
+          /* team and any wording after it are kept apart, so the work-list name can be
+             swapped in without string surgery on a concatenated label */
+          var cell=(r.team?xTeam(r.team):'')+(r.suffix||'');
+          lines.push(['Y',pipe,pipe,cell,xAmer(r.odds),xFrac(r.odds),r.line||''].map(xCell).join(','));
+        });
+        blocks.push(lines.join('\n'));
+      });
+      counts.push('Situational '+rows.length);
+      return;
+    }
     var csv=xBuildCSV(m.k,rows);
     if(!csv)return;
     blocks.push(csv);
@@ -6585,7 +6618,6 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
   var wf=gsWinProb(sp), wd=1-wf;
   var out={};
   out['Time Of First Point Scored Under 34.5 Seconds']=GS_FIRST_SCORE_U345;
-  out['Both Teams To Score In The First Minute']=gsBothScore60(total,60);
   out['Both Teams To Score In The First 90 Seconds']=gsBothScore60(total,90);
   out['Both Teams To Score In The First 2 Minutes']=gsBothScore60(total,120);
   [70,80,90,95].forEach(function(X){
@@ -6636,7 +6668,6 @@ var _gsGame=null;var _gsGames=[];var _gsList=[];
 // generic templates (no team name)
 var GS_GENERIC=[
  'Time Of First Point Scored Under 34.5 Seconds',
-  'Both Teams To Score In The First Minute',
  'Each Team To Score 70+ Points In Game',
  'Each Team To Score 80+ Points In Game',
  'Each Team To Score 90+ Points In Game',
