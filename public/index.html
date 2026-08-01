@@ -4610,9 +4610,14 @@ var SIT_BLOCK={
   race:['Arizona','Delaware','Maryland','Tennessee','Virginia'],
   led :['Colorado','Delaware','Maryland','New York','Pennsylvania','Tennessee','Virginia','Washington State'],
   f4  :['Delaware','Maryland','Tennessee','Virginia'],
-  max :['Arizona','Colorado','Delaware','Iowa','Maryland','Massachusetts','New York','Pennsylvania','Tennessee','Virginia','Washington State']
+  max :['Arizona','Colorado','Delaware','Iowa','Maryland','Massachusetts','New York','Pennsylvania','Tennessee','Virginia','Washington State'],
+  early:['Delaware','Iowa','Maryland','Missouri','Pennsylvania','Tennessee','Virginia','Washington'],
+  /* null rather than an empty list -- an empty list would render as "Good everywhere",
+     which is a compliance answer nobody has given yet. */
+  t5  :null
 };
-var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 Minutes',max:'Largest Lead Of Game'};
+var SIT_BLOCK_TBD={t5:'TBD \u2014 need to request from compliance'};
+var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 Minutes',max:'Largest Lead Of Game',early:'Both Teams To Score In The First Minute',t5:'Threes Made In First 5 Minutes'};
 /* ================= SITUATIONAL: PRICE ONE GAME =================
 /* Build every situational selection for one game.
    Column layout the platform wants:
@@ -4810,9 +4815,11 @@ function sitRestrictHTML(){
   h+='<div style="font-size:10px;letter-spacing:1.2px;color:var(--acc);font-weight:800;margin-bottom:6px">COMPLIANCE REFERENCE</div>';
   h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px;width:100%">'
     +'<thead><tr><th style="width:230px">MARKET</th><th>MARKET NOT ALLOWED IN</th></tr></thead><tbody>';
-  ['race','led','f4','max'].forEach(function(k){
-    var list=SIT_BLOCK[k]||[];
-    var cell=!list.length
+  ['race','led','f4','max','early','t5'].forEach(function(k){
+    var list=SIT_BLOCK[k];
+    var cell=(list===null||SIT_BLOCK_TBD[k])
+      ? '<span style="color:var(--amb);font-weight:700">'+SIT_BLOCK_TBD[k]+'</span>'
+      : (!list||!list.length)
       ? '<span style="color:var(--grn2);font-weight:700">Good everywhere</span>'
       : list.map(function(st){
           return '<span style="background:#fdeaea;color:var(--red2);border:1px solid #e8c4c4;border-radius:3px;'
@@ -5681,15 +5688,31 @@ function xaRestrictHTML(){
   h+='<div style="font-size:10px;letter-spacing:1.2px;color:var(--acc);font-weight:800;margin-bottom:6px">COMPLIANCE REFERENCE</div>';
   h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px;width:100%">'
     +'<thead><tr><th style="width:230px">MARKET</th><th>MARKET NOT ALLOWED IN</th></tr></thead><tbody>';
-  XA_MARKETS.forEach(function(m){
-    var key=({sp:'game',props:'props',f3:'first3',fs:'firstsc',fb:'firstbasket',gs:'gamespec'})[m.k];
-    var list=CBK_MARKET_BLOCK[key]||[];
-    var cell;
-    if(!list.length)cell='<span style="color:var(--grn2);font-weight:700">Good everywhere</span>';
-    else cell=list.map(function(s){
+  function stateCell(list){
+    if(!list||!list.length)return '<span style="color:var(--grn2);font-weight:700">Good everywhere</span>';
+    return list.map(function(s){
       return '<span style="background:#fdeaea;color:var(--red2);border:1px solid #e8c4c4;border-radius:3px;padding:1px 6px;font-size:10px;margin-right:3px;display:inline-block;margin-bottom:2px">'+s+'</span>';
     }).join('');
-    h+='<tr><td class="bold">'+X_MKT[m.k].label+'</td><td>'+cell+'</td></tr>';
+  }
+  XA_MARKETS.forEach(function(m){
+    if(m.k==='sit'){
+      /* Situational covers four markets with different state rules, so it gets a row
+         each rather than one line that would understate the restrictions. */
+      [['race','Situational \u2014 Race To X Points'],
+       ['led','Situational \u2014 Percentage Of Game Led'],
+       ['f4','Situational \u2014 First 4 Minutes'],
+       ['max','Situational \u2014 Largest Lead Of Game'],
+       ['early','Situational \u2014 Both Teams Score In The First Minute'],
+       ['t5','Situational \u2014 Threes Made In First 5 Minutes']].forEach(function(p){
+        var cell=SIT_BLOCK_TBD[p[0]]
+          ? '<span style="color:var(--amb);font-weight:700">'+SIT_BLOCK_TBD[p[0]]+'</span>'
+          : stateCell(SIT_BLOCK[p[0]]);
+        h+='<tr><td class="bold">'+p[1]+'</td><td>'+cell+'</td></tr>';
+      });
+      return;
+    }
+    var key=({sp:'game',props:'props',f3:'first3',fs:'firstsc',fb:'firstbasket',gs:'gamespec'})[m.k];
+    h+='<tr><td class="bold">'+X_MKT[m.k].label+'</td><td>'+stateCell(CBK_MARKET_BLOCK[key])+'</td></tr>';
   });
   h+='</tbody></table></div>';
   /* player-based markets also carry the home-state rule */
@@ -6494,6 +6517,23 @@ var GS_FITS2={
   ast20:[-8.3995,0.06545,0.04195], ft25:[-9.3351,-0.00136,0.04771], ft30:[-11.7553,0.01086,0.05215]
 };
 /* Markets that depend on WHO is playing, not just the spread and total.
+
+   Four alternative forms were tested against this one, held out on 20-25 random
+   halves each, and all four lost:
+     centring on the league medians (spread 6.5, total 149) with spread x profile and
+       total x profile interactions   -0.6% to +0.4%, i.e. nothing
+     splitting the two teams into separate features instead of best-and-sum
+       -1.0% to -3.1%, consistently worse
+     adding the gap between the two teams' expectations   -1.4% to +1.2%, noise
+     a structural model -- fit each team's count, then P(either) = 1-(1-pH)(1-pA)
+       -6% to -14%, much worse at every threshold
+   The structural version is the elegant one and it fails because the residuals are
+   right-skewed (skew +0.26 to +0.50), so a symmetric distribution underprices every
+   high threshold by 2 to 5 points. Fitting the event directly sidesteps that, since
+   the logistic learns the real tail rather than assuming one.
+
+   So the form below is what survived: additive in spread, total, the better team's
+   expectation, and the pair sum.
    Each team's own rate and what its opponent allows are both real traits. Split-half
    across the season: own 3PM 0.786, own assists 0.714, own rebounds 0.629, own FTM
    0.479; allowed 3PM 0.487, rebounds 0.538, assists 0.547, FTA 0.588. Run size is
@@ -6535,6 +6575,12 @@ function gsExpect(own,allowed,k){
 var GS_RICH2={
   reb40:[-25.4277,0.04548,-0.01074,0.29957,0.22127], reb45:[-27.289,0.0527,-0.00648,0.41358,0.15617],
   ast15:[-17.8765,0.04394,0.03643,0.48961,0.20879], ast25:[-23.5802,0.07484,0.04212,0.98874,-0.07674],
+  /* 15+ assists reads -650 as an either-team market, which is not a market.
+     Per team it is live on both sides: the favourite hits it 52.0% overall and
+     the underdog 28.0%, and the split widens hard with the spread -- 40.5% to
+     77.4% for the favourite from a pick'em to -15, while the dog falls from
+     33.7% to 20.4%. */
+  ast15f:[-16.0104,0.05924,0.02866,0.40031,0.40031], ast15d:[-17.3959,-0.04025,0.03399,0.42608,0.42608],
   t310f:[-15.2128,0.03058,0.02949,0.60164,0.60164], t310d:[-16.5089,-0.01423,0.03592,0.62608,0.62608]
 };
 var GS_FITS3={
@@ -6636,8 +6682,18 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
   var wf=gsWinProb(sp), wd=1-wf;
   var out={};
   out['Time Of First Point Scored Under 34.5 Seconds']=GS_FIRST_SCORE_U345;
-  /* 45.2% under 29.5 seconds, 51.7% under 34.5 -- both flat across spread and total */
+  /* Flat by design, and tested rather than assumed.
+     Time of first point: correlation -0.05 with the total, -0.02 with the spread.
+     Scoring last: the favourite does it 50.1% of the time, correlations -0.03 and
+     -0.04. Neither moves, so a flat league rate is the honest price -- and it makes
+     them clean markets, since there is nothing in them for anyone else to know.
+     45.2% under 29.5 seconds, 51.7% under 34.5. */
   out['Time Of First Point Scored Under 29.5 Seconds']=0.452;
+  /* Shooting skill was tested here and does NOT help: the worst-shooting quarter of
+     pairings hit 11.2% against 12.2% for the best, and adding three-point percentage
+     made the held-out fit 0.9% WORSE. A single attempt is too noisy for season form to
+     show through, so this stays on spread and total. Same result for the first-field-
+     goal and score-first-both-halves markets, where team FG% moved nothing. */
   out['Both Teams To Make Their 1st Three Point Attempt']=gsLogit(GS_FITS3.t3both,sp,total);
   out['Both Teams To Score In The First 90 Seconds']=gsBothScore60(total,90);
   out['Both Teams To Score In The First 2 Minutes']=gsBothScore60(total,120);
@@ -6666,7 +6722,6 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
   out['Either Team To Record 40+ Rebounds']=gsRich(GS_RICH2.reb40,sp,total,pr.best,pr.sum);
   out['Either Team To Record 20+ Assists']=gsRich(GS_RICH.ast20,sp,total,pa.best,pa.sum);
   out['Either Team To Record 25+ Assists']=gsRich(GS_RICH2.ast25,sp,total,pa.best,pa.sum);
-  out['Either Team To Record 15+ Assists']=gsRich(GS_RICH2.ast15,sp,total,pa.best,pa.sum);
   out['Either Team To Make 25+ Free Throws']=gsRich(GS_RICH.ft25,sp,total,pt.best,pt.sum);
   out['Either Team To Make 30+ Free Throws']=gsRich(GS_RICH.ft30,sp,total,pt.best,pt.sum);
   out['Either Team To Go On A 15-0 Run']=gsRich(GS_RICH.run15e,sp,total,Math.max(rF,rD),(aF+aD)/2);
@@ -6681,6 +6736,9 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
     out[nm+' To Go On A 15-0 Run']=gsRich(GS_RICH['run15'+sfx],sp,total,myRun,oppAllow);
     out[nm+' To Go On A 20-0 Run']=gsRich(GS_RICH['run20'+sfx],sp,total,myRun,oppAllow);
     out[nm+' To Score First Both Halves']=gsLogit(GS_FITS['both_'+k],sp,total);
+    out[nm+' To Record 15+ Assists']=gsRich(GS_RICH2['ast15'+(k==='fav'?'f':'d')],sp,total,
+      gsExpect(k==='fav'?PF.ast:PD.ast, k==='fav'?PD.ast_allowed:PF.ast_allowed,'ast'),
+      gsExpect(k==='fav'?PF.ast:PD.ast, k==='fav'?PD.ast_allowed:PF.ast_allowed,'ast'));
     out[nm+' To Make 10+ Threes In The Game']=gsRich(GS_RICH2['t310'+(k==='fav'?'f':'d')],sp,total,
       gsExpect(k==='fav'?PF.t3m:PD.t3m, k==='fav'?PD.t3m_allowed:PF.t3m_allowed,'t3'),
       gsExpect(k==='fav'?PF.t3m:PD.t3m, k==='fav'?PD.t3m_allowed:PF.t3m_allowed,'t3'));
@@ -6715,7 +6773,6 @@ var GS_GENERIC=[
  'Either Team To Record 40+ Rebounds',
  'Either Team To Record 25+ Assists',
  'Either Team To Record 20+ Assists',
- 'Either Team To Record 15+ Assists',
  'Either Team To Make 25+ Free Throws',
  'Either Team To Make 30+ Free Throws'
 ];
@@ -6726,6 +6783,7 @@ var GS_TEAM=[
  '{T} To Go On A 15-0 Run',
  '{T} To Go On A 20-0 Run',
  '{T} To Score First Both Halves',
+ '{T} To Record 15+ Assists',
  '{T} To Make 10+ Threes In The Game',
  '{T} To Score Last In Game',
  '{T} To Win And Make 15+ Threes In The Game',
