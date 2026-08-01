@@ -5607,11 +5607,17 @@ var X_MKT={
      only to give the status table and counters something to label. */
   sit   :{label:'Situational',               shape:'desc',                titleCol:3, oddsCol:4}
 };
+/* Column H (index 7) carries the fractional price on every market in the combined
+   file. Left where each layout naturally put it, the fraction landed in F for the
+   description markets, G for First Scorer and H only for Top Scorer -- three
+   different columns in one workbook. Pinning it to H means one column holds every
+   fraction no matter which block you are looking at. */
+var X_FRAC_COL=7;
 function xBuildCSV(key,rows){
   var m=X_MKT[key];
   if(!m||!rows||!rows.length)return null;
   var pipe='|'+m.label+'|';
-  var width=Math.max(m.oddsCol+2, m.titleCol+1);
+  var width=Math.max(m.oddsCol+2, m.titleCol+1, X_FRAC_COL+1);
   var head=new Array(width).fill('');
   head[0]='Flag'; head[m.titleCol]=m.label; head[m.oddsCol]='ODDS';
   var lines=[head.map(xCell).join(',')];
@@ -5620,11 +5626,12 @@ function xBuildCSV(key,rows){
     c[0]='Y'; c[1]=pipe; c[2]=pipe; c[3]=r.name;
     if(m.shape==='player'){
       c[4]=xTeam(r.team);
-      if(m.ppg){ c[5]=(r.ppg==null?'':r.ppg); c[6]=xAmer(r.odds); c[7]=xFrac(r.odds); }
-      else { c[5]=xAmer(r.odds); c[6]=xFrac(r.odds); }
+      if(m.ppg){ c[5]=(r.ppg==null?'':r.ppg); c[6]=xAmer(r.odds); }
+      else { c[5]=xAmer(r.odds); }
     } else {
-      c[4]=xAmer(r.odds); c[5]=xFrac(r.odds);
+      c[4]=xAmer(r.odds);
     }
+    c[X_FRAC_COL]=xFrac(r.odds);
     lines.push(c.map(xCell).join(','));
   });
   return lines.join('\n');
@@ -5899,15 +5906,32 @@ function xaExport(){
       /* one block per situational market, each with its own piped header */
       var order=[],seen={};
       rows.forEach(function(r){if(!seen[r.mkt]){seen[r.mkt]=1;order.push(r.mkt);}});
+      var homeTeam=(_xaTeams&&_xaTeams.length)?_xaTeams[0]:null;
       order.forEach(function(mk){
         var sub=rows.filter(function(r){return r.mkt===mk;});
+        /* Race to X and the two first-4-minute team markets always list the home
+           side second, so the pair reads the same way on every game regardless of
+           which side happens to be favoured. */
+        if(homeTeam&&(mk.indexOf('Race To ')===0||mk==='1st 4 Minutes Spread'||mk==='1st 4 Minutes Money Line')){
+          sub=sub.slice().sort(function(a,b){
+            return (a.team===homeTeam?1:0)-(b.team===homeTeam?1:0);
+          });
+        }
         var pipe='|'+mk+'|';
-        var lines=[['Flag','','',mk,'ODDS','',''].map(xCell).join(',')];
+        /* A Flag  B |market|  C |market|  D selection  E odds  F line  G blank
+           H fractional -- the fraction sits in H on every block so one column holds
+           it for the whole file rather than moving about market to market. */
+        var hd=new Array(X_FRAC_COL+1).fill('');
+        hd[0]='Flag'; hd[3]=mk; hd[4]='ODDS';
+        var lines=[hd.map(xCell).join(',')];
         sub.forEach(function(r){
           /* team and any wording after it are kept apart, so the work-list name can be
              swapped in without string surgery on a concatenated label */
           var cell=(r.team?xTeam(r.team):'')+(r.suffix||'');
-          lines.push(['Y',pipe,pipe,cell,xAmer(r.odds),xFrac(r.odds),r.line||''].map(xCell).join(','));
+          var c=new Array(X_FRAC_COL+1).fill('');
+          c[0]='Y'; c[1]=pipe; c[2]=pipe; c[3]=cell; c[4]=xAmer(r.odds); c[5]=r.line||'';
+          c[X_FRAC_COL]=xFrac(r.odds);
+          lines.push(c.map(xCell).join(','));
         });
         blocks.push(lines.join('\n'));
       });
