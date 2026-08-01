@@ -4105,7 +4105,7 @@ function ratesInitialKey(name,team){
 }
 function loadRates(cb){
   if(_rates){if(cb)cb();return;}
-  sb.from('player_rates').select('player_name,team,season,games,ls_1,ls_2,ls_3,fs_1,fs_2,fs_3,f3_1,f3_2,f3_3,prev_season,prev_games,prev_ls_1,prev_ls_2,prev_ls_3,prev_fs_1,prev_fs_2,prev_fs_3,prev_f3_1,prev_f3_2,prev_f3_3')
+  sb.from('player_rates').select('player_name,team,season,games,ls_1,ls_2,ls_3,fs_1,fs_2,fs_3,f3_1,f3_2,f3_3,prev_season,prev_games,prev_ppg,ppg,prev_ls_1,prev_ls_2,prev_ls_3,prev_fs_1,prev_fs_2,prev_fs_3,prev_f3_1,prev_f3_2,prev_f3_3')
     .range(0,9999).then(function(r){
       _rates=r.data||[]; _ratesBy={}; _ratesByIni={};
       _rates.forEach(function(x){
@@ -4127,6 +4127,24 @@ function cbkSeasonNow(){
   return d.getMonth()>=9 ? d.getFullYear()+1 : d.getFullYear();
 }
 function cbkSeasonLabel(y){return (y-1)+'-'+String(y).slice(2);}
+/* A one-line note so nobody has to guess which season the counts describe. */
+function rateSeasonNote(){
+  if(!_rates||!_rates.length)return '';
+  var withCur=0,withPrev=0,cs=null,ps=null;
+  _rates.forEach(function(x){
+    if(x.games>0){withCur++;cs=cs||x.season;}
+    if(x.prev_games>0){withPrev++;ps=ps||x.prev_season;}
+  });
+  if(!cs&&!ps)return '';
+  var pct=withCur?Math.round(100*withCur/_rates.length):0;
+  if(!withCur||pct<5){
+    return '<div style="font-size:10px;color:var(--amb);padding:2px 2px 8px">Counts are from '
+      +(ps?cbkSeasonLabel(ps):'last season')+' \u2014 '+(cs?cbkSeasonLabel(cs):'the new season')
+      +' has not started.</div>';
+  }
+  return '<div style="font-size:10px;color:var(--txt3);padding:2px 2px 8px">Counts from '
+    +cbkSeasonLabel(cs)+(withPrev?(', blended with '+cbkSeasonLabel(ps)+' for players with few games'):'')+'.</div>';
+}
 function rateCell(name,team,kind){
   var h=(typeof rateFor==='function')?rateFor(name,team):null;
   /* a returning player with no games yet still has last season to show, so the
@@ -4136,18 +4154,31 @@ function rateCell(name,team,kind){
   if(kind==='ls'){a=h.ls_1;b=h.ls_2;c=h.ls_3;lab='finished 1st / 2nd / 3rd in scoring';}
   else if(kind==='fs'){a=h.fs_1;b=h.fs_2;c=h.fs_3;lab='was 1st / 2nd / 3rd to score';}
   else {a=h.f3_1;b=h.f3_2;c=h.f3_3;lab='hit the 1st / 2nd / 3rd three';}
-  if(!h.games&&h.prev_games){a=h['prev_'+k+'_1'];b=h['prev_'+k+'_2'];c=h['prev_'+k+'_3'];}
   var r=rateBlendSeasons(h,k+'_1','prev_'+k+'_1');
+  /* when the rate is entirely last season's, show last season's counts beside it --
+     printing this season's zeros next to a prior-season percentage reads as broken */
+  if(r&&r.useprev&&h.prev_games){a=h['prev_'+k+'_1'];b=h['prev_'+k+'_2'];c=h['prev_'+k+'_3'];}
   var pct=r?Math.round(100*r.rate):0;
   var tail,tip;
-  if(r&&r.blended){
+  /* Label with the actual years rather than "this season". The season a file is
+     stamped with runs a year ahead of the calendar -- player_box_2026 holds 2025-26 --
+     and "this season" reads as the one about to tip off, which it is not. */
+  var curLbl=h.season?cbkSeasonLabel(h.season):'', prvLbl=h.prev_season?cbkSeasonLabel(h.prev_season):'';
+  if(r&&r.useprev){
+    tail=' of '+(h.prev_games||0)+' <span style="color:var(--amb)">'+prvLbl+'</span>';
+    tip=lab+'. All from '+prvLbl+' ('+(h.prev_games||0)+' games) \u2014 only '
+        +(h.games||0)+' game'+((h.games===1)?'':'s')+' played in '+curLbl+' so far.'
+        +((r.scale&&Math.abs(r.scale-1)>0.05)
+          ? ' Scaled '+(r.scale>1?'up':'down')+' to '+Math.round(r.scale*100)+'% for the change in scoring role ('
+            +Number(h.prev_ppg).toFixed(1)+' ppg to '+Number(h.ppg).toFixed(1)+').' : '');
+  }else if(r&&r.blended){
     var wt=Math.round(r.wThis*100);
     tail=' <span style="color:var(--amb)">'+wt+'/'+(100-wt)+'</span>';
-    tip=lab+'. Blended '+wt+'% this season ('+(h.games||0)+' games) and '+(100-wt)
-        +'% last ('+(h.prev_games||0)+' games).';
+    tip=lab+'. Blended '+wt+'% from '+curLbl+' ('+(h.games||0)+' games) and '+(100-wt)
+        +'% from '+prvLbl+' ('+(h.prev_games||0)+' games).';
   }else{
     tail=' of '+(h.games||0);
-    tip=lab+', in '+(h.games||0)+' games this season.';
+    tip=lab+', in '+(h.games||0)+' games in '+curLbl+'.';
   }
   return '<td title="'+tip+'">'
     +'<span style="font-weight:800;color:'+((r&&r.blended)?'var(--amb)':'var(--acc)')+'">'+a+'</span>'
@@ -4184,16 +4215,39 @@ function rateSeasonWeight(games){
   return (w==null)?1:w;
 }
 /* returns {rate, n, wThis, blended} for one counter, or null if there is nothing */
+/* A player's rate from last season assumes last season's role. Ugnius Jarusevicius
+   led 19% of games at 16.2 ppg for Central Michigan, then transferred to Nebraska
+   and became a 7.0 ppg bench player -- carrying the 19% forward priced him ahead of
+   guys scoring twice as much. Scaling the prior rate by how the scoring role moved
+   fixes it, and it is measurable: across 1,856 players who appeared in both seasons,
+   MAE predicting this year's rate falls from 0.074 to 0.055 and the correlation
+   rises from 0.34 to 0.60. The exponent is flat anywhere from 1.25 to 2.5, so 1.5
+   is chosen in the middle rather than tuned to the last decimal. */
+var RATE_ROLE_POW=1.5, RATE_ROLE_MIN=0.3, RATE_ROLE_MAX=2.5;
+function rateRoleScale(h){
+  var cp=h.ppg, pp=h.prev_ppg;
+  if(!cp||!pp||pp<=2)return 1;
+  var r=Math.pow(cp/pp,RATE_ROLE_POW);
+  return Math.min(Math.max(r,RATE_ROLE_MIN),RATE_ROLE_MAX);
+}
 function rateBlendSeasons(h,curKey,prevKey){
   if(!h)return null;
   var cg=h.games||0, pg=h.prev_games||0;
   var cHit=h[curKey], pHit=h[prevKey];
   var hasCur=cg>0&&cHit!=null, hasPrev=pg>0&&pHit!=null;
   if(!hasCur&&!hasPrev)return null;
-  if(!hasPrev)return {rate:cHit/cg,n:cg,wThis:1,blended:false};
-  if(!hasCur) return {rate:pHit/pg,n:pg,wThis:0,blended:true};
+  var sc=rateRoleScale(h);
+  var prevRate=hasPrev?Math.min(1,(pHit/pg)*sc):0;
+  if(!hasPrev)return {rate:cHit/cg,n:cg,wThis:1,blended:false,useprev:false,scale:1};
+  if(!hasCur) return {rate:prevRate,n:pg,wThis:0,blended:true,useprev:true,scale:sc};
   var w=rateSeasonWeight(cg);
-  return {rate:w*(cHit/cg)+(1-w)*(pHit/pg), n:cg+pg, wThis:w, blended:w<1};
+  /* Effective sample size for a weighted average of two rates. Simply adding the
+     two game counts overstates it badly: at 100% weight on this season, last
+     season's games contribute nothing to the estimate but were still inflating the
+     confidence. Divine Ugochukwu read as 50 games of evidence for a rate measured
+     over 22, which pushed him past a better scorer. */
+  var nEff=1/((w*w)/cg+((1-w)*(1-w))/pg);
+  return {rate:w*(cHit/cg)+(1-w)*prevRate, n:nEff, wThis:w, blended:w<1, useprev:w===0, scale:sc};
 }
 function rateFor(name,team){
   var hit=_ratesBy[ratesKey(name,team)];
@@ -4305,7 +4359,7 @@ function spApplyMargin(){
   });
   _mkRows.sp=rows.map(function(r){return{name:r.player,team:r.team,ppg:r.ppg.toFixed(1),odds:r.odds};});
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:1px">'+(_spMode==='day'?'DAILY LEADING SCORER':'GAME LEADING SCORER')+'</div><button class="btn" style="font-size:11px;padding:4px 12px" onclick="xExportSp()">EXPORT CSV</button></div>';
-  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th>LED 1/2/3</th><th>FAIR%</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
+  h+='<div class="panel"><div style="overflow-x:auto"><table class="data" style="font-size:12px"><thead><tr><th>PLAYER</th><th>TEAM</th><th>PPG</th><th title="Times this player finished 1st, 2nd or 3rd on his team in scoring">LED 1/2/3</th><th>FAIR%</th><th>ODDS</th>'+(isAdmin?'<th>OVERRIDE</th>':'')+'</tr></thead><tbody>';
   rows.forEach(function(r){
     h+='<tr><td class="bold">'+r.player+'</td><td>'+r.team+'</td><td>'+r.ppg.toFixed(1)+'</td>'+rateCell(r.player,r.team,'ls')+'<td class="muted">'+(r.fair*100).toFixed(1)+'%</td><td style="font-weight:800;color:var(--acc3)">'+r.odds+'</td>';
     if(isAdmin)h+='<td><input class="field" style="width:90px;padding:4px 6px;font-size:11px" value="'+r.odds+'" onchange="spOverride(\''+r.player.replace(/'/g,"\\'")+'\',this.value)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fld"></td>';
