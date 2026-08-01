@@ -4482,7 +4482,8 @@ var GAME_SELS={
   fb   :{sel:'fb-game',   src:function(){return _fbGames;}},
   gs   :{sel:'gs-game',   src:function(){return _gsGames;}},
   xa   :{sel:'xa-game',   src:function(){return _xaGames;}},
-  sit  :{sel:'sit-game',  src:function(){return _sitGames;}}
+  sit  :{sel:'sit-game',  src:function(){return _sitGames;}},
+  t5   :{sel:'t5-game',   src:function(){return _sitT5Games;}}
 };
 function gameToday(){
   var d=new Date();
@@ -4510,7 +4511,7 @@ function gameFill(key){
     });
   }
   var keep=sel.value;
-  sel.innerHTML='<option value="">'+(list.length?'Select a game\u2026':'No match')+'</option>'
+  sel.innerHTML='<option value="">'+(key==='t5'?'Any game (league average)':(list.length?'Select a game\u2026':'No match'))+'</option>'
     +list.map(function(g){return '<option value="'+g.id+'">'+gameLabel(g)+'</option>';}).join('');
   if(keep&&list.some(function(g){return String(g.id)===String(keep);}))sel.value=keep;
   var note=document.getElementById(key+'-gnote');
@@ -4591,6 +4592,7 @@ function sitSetView(v,el){
 }
 function sitSetProp(p,el){
   _sitProp=p;
+
   /* the banding toggles mean nothing for a market with no spread buckets */
   var vb=document.getElementById('sit-viewband');
   if(vb)vb.style.display=(p==='early'||p==='t5')?'none':'inline-flex';
@@ -4744,9 +4746,9 @@ function sitBuildRows(){
   add('Both Teams To Score In The First Minute',null,'Yes',sitOdds(sitR5(propAmer(ep,SIT_EARLY_HOLD))),'');
   add('Both Teams To Score In The First Minute',null,'No', sitOdds(sitR5(propAmer(1-ep,SIT_EARLY_HOLD))),'');
   /* threes in the first five minutes, a five-way ladder off the same total */
-  var t5=sitT5Probs(_sitT5Total);
+  var t5=sitT5Probs(_sitT5Total,sitT5Exp3());
   ['0','1','2','3','4+'].forEach(function(lab,k){
-    add('Threes Made In First 5 Minutes',null,lab,sitOdds(sitR5(propAmer(t5[k],SIT_EARLY_HOLD))),'');
+    add('Threes Made In First 5 Minutes',null,lab,sitOdds(sitR5(propAmer(t5[k],SIT_T5_HOLD))),'');
   });
   _sitRows._meta={spread:sp,fav:fav,dog:dog,bucket:row.label,n:row.n,band:band.label,bandN:band.n,neutral:!!g.neutral_site,earlyTotal:_sitEarlyTotal};
 }
@@ -4850,60 +4852,110 @@ function sitEarlySetTotal(v){
   sitRender();
 }
 /* ---- Threes made in the first five minutes --------------------------------
-   5,327 games. Almost perfectly Poisson -- variance over mean is 0.973, and the
-   fitted distribution lands within a point of the actual at every count:
-       0 actual 12.71 model 12.81   1: 26.21 / 26.32   2: 26.43 / 27.05
-       3 actual 19.84 model 18.53   4+: 14.81 / 15.30
-   So the whole five-way prices off one number, and that number moves with the
-   total: lambda = -0.4109 + 0.01651 x total. Correlation with the total is +0.226,
-   with the spread only +0.047, so the spread is left out.
-   Three minutes was tried first but zero happens 28 percent of the time there,
-   which makes for a lopsided ladder. Five minutes is far more balanced. */
-var SIT_T5=[-0.4109,0.01651];
-function sitT5Lambda(total){return Math.max(0.35,SIT_T5[0]+SIT_T5[1]*(total||151));}
-function sitPoisson(k,lam){
-  var p=Math.exp(-lam);
-  for(var i=1;i<=k;i++)p*=lam/i;
-  return p;
+   6,273 games, and it depends on WHO is shooting as much as on the total. Across
+   games sorted by the two teams' combined three-point rate, early threes run from
+   1.69 in the bottom fifth to 2.53 in the top -- a swing as large as the total's.
+   Held out on 30 random halves, Poisson loss: total alone 0.53802, shooting profile
+   alone 0.53422, both together 0.52053. So both go in.
+   Each team's expected threes is its own average blended with what its opponent
+   allows; the two are summed. The count itself is almost exactly Poisson --
+   variance over mean 0.973 -- so the whole ladder comes off that one number.
+   Booked at 10 percent hold. */
+var SIT_T5_HOLD=1.10;
+var SIT_T5=[-2.9644,0.01217,0.20432];
+var SIT_T5_LG=15.714;
+var _sitT5Total=151,_sitT5Games=[],_sitT5Game=null;
+function sitT5Exp3(){
+  /* combined expected threes for the two teams, or the league value with no game */
+  var g=_sitT5Game;
+  if(!g||!_fbProfiles)return SIT_T5_LG;
+  var H=_fbProfiles[g.home.team],A=_fbProfiles[g.away.team];
+  if(!H||!A||H.t3m==null||A.t3m==null)return SIT_T5_LG;
+  var eH=(Number(H.t3m)+Number(A.t3m_allowed==null?H.t3m:A.t3m_allowed))/2;
+  var eA=(Number(A.t3m)+Number(H.t3m_allowed==null?A.t3m:H.t3m_allowed))/2;
+  return eH+eA;
 }
-function sitT5Probs(total){
-  var lam=sitT5Lambda(total),out=[],cum=0;
+function sitT5Lambda(total,exp3){
+  return Math.max(0.35,SIT_T5[0]+SIT_T5[1]*(total||151)+SIT_T5[2]*(exp3==null?SIT_T5_LG:exp3));
+}
+function sitPoisson(k,lam){var p=Math.exp(-lam);for(var i=1;i<=k;i++)p*=lam/i;return p;}
+function sitT5Probs(total,exp3){
+  var lam=sitT5Lambda(total,exp3),out=[],cum=0;
   for(var k=0;k<4;k++){var p=sitPoisson(k,lam);out.push(p);cum+=p;}
   out.push(Math.max(0.001,1-cum));
   return out;
 }
-var _sitT5Total=151;
 function sitT5SetTotal(v){
   var n=parseFloat(v);
   _sitT5Total=(isNaN(n)||n<90||n>240)?151:n;
-  sitBuildRows();
-  sitRender();
+  sitBuildRows(); sitRender();
+}
+/* Games are fetched once into _sitT5Games and the select is repopulated after every
+   render -- sitRender rebuilds the whole panel, so filling the dropdown inside the
+   loader alone would have it wiped on the next paint. */
+var _sitT5Loaded=false,_sitT5Loading=false;
+async function sitT5LoadGames(){
+  if(_sitT5Loaded||_sitT5Loading)return;
+  _sitT5Loading=true;
+  var r=await sb.from('games').select('id,game_date,home:home_team_id(id,team),away:away_team_id(id,team)')
+    .order('game_date',{ascending:true}).range(0,9999);
+  _sitT5Games=(r.data||[]).filter(function(g){return g.home&&g.away;});
+  _sitT5Loaded=true; _sitT5Loading=false;
+  fbLoadProfiles(function(){sitRender();});
+}
+/* called at the end of every threes render, once the select exists again */
+function sitT5FillSelect(){
+  var sel=document.getElementById('t5-game');
+  if(!sel)return;
+  if(!_sitT5Loaded){sitT5LoadGames();return;}
+  gameFill('t5');
+  var note=document.getElementById('t5-gnote');
+  if(note&&!_sitT5Games.length)note.textContent='no games loaded';
+  if(_sitT5Game)sel.value=String(_sitT5Game.id);
+}
+function sitT5PickGame(){
+  var sel=document.getElementById('t5-game');
+  var gid=sel?sel.value:'';
+  _sitT5Game=gid?_sitT5Games.filter(function(x){return String(x.id)===String(gid);})[0]:null;
+  sitBuildRows(); sitRender();
 }
 function sitT5HTML(){
-  var T=_sitT5Total,P=sitT5Probs(T),lam=sitT5Lambda(T);
+  var T=_sitT5Total,e3=sitT5Exp3(),P=sitT5Probs(T,e3),lam=sitT5Lambda(T,e3);
+  var g=_sitT5Game;
   var h=sitHead('THREES MADE IN THE FIRST 5 MINUTES',
-    'How many three-pointers go in inside the opening five minutes, as a five-way. '
-    +'Driven by the total alone \u2014 the count is Poisson to within a point at every '
-    +'level, so the whole ladder comes off one expected number. Booked at 5% hold.');
-  h+='<div class="search-bar" style="gap:10px;align-items:center;margin-bottom:10px">'
-   +'<span style="font-size:11px;color:var(--txt3)">your total</span>'
-   +'<input class="field" style="width:78px" value="'+T+'" onchange="sitT5SetTotal(this.value)" '
-   +'autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" name="q-sitt5">'
-   +'<span style="font-size:10px;color:var(--txt3)">expects '+lam.toFixed(2)+' threes</span></div>';
+    'A five-way on how many threes go in early. Driven by the total AND by who is '
+    +'shooting \u2014 across games sorted by the two teams\u2019 combined three-point rate the '
+    +'count runs from 1.69 to 2.53, a swing as big as the total\u2019s. Booked at 10% hold.');
+  h+='<div class="search-bar" style="gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">'
+   +'<input id="t5-gsearch" class="field" style="max-width:140px" placeholder="Search team\u2026" '
+   +'oninput="gameSearch(\'t5\')" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" name="q-t5s">'
+   +'<select id="t5-game" class="field" style="max-width:300px" onchange="sitT5PickGame()"><option value="">Any game (league average)</option></select>'
+   +'<span id="t5-gnote" style="font-size:10px;color:var(--txt3)"></span>'
+   +'<span style="font-size:11px;color:var(--txt3);margin-left:6px">total</span>'
+   +'<input class="field" style="width:72px" value="'+T+'" onchange="sitT5SetTotal(this.value)" '
+   +'autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" name="q-t5t"></div>';
+  h+='<div class="panel" style="margin-bottom:12px"><div style="display:flex;gap:26px;align-items:baseline;flex-wrap:wrap">'
+   +'<div><div style="font-size:9px;letter-spacing:1px;color:var(--txt3)">GAME</div>'
+   +'<div style="font-size:13px;font-weight:800;color:var(--txt1)">'
+   +(g?fbEsc(g.away.team+' @ '+g.home.team):'<span style="color:var(--txt3);font-weight:400">league average</span>')+'</div></div>'
+   +'<div><div style="font-size:9px;letter-spacing:1px;color:var(--txt3)">COMBINED 3PM/G</div>'
+   +'<div style="font-size:15px;font-weight:800;color:'+(Math.abs(e3-SIT_T5_LG)>0.8?'var(--acc)':'var(--txt1)')+'">'+e3.toFixed(2)+'</div></div>'
+   +'<div><div style="font-size:9px;letter-spacing:1px;color:var(--txt3)">EXPECTED IN 5 MIN</div>'
+   +'<div style="font-size:15px;font-weight:800;color:var(--txt1)">'+lam.toFixed(2)+'</div></div>'
+   +'</div></div>';
   h+='<div class="panel" style="padding:0"><table class="data" style="font-size:11px;width:100%">'
    +'<thead><tr><th>THREES MADE</th><th style="width:120px">TRUE</th><th style="width:110px">PRICE</th></tr></thead><tbody>';
   ['0','1','2','3','4+'].forEach(function(lab,k){
-    var p=P[k],o=sitR5(propAmer(p,SIT_EARLY_HOLD));
-    h+='<tr><td class="bold">'+lab+'</td>'
-      +'<td class="tnum">'+(100*p).toFixed(2)+'%</td>'
+    var p=P[k],o=sitR5(propAmer(p,SIT_T5_HOLD));
+    h+='<tr><td class="bold">'+lab+'</td><td class="tnum">'+(100*p).toFixed(2)+'%</td>'
       +'<td class="tnum" style="color:var(--acc);font-weight:800">'+sitOdds(o)+'</td></tr>';
   });
-  var book=0;P.forEach(function(p){book+=1/((sitR5(propAmer(p,SIT_EARLY_HOLD))<0)?(1+100/-sitR5(propAmer(p,SIT_EARLY_HOLD))):(1+sitR5(propAmer(p,SIT_EARLY_HOLD))/100));});
   h+='</tbody></table></div>';
   h+='<div style="font-size:10px;color:var(--txt3);line-height:1.6;padding:8px 2px;max-width:900px">'
-   +'<b style="color:var(--txt2)">Basis.</b> 5,327 games. The count is Poisson to within a point at '
-   +'every level \u2014 zero came in at 12.71% against a modelled 12.81%. Expected threes runs '
-   +'1.82 at a 135 total, 2.08 at 151 and 2.36 at 168.</div>';
+   +'<b style="color:var(--txt2)">Basis.</b> 6,273 games. Expected threes = total and the two '
+   +'teams\u2019 combined output, where each team\u2019s figure is its own average blended with what '
+   +'its opponent allows. League average is '+SIT_T5_LG.toFixed(2)+' combined 3PM per game. Two teams '
+   +'that both shoot heavily push the expected count near 2.8; two that do not drop it below 1.4.</div>';
   return h;
 }
 function sitEarlyHTML(){
@@ -4961,7 +5013,7 @@ function sitRender(){
   /* a pick'em has no favourite, so every one of these numbers is just a coin-flip
      artefact of which side happened to be listed first. Dropped from all views. */
   if(_sitProp==='early'){out.innerHTML=sitEarlyHTML();return;}
-  if(_sitProp==='t5'){out.innerHTML=sitT5HTML();return;}
+  if(_sitProp==='t5'){out.innerHTML=sitT5HTML();sitT5FillSelect();return;}
   var T=SIT_DATA.targets, h=sitGameHTML()+sitRestrictHTML();
   if(_sitProp==='race'){
     h+=sitHead('RACE TO X POINTS','Which side gets there first, from the favourite\u2019s side. The percentage is what actually happened; the price beside it is that number posted 30 cents apart and rounded to the nearest 5. '+'Prices widen as they lengthen: 30 cents to -180, then 40, 50 and 100. '+'Notice how the edge grows with the target \u2014 an early race is close to a coin flip even for a big favourite.');
