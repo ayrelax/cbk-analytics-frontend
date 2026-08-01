@@ -4294,7 +4294,11 @@ function rateBlend(modelP,hits,games){
    needed. Measured on the 105 players the model put under 2% who still led at least
    once: they actually led 1.52% of their following games, the old formula predicted
    4.18%, this predicts 1.80%. It does not cost anything on everyone else. */
-var RATE_ALPHA_MIN=2.0, RATE_P_FLOOR=0.0005;
+/* 1.5 rather than 2.0. At 2.0 the counts were being squeezed too hard for ordinary
+   rotation players -- a legitimate 10 ppg scorer kept only a third of his own record.
+   At 1.5 the group the model puts at 2-10% predicts 5.81% against an actual 5.81%,
+   exactly calibrated, while the fluke group stays at 1.95% against 1.52%. */
+var RATE_ALPHA_MIN=1.5, RATE_P_FLOOR=0.0005;
 function rateBlendRate(modelP,r){
   if(!r||!r.n||r.n<3)return modelP;
   /* Floor the model probability before sizing the prior. The leading-scorer number
