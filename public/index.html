@@ -6522,6 +6522,24 @@ function gsExpect(own,allowed,k){
   var a=(allowed==null)?GS_MEAN[k+'_allow']:allowed;
   return (o+a)/2;
 }
+/* More game specials. Rebounds, assists and per-team threes use the same
+   profile-aware form as the existing ones -- adding what each side does and what its
+   opponent allows improved held-out log loss by 8.4% to 11.7%. The rest run on spread
+   and total.
+   Base rates: 40+ rebounds 40.2%, 45+ 14.2%, 15+ assists 63.5%, 25+ 3.4%,
+   each team 30+ each half 41.5%, both make their first three 12.0%,
+   favourite 10+ threes 32.7%, underdog 22.9%.
+   Scoring last is a coin flip -- the favourite does it 50.1% of the time and neither
+   the spread (-0.03) nor the total (-0.04) moves it. Priced flat at 50/50, which
+   makes it a clean market: there is nothing in it for anyone to know. */
+var GS_RICH2={
+  reb40:[-25.4277,0.04548,-0.01074,0.29957,0.22127], reb45:[-27.289,0.0527,-0.00648,0.41358,0.15617],
+  ast15:[-17.8765,0.04394,0.03643,0.48961,0.20879], ast25:[-23.5802,0.07484,0.04212,0.98874,-0.07674],
+  t310f:[-15.2128,0.03058,0.02949,0.60164,0.60164], t310d:[-16.5089,-0.01423,0.03592,0.62608,0.62608]
+};
+var GS_FITS3={
+  half30:[-11.7569,-0.04976,0.07848], t3both:[-3.8851,-0.0019,0.01265]
+};
 var GS_WIN=[-0.2814,0.16194];
 var GS_FIRST_SCORE_U345=0.510;   /* flat across every spread and total, corr -0.05 */
 var GS_WIN3_LIFT=1.30;
@@ -6618,12 +6636,15 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
   var wf=gsWinProb(sp), wd=1-wf;
   var out={};
   out['Time Of First Point Scored Under 34.5 Seconds']=GS_FIRST_SCORE_U345;
+  /* 45.2% under 29.5 seconds, 51.7% under 34.5 -- both flat across spread and total */
+  out['Time Of First Point Scored Under 29.5 Seconds']=0.452;
+  out['Both Teams To Make Their 1st Three Point Attempt']=gsLogit(GS_FITS3.t3both,sp,total);
   out['Both Teams To Score In The First 90 Seconds']=gsBothScore60(total,90);
   out['Both Teams To Score In The First 2 Minutes']=gsBothScore60(total,120);
   [70,80,90,95].forEach(function(X){
     out['Each Team To Score '+X+'+ Points In Game']=gsEachTeam(sim,X);
   });
-  [35,40].forEach(function(X){
+  [30,35,40].forEach(function(X){
     out['Each Team To Score '+X+'+ Points Each Half']=gsEachHalf(sim,X);
   });
   /* each team's expectation for a stat, then the better of the two and their sum */
@@ -6641,7 +6662,11 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
   var aF=(PF.run_allowed==null)?GS_MEAN.run_allow:PF.run_allowed, aD=(PD.run_allowed==null)?GS_MEAN.run_allow:PD.run_allowed;
   out['Either Team To Make 15+ Threes']=gsRich(GS_RICH.thr15,sp,total,p3.best,p3.sum);
   out['Either Team To Record 50+ Rebounds']=gsRich(GS_RICH.reb50,sp,total,pr.best,pr.sum);
+  out['Either Team To Record 45+ Rebounds']=gsRich(GS_RICH2.reb45,sp,total,pr.best,pr.sum);
+  out['Either Team To Record 40+ Rebounds']=gsRich(GS_RICH2.reb40,sp,total,pr.best,pr.sum);
   out['Either Team To Record 20+ Assists']=gsRich(GS_RICH.ast20,sp,total,pa.best,pa.sum);
+  out['Either Team To Record 25+ Assists']=gsRich(GS_RICH2.ast25,sp,total,pa.best,pa.sum);
+  out['Either Team To Record 15+ Assists']=gsRich(GS_RICH2.ast15,sp,total,pa.best,pa.sum);
   out['Either Team To Make 25+ Free Throws']=gsRich(GS_RICH.ft25,sp,total,pt.best,pt.sum);
   out['Either Team To Make 30+ Free Throws']=gsRich(GS_RICH.ft30,sp,total,pt.best,pt.sum);
   out['Either Team To Go On A 15-0 Run']=gsRich(GS_RICH.run15e,sp,total,Math.max(rF,rD),(aF+aD)/2);
@@ -6656,6 +6681,10 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
     out[nm+' To Go On A 15-0 Run']=gsRich(GS_RICH['run15'+sfx],sp,total,myRun,oppAllow);
     out[nm+' To Go On A 20-0 Run']=gsRich(GS_RICH['run20'+sfx],sp,total,myRun,oppAllow);
     out[nm+' To Score First Both Halves']=gsLogit(GS_FITS['both_'+k],sp,total);
+    out[nm+' To Make 10+ Threes In The Game']=gsRich(GS_RICH2['t310'+(k==='fav'?'f':'d')],sp,total,
+      gsExpect(k==='fav'?PF.t3m:PD.t3m, k==='fav'?PD.t3m_allowed:PF.t3m_allowed,'t3'),
+      gsExpect(k==='fav'?PF.t3m:PD.t3m, k==='fav'?PD.t3m_allowed:PF.t3m_allowed,'t3'));
+    out[nm+' To Score Last In Game']=0.5;
     out[nm+' To Win And Make 15+ Threes In The Game']=
       Math.min(0.995,win*gsThreesOver(avg3,15,total)*GS_WIN3_LIFT);
     out[nm+' To Win And Make Their First Basket In The Game']=win*fga;
@@ -6668,18 +6697,25 @@ var _gsGame=null;var _gsGames=[];var _gsList=[];
 // generic templates (no team name)
 var GS_GENERIC=[
  'Time Of First Point Scored Under 34.5 Seconds',
+ 'Time Of First Point Scored Under 29.5 Seconds',
+ 'Both Teams To Make Their 1st Three Point Attempt',
  'Each Team To Score 70+ Points In Game',
  'Each Team To Score 80+ Points In Game',
  'Each Team To Score 90+ Points In Game',
  'Each Team To Score 95+ Points In Game',
  'Each Team To Score 40+ Points Each Half',
  'Each Team To Score 35+ Points Each Half',
+ 'Each Team To Score 30+ Points Each Half',
  'Either Team To Go On A 10-0 Run',
  'Either Team To Go On A 15-0 Run',
  'Either Team To Go On A 20-0 Run',
  'Either Team To Make 15+ Threes',
  'Either Team To Record 50+ Rebounds',
+ 'Either Team To Record 45+ Rebounds',
+ 'Either Team To Record 40+ Rebounds',
+ 'Either Team To Record 25+ Assists',
  'Either Team To Record 20+ Assists',
+ 'Either Team To Record 15+ Assists',
  'Either Team To Make 25+ Free Throws',
  'Either Team To Make 30+ Free Throws'
 ];
@@ -6690,6 +6726,8 @@ var GS_TEAM=[
  '{T} To Go On A 15-0 Run',
  '{T} To Go On A 20-0 Run',
  '{T} To Score First Both Halves',
+ '{T} To Make 10+ Threes In The Game',
+ '{T} To Score Last In Game',
  '{T} To Win And Make 15+ Threes In The Game',
  '{T} To Win And Make Their First Basket In The Game'
 ];
