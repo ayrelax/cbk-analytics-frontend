@@ -6250,13 +6250,27 @@ function gsLogit(f,spread,total){
   return 1/(1+Math.exp(-z));
 }
 function gsWinProb(spread){return 1/(1+Math.exp(-(GS_WIN[0]+GS_WIN[1]*spread)));}
-/* P(team makes 15+ threes) from its season average, normal approximation with
-   sd = 1.05 x sqrt(mean), which matches the observed spread by team */
-function gsThreesOver(avg,line){
+/* P(team makes 15+ threes).
+
+   The season average alone is not enough -- a team makes far more threes in a
+   high-scoring game, because there are simply more possessions. Measured across
+   12,049 team-games, threes made against the team's own season average:
+
+       game total   under 125   125-140   140-152   152-165   165 +
+       vs average      77%        89%       98%      106%      117%
+
+   correlation of total with threes made +0.394. So the season average is scaled by
+   the game's total before the threshold is applied. Without this the market read the
+   same at a 132 total as at 165, when the true probability differs sevenfold. */
+function gsThreesMult(total){
+  return Math.max(0.55,Math.min(1.45,0.0096+0.00661*(total||151)));
+}
+function gsThreesOver(avg,line,total){
   if(!avg||avg<=0)return 0.001;
-  var sd=Math.max(1.6,1.05*Math.sqrt(avg));
-  var z=(line-0.5-avg)/sd;
-  return Math.max(0.0005,Math.min(0.995,1-gsNormCdf(z)));
+  var m=avg*gsThreesMult(total);
+  var sd=Math.max(1.6,1.05*Math.sqrt(m));
+  var z=(line-0.5-m)/sd;
+  return Math.max(0.0002,Math.min(0.995,1-gsNormCdf(z)));
 }
 function gsNormCdf(z){
   var t=1/(1+0.2316419*Math.abs(z));
@@ -6317,7 +6331,7 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
     out[nm+' To Go On A 10-0 Run']=gsLogit(GS_FITS['run_'+k],sp,total);
     out[nm+' To Score First Both Halves']=gsLogit(GS_FITS['both_'+k],sp,total);
     out[nm+' To Win And Make 15+ Threes In The Game']=
-      Math.min(0.995,win*gsThreesOver(avg3,15)*GS_WIN3_LIFT);
+      Math.min(0.995,win*gsThreesOver(avg3,15,total)*GS_WIN3_LIFT);
     out[nm+' To Win And Make Their First Basket In The Game']=win*fga;
   });
   return out;
