@@ -5613,6 +5613,8 @@ var X_MKT={
    different columns in one workbook. Pinning it to H means one column holds every
    fraction no matter which block you are looking at. */
 var X_FRAC_COL=7;
+/* column J -- the away team goes in J2 and the home team in J3 */
+var X_TEAM_COL=9;
 function xBuildCSV(key,rows){
   var m=X_MKT[key];
   if(!m||!rows||!rows.length)return null;
@@ -5944,8 +5946,26 @@ function xaExport(){
     counts.push(X_MKT[m.k].label+' '+rows.length);
   });
   if(!blocks.length){alert('Nothing priced.');return;}
+  /* The two teams go in J2 and J3 -- away first, then home -- so the upload has the
+     matchup in a fixed place regardless of which markets priced or how many rows each
+     block ran to. Work-list names, same as everywhere else in the file. Rows 2 and 3
+     are the first two data rows, since row 1 is the opening block's header. */
+  var text=blocks.join('\n\n');
+  if(_xaTeams&&_xaTeams.length===2){
+    var ls=text.split('\n');
+    var names=[xTeam(_xaTeams[1]),xTeam(_xaTeams[0])];   /* away, then home */
+    for(var n=0;n<2;n++){
+      var li=n+1;
+      if(li>=ls.length)break;
+      var cells=ls[li].split(',');
+      while(cells.length<=X_TEAM_COL)cells.push('');
+      cells[X_TEAM_COL]=xCell(names[n]);
+      ls[li]=cells.join(',');
+    }
+    text=ls.join('\n');
+  }
   var tag=_xaLabel.replace(/[^a-z0-9]+/gi,'_');
-  xDownload('all_markets_'+tag+'.csv', blocks.join('\n\n'));
+  xDownload('all_markets_'+tag+'.csv', text);
   var out=document.getElementById('xa-output');
   if(out){
     var note=document.createElement('div');
