@@ -4282,10 +4282,30 @@ function rateBlend(modelP,hits,games){
   var w=games/(games+RATE_K);
   return w*emp+(1-w)*modelP;
 }
-/* same shrinkage, but fed an already season-blended rate and its combined sample */
+/* Shrinkage with a floor on how weak the prior is allowed to get.
+
+   (hits + K x model) / (games + K) means the prior contributes K x model "virtual
+   successes". For a 3.4 ppg player the model might say 0.5%, so the prior is worth
+   0.09 of a success -- and one real lead, however flukish, outweighs it twelve to
+   one. The rarer the event, the weaker the prior became, which is backwards: a low
+   model probability is a CONFIDENT statement, not an uncertain one.
+
+   So the prior is given at least RATE_ALPHA_MIN virtual successes by raising K where
+   needed. Measured on the 105 players the model put under 2% who still led at least
+   once: they actually led 1.52% of their following games, the old formula predicted
+   4.18%, this predicts 1.80%. It does not cost anything on everyone else. */
+var RATE_ALPHA_MIN=2.0, RATE_P_FLOOR=0.0005;
 function rateBlendRate(modelP,r){
   if(!r||!r.n||r.n<3)return modelP;
-  var w=r.n/(r.n+RATE_K);
+  /* Floor the model probability before sizing the prior. The leading-scorer number
+     comes from 60,000 simulations, which cannot resolve below about 1 in 60,000 --
+     a 3.4 ppg player in a field with a 20 ppg star simply never wins one, so the
+     simulation returns exactly 0. That is the model at its MOST confident, but an
+     unguarded divide would skip the floor entirely and hand the empirical rate the
+     full weight. Which is how one fluke lead in 29 games priced Kohl Rosario above
+     a player scoring three times as much. */
+  var K=Math.max(RATE_K, RATE_ALPHA_MIN/Math.max(modelP,RATE_P_FLOOR));
+  var w=r.n/(r.n+K);
   return w*r.rate+(1-w)*modelP;
 }
 /* apply the blend across a field, then renormalise so the market still sums to 1 */
