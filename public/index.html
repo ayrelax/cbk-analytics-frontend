@@ -4084,25 +4084,89 @@ var _rates=null,_ratesBy={};
 function ratesKey(name,team){return String(name||'').toLowerCase().trim()+'|'+String(team||'').toLowerCase().trim();}
 function loadRates(cb){
   if(_rates){if(cb)cb();return;}
-  sb.from('player_rates').select('player_name,team,games,ls_1,ls_2,ls_3,fs_1,fs_2,fs_3,f3_1,f3_2,f3_3')
+  sb.from('player_rates').select('player_name,team,season,games,ls_1,ls_2,ls_3,fs_1,fs_2,fs_3,f3_1,f3_2,f3_3,prev_season,prev_games,prev_ls_1,prev_ls_2,prev_ls_3,prev_fs_1,prev_fs_2,prev_fs_3,prev_f3_1,prev_f3_2,prev_f3_3')
     .range(0,9999).then(function(r){
       _rates=r.data||[]; _ratesBy={};
       _rates.forEach(function(x){_ratesBy[ratesKey(x.player_name,x.team)]=x;});
       if(cb)cb();
     });
 }
+/* The counts carry the season they were measured in. Early in a new season a
+   player has too few games to qualify, so the previous season's row is still what
+   the model sees -- which is the right fallback, but it needs to be visible rather
+   than passed off as current form. */
+function cbkSeasonNow(){
+  var d=new Date();
+  return d.getMonth()>=9 ? d.getFullYear()+1 : d.getFullYear();
+}
+function cbkSeasonLabel(y){return (y-1)+'-'+String(y).slice(2);}
 function rateCell(name,team,kind){
   var h=(typeof rateFor==='function')?rateFor(name,team):null;
-  if(!h||!h.games)return '<td class="muted" title="no season history">--</td>';
-  var a,b,c,lab;
+  /* a returning player with no games yet still has last season to show, so the
+     guard is on having ANY history rather than only current-season games */
+  if(!h||(!h.games&&!h.prev_games))return '<td class="muted" title="no history">--</td>';
+  var a,b,c,lab,k=kind;
   if(kind==='ls'){a=h.ls_1;b=h.ls_2;c=h.ls_3;lab='finished 1st / 2nd / 3rd in scoring';}
   else if(kind==='fs'){a=h.fs_1;b=h.fs_2;c=h.fs_3;lab='was 1st / 2nd / 3rd to score';}
   else {a=h.f3_1;b=h.f3_2;c=h.f3_3;lab='hit the 1st / 2nd / 3rd three';}
-  var pct=h.games?Math.round(100*a/h.games):0;
-  return '<td title="'+lab+', in '+h.games+' games">'
-    +'<span style="font-weight:800;color:var(--acc)">'+a+'</span>'
+  if(!h.games&&h.prev_games){a=h['prev_'+k+'_1'];b=h['prev_'+k+'_2'];c=h['prev_'+k+'_3'];}
+  var r=rateBlendSeasons(h,k+'_1','prev_'+k+'_1');
+  var pct=r?Math.round(100*r.rate):0;
+  var tail,tip;
+  if(r&&r.blended){
+    var wt=Math.round(r.wThis*100);
+    tail=' <span style="color:var(--amb)">'+wt+'/'+(100-wt)+'</span>';
+    tip=lab+'. Blended '+wt+'% this season ('+(h.games||0)+' games) and '+(100-wt)
+        +'% last ('+(h.prev_games||0)+' games).';
+  }else{
+    tail=' of '+(h.games||0);
+    tip=lab+', in '+(h.games||0)+' games this season.';
+  }
+  return '<td title="'+tip+'">'
+    +'<span style="font-weight:800;color:'+((r&&r.blended)?'var(--amb)':'var(--acc)')+'">'+a+'</span>'
     +'<span class="muted" style="font-size:10px"> / '+b+' / '+c+'</span>'
-    +'<span class="muted" style="font-size:9px;display:block;letter-spacing:.3px">'+pct+'% of '+h.games+'</span></td>';
+    +'<span class="muted" style="font-size:9px;display:block;letter-spacing:.3px">'+pct+'%'+tail+'</span></td>';
+}
+/* ---- blending last season with this one ----------------------------------
+   Early in a year a handful of games says almost nothing, so the previous season
+   carries most of the weight and hands over as the sample builds. The table below
+   is the desk's, not a fitted curve:
+
+       games this season   last    this
+              0 - 1        100%      0%
+                2           80%     20%
+                3           75%     25%
+                4           70%     30%
+                5           65%     35%
+                6           60%     40%
+                7           50%     50%
+                8           40%     60%
+                9           30%     70%
+               10           20%     80%
+               11           10%     90%
+              12+            0%    100%
+
+   The blend is applied to the RATES, not the raw counts, since a count depends on
+   how many games have been played. A player with no prior season simply runs on
+   this season alone, whatever the game count. */
+var RATE_SEASON_W={0:0,1:0,2:0.20,3:0.25,4:0.30,5:0.35,6:0.40,7:0.50,8:0.60,9:0.70,10:0.80,11:0.90};
+function rateSeasonWeight(games){
+  if(games==null||games<0)return 0;
+  if(games>=12)return 1;
+  var w=RATE_SEASON_W[Math.floor(games)];
+  return (w==null)?1:w;
+}
+/* returns {rate, n, wThis, blended} for one counter, or null if there is nothing */
+function rateBlendSeasons(h,curKey,prevKey){
+  if(!h)return null;
+  var cg=h.games||0, pg=h.prev_games||0;
+  var cHit=h[curKey], pHit=h[prevKey];
+  var hasCur=cg>0&&cHit!=null, hasPrev=pg>0&&pHit!=null;
+  if(!hasCur&&!hasPrev)return null;
+  if(!hasPrev)return {rate:cHit/cg,n:cg,wThis:1,blended:false};
+  if(!hasCur) return {rate:pHit/pg,n:pg,wThis:0,blended:true};
+  var w=rateSeasonWeight(cg);
+  return {rate:w*(cHit/cg)+(1-w)*(pHit/pg), n:cg+pg, wThis:w, blended:w<1};
 }
 function rateFor(name,team){return _ratesBy[ratesKey(name,team)]||null;}
 /* blend a model probability with an observed rate, weighted by sample size */
@@ -4112,13 +4176,19 @@ function rateBlend(modelP,hits,games){
   var w=games/(games+RATE_K);
   return w*emp+(1-w)*modelP;
 }
+/* same shrinkage, but fed an already season-blended rate and its combined sample */
+function rateBlendRate(modelP,r){
+  if(!r||!r.n||r.n<3)return modelP;
+  var w=r.n/(r.n+RATE_K);
+  return w*r.rate+(1-w)*modelP;
+}
 /* apply the blend across a field, then renormalise so the market still sums to 1 */
-function rateAdjustField(rows,getModelP,getHits,setP){
+function rateAdjustField(rows,getModelP,getRate,setP){
   var any=false,tot=0;
   rows.forEach(function(r){
-    var h=getHits(r);
-    var p=(h&&h.games)?rateBlend(getModelP(r),h.hits,h.games):getModelP(r);
-    if(h&&h.games)any=true;
+    var h=getRate(r);
+    var p=h?rateBlendRate(getModelP(r),h):getModelP(r);
+    if(h)any=true;
     r._bp=Math.max(1e-6,p); tot+=r._bp;
   });
   if(!any||tot<=0)return false;
@@ -4190,8 +4260,7 @@ function spApplyMargin(){
   if(!_rates){loadRates(function(){spApplyMargin();});}
   var src=_spResult.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,prob:r.prob};});
   rateAdjustField(src,function(r){return r.prob;},function(r){
-    var h=rateFor(r.player,r.team);
-    return h?{hits:h.ls_1,games:h.games}:null;
+    return rateBlendSeasons(rateFor(r.player,r.team),'ls_1','prev_ls_1');
   },function(r,p){r.prob=p;});
   var flat=src.map(function(r){return{player:r.player,team:r.team,ppg:r.ppg,prob:r.prob,fp:Math.pow(r.prob,_spFlatten)};});
   var s=flat.reduce(function(a,b){return a+b.fp;},0);
@@ -5539,6 +5608,7 @@ function fbRender(){
   _fbGame=g;
   if(!_fbProfiles){out.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:10px">Loading team profiles...</div>';return;}
   var H=_fbProfiles[g.home.team],A=_fbProfiles[g.away.team];
+  var staleSeason=(H&&A&&H.season&&H.season<cbkSeasonNow())?H.season:null;
   if(!H||!A){
     out.innerHTML='<div style="color:var(--red2);font-size:12px;padding:10px">No profile on file for <b>'
       +(!H?g.home.team:g.away.team)+'</b>. Load the team_profiles table first.</div>';return;}
@@ -5862,8 +5932,7 @@ function f3Price(){
   rows.forEach(function(r){r.prob=r.w/total;});
   if(!_rates){loadRates(function(){f3Price();});}
   rateAdjustField(rows,function(r){return r.prob;},function(r){
-    var h=rateFor(r.player,r.team);
-    return h?{hits:h.f3_1,games:h.games}:null;
+    return rateBlendSeasons(rateFor(r.player,r.team),'f3_1','prev_f3_1');
   },function(r,p){r.prob=p;});
   rows.sort(function(a,b){return b.prob-a.prob;});
   var booked=0;
@@ -5966,8 +6035,7 @@ function fsPrice(){
   var total=rows.reduce(function(s,x){return s+x.w;},0);
   rows.forEach(function(r){r.prob=r.w/total;});
   rateAdjustField(rows,function(r){return r.prob;},function(r){
-    var h=rateFor(r.player,r.team);
-    return h?{hits:h.fs_1,games:h.games}:null;
+    return rateBlendSeasons(rateFor(r.player,r.team),'fs_1','prev_fs_1');
   },function(r,p){r.prob=p;});
   rows.sort(function(a,b){return b.prob-a.prob;});
   var booked=0;
