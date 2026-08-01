@@ -4737,7 +4737,13 @@ function sitBuildRows(){
   /* largest lead, one two-way market on the favourite's number */
   add('Largest Lead Of Game',null,'Over','-110',row.ml_fav_line.toFixed(1));
   add('Largest Lead Of Game',null,'Under','-120',row.ml_fav_line.toFixed(1));
-  _sitRows._meta={spread:sp,fav:fav,dog:dog,bucket:row.label,n:row.n,band:band.label,bandN:band.n,neutral:!!g.neutral_site};
+  /* Both teams to score in the first minute. Yes/No rather than Over/Under, and no
+     number in the line column since the market is the event itself, not a threshold.
+     Priced off the total alone -- spread and venue tested as noise. 5% hold. */
+  var ep=sitEarlyP(_sitEarlyTotal);
+  add('Both Teams To Score In The First Minute',null,'Yes',sitOdds(sitR5(propAmer(ep,SIT_EARLY_HOLD))),'');
+  add('Both Teams To Score In The First Minute',null,'No', sitOdds(sitR5(propAmer(1-ep,SIT_EARLY_HOLD))),'');
+  _sitRows._meta={spread:sp,fav:fav,dog:dog,bucket:row.label,n:row.n,band:band.label,bandN:band.n,neutral:!!g.neutral_site,earlyTotal:_sitEarlyTotal};
 }
 function sitLabel(r){return (r.team?r.team:'')+(r.suffix||'');}
 function sitGameHTML(){
@@ -4835,6 +4841,7 @@ function sitEarlyP(total){
 function sitEarlySetTotal(v){
   var n=parseFloat(v);
   _sitEarlyTotal=(isNaN(n)||n<90||n>240)?151:n;
+  sitBuildRows();      /* the export carries this price, so rebuild it too */
   sitRender();
 }
 function sitEarlyHTML(){
