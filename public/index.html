@@ -66,14 +66,14 @@ body{background:var(--bg0);color:var(--txt1);font-family:-apple-system,BlinkMacS
 .tk-body:before{left:0;background:linear-gradient(90deg,var(--acc),rgba(139,105,20,0))}
 .tk-body:after{right:0;background:linear-gradient(270deg,var(--acc),rgba(139,105,20,0))}
 .ticker:hover .ticker-track{animation-play-state:paused}
-.tk-rev{animation-duration:74s!important;animation-direction:reverse!important}
+.tk-rev{animation-duration:95s!important;animation-direction:reverse!important}
 .tk-it{display:inline-flex;align-items:center;gap:7px;margin:0 19px;
   font-family:'Courier New',monospace;font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:#fff}
 .tk-mu{color:var(--acc2)}
 .tk-fin{font-size:8.5px;letter-spacing:1.4px;padding:2px 6px;border-radius:3px;
   background:rgba(255,255,255,.17);color:rgba(255,255,255,.9)}
 .tk-sc{font-size:12.5px}
-.ticker-track{display:inline-block;animation:ticker 52s linear infinite;padding:7px 0}
+.ticker-track{display:inline-block;animation:ticker 34s linear infinite;padding:7px 0}
 @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .ticker-track span{font-size:12px;letter-spacing:2px;color:#fff;margin:0 22px;font-weight:700}
 .ticker-track .tsep{color:var(--acc2);margin:0 6px}
@@ -544,6 +544,25 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 /* ============ CBK v2 additions ============ */
 .tbl{font-variant-numeric:tabular-nums}
 .tnum{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;font-variant-numeric:tabular-nums;letter-spacing:-0.2px}
+/* A small jersey in the team's colour, used wherever a team is listed on the
+   ratings screens. Drawn in CSS rather than as an image so it inherits the team
+   colour at render time and costs no requests.
+
+   The shape is one box for the body with two pseudo-elements for the sleeves, plus
+   a lighter notch for the collar. Kept to 13px tall so it sits on a table row
+   without changing the line height. */
+.cbk-jsy{display:inline-block;position:relative;width:12px;height:13px;margin-right:7px;
+  vertical-align:-2px;background:currentColor;border-radius:1px 1px 2px 2px;flex:0 0 auto}
+.cbk-jsy:before,.cbk-jsy:after{content:'';position:absolute;top:0;width:4px;height:6px;
+  background:currentColor;border-radius:1px}
+.cbk-jsy:before{left:-3px;transform:skewY(12deg)}
+.cbk-jsy:after{right:-3px;transform:skewY(-12deg)}
+/* the collar: a notch cut out of the top centre */
+.cbk-jsy>i{position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:5px;height:3px;background:var(--bg1);border-radius:0 0 3px 3px;display:block}
+/* on a shaded row the collar has to match that background instead */
+tr.heat1 .cbk-jsy>i,tr.heat2 .cbk-jsy>i,tr.heat3 .cbk-jsy>i,
+tr:nth-child(even) .cbk-jsy>i{background:inherit}
 .cbk-cbar{display:inline-block;width:3px;height:12px;border-radius:1px;margin-right:6px;vertical-align:-1px}
 .cbk-dot{display:inline-block;width:9px;height:9px;border-radius:50%}
 .cbk-sheet-hdr{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;border-bottom:2px solid var(--acc);margin-bottom:10px;gap:12px}
@@ -1923,7 +1942,31 @@ function buildGameTicker(games){
     inner+='<span class="tk-it"><span class="tk-mu">'+g.away.team.toUpperCase()+' AT '
       +g.home.team.toUpperCase()+'</span> '+fav.toUpperCase()+' '+fmtSp(-Math.abs(rsp))+'</span>';
   });
-  track.innerHTML=inner+inner;
+  /* One game reads as the same fixture listed twice if it scrolls, so it is left
+     static and centred instead. */
+  var n=done.length+todo.length;
+  if(n<=1){
+    track.style.animation='none';
+    track.style.display='block';
+    track.style.textAlign='center';
+    track.innerHTML=inner;
+    return;
+  }
+  track.style.animation='';
+  track.style.display='';
+  track.style.textAlign='';
+
+  /* The scroll works by translating the track -50%, so the back half arrives exactly
+     as the front half leaves. That only looks seamless if each half is at least as
+     wide as the bar -- with three or four games it is not, and a gap slides through.
+     So the content is repeated until one half fills the bar, then doubled. */
+  track.innerHTML=inner;
+  var bar=track.parentElement?track.parentElement.clientWidth:1200;
+  var one=track.scrollWidth||1;
+  var copies=Math.max(1,Math.ceil(bar/one));
+  var half='';
+  for(var c=0;c<copies;c++)half+=inner;
+  track.innerHTML=half+half;
 }
 
 function getHeatClass(idx,total){var pct=idx/total;if(pct<0.2)return'pr-row-1';if(pct<0.4)return'pr-row-2';if(pct<0.6)return'pr-row-3';if(pct<0.8)return'pr-row-4';return'pr-row-5';}
@@ -1933,7 +1976,7 @@ function _iName(n){if(!n)return '';var p=String(n).trim().split(/\s+/);return p.
   renderDashPlays();
 sb.from('teams').select('*').order('pr',{ascending:false}).limit(25).then(function(res){
 var teams=res.data;if(!teams||!teams.length)return;allTeams=teams;buildTicker(teams);populateQCDropdowns();
-var topPR=teams[0].pr;var t25=teams.slice(0,25);var _lids=t25.map(function(t){return t.id;});function _dpr(lead){var html='';t25.forEach(function(t,i){var bw=Math.round(((t.pr-10)/(topPR-10))*100);var hcl=getHeatClass(i,25);var L=lead[t.id]||{};function seg(lbl,x){return x?'<span style="color:var(--acc);font-weight:700">'+lbl+':</span> <span onclick="cbkOpenPlayer('+x.id+')" style="cursor:pointer">'+_iName(x.n)+'</span> <span style="font-weight:700">'+x.v.toFixed(1)+'</span>':'';}var parts=[seg('PPG',L.ppg),seg('RPG',L.rpg),seg('APG',L.apg)].filter(Boolean);var leaders=parts.length?parts.join('<span class="muted"> / </span>'):'<span class="muted">--</span>';html+='<tr class="'+hcl+'"><td class="muted">'+(i+1)+'</td>'+'<td class="bold">'+TL(t.team)+'</td>'+'<td class="acc" style="font-weight:700">'+t.pr.toFixed(1)+'<div class="pr-bar"><div class="pr-fill" style="width:'+bw+'%"></div></div></td>'+'<td style="font-size:11px;line-height:1.55">'+leaders+'</td></tr>';});document.getElementById('dash-pr-body').innerHTML=html;}sb.from('player_stats').select('id,player_name,ppg,rpg,apg,team_id').in('team_id',_lids).range(0,9999).then(function(psr){var lead={};(psr.data||[]).forEach(function(p){var L=lead[p.team_id]||(lead[p.team_id]={});if(p.ppg!=null&&(!L.ppg||p.ppg>L.ppg.v))L.ppg={v:p.ppg,n:p.player_name,id:p.id};if(p.rpg!=null&&(!L.rpg||p.rpg>L.rpg.v))L.rpg={v:p.rpg,n:p.player_name,id:p.id};if(p.apg!=null&&(!L.apg||p.apg>L.apg.v))L.apg={v:p.apg,n:p.player_name,id:p.id};});_dpr(lead);}).catch(function(){_dpr({});});
+var topPR=teams[0].pr;var t25=teams.slice(0,25);var _lids=t25.map(function(t){return t.id;});function _dpr(lead){var html='';t25.forEach(function(t,i){var bw=Math.round(((t.pr-10)/(topPR-10))*100);var hcl=getHeatClass(i,25);var L=lead[t.id]||{};function seg(lbl,x){return x?'<span style="color:var(--acc);font-weight:700">'+lbl+':</span> <span onclick="cbkOpenPlayer('+x.id+')" style="cursor:pointer">'+_iName(x.n)+'</span> <span style="font-weight:700">'+x.v.toFixed(1)+'</span>':'';}var parts=[seg('PPG',L.ppg),seg('RPG',L.rpg),seg('APG',L.apg)].filter(Boolean);var leaders=parts.length?parts.join('<span class="muted"> / </span>'):'<span class="muted">--</span>';html+='<tr class="'+hcl+'"><td class="muted">'+(i+1)+'</td>'+'<td class="bold">'+cbkJersey(t.team,t.conference)+TL(t.team)+'</td>'+'<td class="acc" style="font-weight:700">'+t.pr.toFixed(1)+'<div class="pr-bar"><div class="pr-fill" style="width:'+bw+'%"></div></div></td>'+'<td style="font-size:11px;line-height:1.55">'+leaders+'</td></tr>';});document.getElementById('dash-pr-body').innerHTML=html;}sb.from('player_stats').select('id,player_name,ppg,rpg,apg,team_id').in('team_id',_lids).range(0,9999).then(function(psr){var lead={};(psr.data||[]).forEach(function(p){var L=lead[p.team_id]||(lead[p.team_id]={});if(p.ppg!=null&&(!L.ppg||p.ppg>L.ppg.v))L.ppg={v:p.ppg,n:p.player_name,id:p.id};if(p.rpg!=null&&(!L.rpg||p.rpg>L.rpg.v))L.rpg={v:p.rpg,n:p.player_name,id:p.id};if(p.apg!=null&&(!L.apg||p.apg>L.apg.v))L.apg={v:p.apg,n:p.player_name,id:p.id};});_dpr(lead);}).catch(function(){_dpr({});});
 });
 sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').in('status',['scheduled','live']).range(0,9999).then(function(res){
 var games=res.data||[];var teamWins={};var teamConf={};var teamPR={};
@@ -1957,7 +2000,7 @@ var logoUrl=CONF_LOGOS[c]||'';
 var logoHtml=logoUrl?'<img src="'+logoUrl+'" class="conf-logo" onerror="this.style.display=\'none\'">':'';
 var labelHtml=CONF_LABELS[c]||c;
 var html='<div class="cbox-hdr">'+logoHtml+labelHtml+'<span class="cbox-hdr-sub">EXP W / ML</span></div><table><tbody>';
-rows.forEach(function(r,i){var mlClass=r.ml<0?'mln':'mlp';html+='<tr><td><span class="rnk">'+(i+1)+'</span></td><td class="tnm">'+TL(r.team)+'</td><td class="ew">'+r.wins.toFixed(1)+'</td><td class="'+mlClass+'">'+(r.ml>0?'+':'')+r.ml+'</td></tr>';});
+rows.forEach(function(r,i){var mlClass=r.ml<0?'mln':'mlp';html+='<tr><td><span class="rnk">'+(i+1)+'</span></td><td class="tnm">'+cbkJersey(r.team,c)+TL(r.team)+'</td><td class="ew">'+r.wins.toFixed(1)+'</td><td class="'+mlClass+'">'+(r.ml>0?'+':'')+r.ml+'</td></tr>';});
 if(!rows.length)html+='<tr><td colspan="4" style="color:var(--txt3);text-align:center;padding:8px;font-size:11px">No data</td></tr>';
 html+='</tbody></table>';
 box.innerHTML=html;strip.appendChild(box);
@@ -1974,7 +2017,7 @@ try{buildGameTicker(_dayGames);}catch(e){}
 fetch(API+'/health').then(function(r){return r.json();}).catch(function(){});
 loadDashboardATS();
 }
-function loadTeams(){var search=document.getElementById('pr-search').value;var conf=document.getElementById('conf-filter').value;var q=sb.from('teams').select('*').order('pr',{ascending:false});if(search)q=q.ilike('team','%'+search+'%');if(conf)q=q.eq('conference',conf);q.then(function(res){var teams=res.data;if(!teams||!teams.length)return;allTeams=teams;document.getElementById('pr-count').textContent='Power ratings -- '+teams.length+' teams';var sel=document.getElementById('conf-filter');if(sel.options.length<=1){var confs=[...new Set(teams.map(function(t){return t.conference;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}var topPR=teams[0].pr;var confMap={};teams.forEach(function(t){confMap[t.id]=t.conference;});function _prBuild(hi,lo,cw,cl){var html='';teams.forEach(function(t,i){var bw=Math.round(((t.pr-10)/(topPR-10))*100);var pre=(t.pr_preseason!=null?t.pr_preseason.toFixed(1):'--');var hh=Math.max((hi[t.id]!=null?hi[t.id]:t.pr),t.pr),ll=Math.min((lo[t.id]!=null?lo[t.id]:t.pr),t.pr);var cr=(cw[t.id]||0)+'-'+(cl[t.id]||0);html+='<tr><td class="muted">'+(i+1)+'</td>'+'<td class="bold">'+TL(t.team)+'</td>'+'<td class="acc" style="font-weight:700">'+t.pr.toFixed(1)+'<div class="pr-bar"><div class="pr-fill" style="width:'+bw+'%"></div></div></td>'+'<td style="color:var(--amb);font-weight:700">'+t.hc.toFixed(1)+'</td>'+'<td class="muted">'+(t.wins||0)+'-'+(t.losses||0)+' <span style="color:var(--txt3)">/</span> '+cr+'</td>'+'<td class="muted">'+pre+'</td>'+'<td class="up">'+hh.toFixed(1)+'</td>'+'<td class="dn">'+ll.toFixed(1)+'</td>'+'<td class="muted">'+(t.updated_at?t.updated_at.split('T')[0]:'--')+'</td></tr>';});document.getElementById('pr-body').innerHTML=html;}Promise.all([sb.from('pr_history').select('team_id,pr').range(0,99999),sb.from('games').select('home_team_id,away_team_id,home_score,away_score,status').eq('status','final').range(0,99999)]).then(function(rr){var hi={},lo={};((rr[0]&&rr[0].data)||[]).forEach(function(r){if(r.pr==null)return;if(hi[r.team_id]==null||r.pr>hi[r.team_id])hi[r.team_id]=r.pr;if(lo[r.team_id]==null||r.pr<lo[r.team_id])lo[r.team_id]=r.pr;});var cw={},cl={};((rr[1]&&rr[1].data)||[]).forEach(function(g){var a=confMap[g.home_team_id],b=confMap[g.away_team_id];if(!a||!b||a!==b||g.home_score==null||g.away_score==null)return;if(g.home_score>g.away_score){cw[g.home_team_id]=(cw[g.home_team_id]||0)+1;cl[g.away_team_id]=(cl[g.away_team_id]||0)+1;}else{cw[g.away_team_id]=(cw[g.away_team_id]||0)+1;cl[g.home_team_id]=(cl[g.home_team_id]||0)+1;}});_prBuild(hi,lo,cw,cl);}).catch(function(){_prBuild({},{},{},{});});});}
+function loadTeams(){var search=document.getElementById('pr-search').value;var conf=document.getElementById('conf-filter').value;var q=sb.from('teams').select('*').order('pr',{ascending:false});if(search)q=q.ilike('team','%'+search+'%');if(conf)q=q.eq('conference',conf);q.then(function(res){var teams=res.data;if(!teams||!teams.length)return;allTeams=teams;document.getElementById('pr-count').textContent='Power ratings -- '+teams.length+' teams';var sel=document.getElementById('conf-filter');if(sel.options.length<=1){var confs=[...new Set(teams.map(function(t){return t.conference;}))].sort();confs.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});}var topPR=teams[0].pr;var confMap={};teams.forEach(function(t){confMap[t.id]=t.conference;});function _prBuild(hi,lo,cw,cl){var html='';teams.forEach(function(t,i){var bw=Math.round(((t.pr-10)/(topPR-10))*100);var pre=(t.pr_preseason!=null?t.pr_preseason.toFixed(1):'--');var hh=Math.max((hi[t.id]!=null?hi[t.id]:t.pr),t.pr),ll=Math.min((lo[t.id]!=null?lo[t.id]:t.pr),t.pr);var cr=(cw[t.id]||0)+'-'+(cl[t.id]||0);html+='<tr><td class="muted">'+(i+1)+'</td>'+'<td class="bold">'+cbkJersey(t.team,t.conference)+TL(t.team)+'</td>'+'<td class="acc" style="font-weight:700">'+t.pr.toFixed(1)+'<div class="pr-bar"><div class="pr-fill" style="width:'+bw+'%"></div></div></td>'+'<td style="color:var(--amb);font-weight:700">'+t.hc.toFixed(1)+'</td>'+'<td class="muted">'+(t.wins||0)+'-'+(t.losses||0)+' <span style="color:var(--txt3)">/</span> '+cr+'</td>'+'<td class="muted">'+pre+'</td>'+'<td class="up">'+hh.toFixed(1)+'</td>'+'<td class="dn">'+ll.toFixed(1)+'</td>'+'<td class="muted">'+(t.updated_at?t.updated_at.split('T')[0]:'--')+'</td></tr>';});document.getElementById('pr-body').innerHTML=html;}Promise.all([sb.from('pr_history').select('team_id,pr').range(0,99999),sb.from('games').select('home_team_id,away_team_id,home_score,away_score,status').eq('status','final').range(0,99999)]).then(function(rr){var hi={},lo={};((rr[0]&&rr[0].data)||[]).forEach(function(r){if(r.pr==null)return;if(hi[r.team_id]==null||r.pr>hi[r.team_id])hi[r.team_id]=r.pr;if(lo[r.team_id]==null||r.pr<lo[r.team_id])lo[r.team_id]=r.pr;});var cw={},cl={};((rr[1]&&rr[1].data)||[]).forEach(function(g){var a=confMap[g.home_team_id],b=confMap[g.away_team_id];if(!a||!b||a!==b||g.home_score==null||g.away_score==null)return;if(g.home_score>g.away_score){cw[g.home_team_id]=(cw[g.home_team_id]||0)+1;cl[g.away_team_id]=(cl[g.away_team_id]||0)+1;}else{cw[g.away_team_id]=(cw[g.away_team_id]||0)+1;cl[g.home_team_id]=(cl[g.home_team_id]||0)+1;}});_prBuild(hi,lo,cw,cl);}).catch(function(){_prBuild({},{},{},{});});});}
 function filterPR(){loadTeams();}
 function editTeam(id,pr,hc){if(!isAdmin)return;var newPR=prompt('New power rating:',pr);if(newPR===null)return;var newHC=prompt('New home court:',hc);if(newHC===null)return;sb.from('teams').update({pr:parseFloat(newPR),hc:parseFloat(newHC),updated_at:new Date().toISOString()}).eq('id',id).then(function(){loadTeams();});}
 function exportCSV(){var csv='Rank,Team,Conference,W,L,PR,PR_Pre,HC\n';allTeams.forEach(function(t,i){csv+=(i+1)+','+t.team+','+t.conference+','+(t.wins||0)+','+(t.losses||0)+','+t.pr+','+(t.pr_preseason||'')+','+t.hc+'\n';});var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='cbk_ratings.csv';a.click();}
@@ -8726,6 +8769,11 @@ var CBK_CONFCOL={"ACC": "#013CA6", "B10": "#0088CE", "B12": "#C8102E", "SEC": "#
 var CBK_GAME_BLOCK=["Washington DC", "Delaware", "Maine", "Nebraska", "Rhode Island", "Illinois", "Massachusetts", "New Jersey", "Virginia", "New York", "Washington State"];
 
 /* ============ CBK v2 : colors, compliance, volatility, pricing ============ */
+/* Returns the jersey markup for a team. Colour is set on the element so both the
+   body and the sleeves pick it up through currentColor. */
+function cbkJersey(team,conf){
+  return '<span class="cbk-jsy" style="color:'+cbkTeamColor(team,conf)+'"><i></i></span>';
+}
 function cbkTeamColor(t,conf){
   if(t&&CBK_COLORS[t])return CBK_COLORS[t];
   if(conf&&CBK_CONFCOL[conf])return CBK_CONFCOL[conf];
