@@ -6410,10 +6410,12 @@ function scEdges(att,def){
       var ov=o[key][b[0]], dv=d[key][b[0]], L=lg[key][b[0]];
       if(!ov||!dv||!L)return;
       var share=(ov[0]+dv[0])/2;
-      if(share<SC_SHARE_MIN)return;
       var proj=L[2]+(ov[2]-L[2])+(dv[2]-L[2]);
+      /* every slice comes back so the matchup panel can show the full picture;
+         `ok` marks whether it carries enough of the game to flag on */
       out.push({band:b,kind:kind,share:share,proj:proj,edge:proj-L[2],
-                off:ov,def:dv,L:L,forced:dv[0]-L[0]});
+                off:ov,def:dv,L:L,forced:dv[0]-L[0],
+                ok:scShareOK(share,L[0])});
     });
   }
   scan(SC_BANDS,'b','clock');
@@ -6436,7 +6438,7 @@ function scRenderAlerts(games){
     if(!SC_DATA.o[H]||!SC_DATA.o[A])return;
     [[A,H],[H,A]].forEach(function(pr){
       scEdges(pr[0],pr[1]).forEach(function(x){
-        if(Math.abs(x.edge)>=SC_ALERT_MIN){
+        if(x.ok&&Math.abs(x.edge)>=SC_ALERT_MIN){
           found.push({game:A+' at '+H,att:pr[0],def:pr[1],x:x});
         }
       });
@@ -6484,7 +6486,8 @@ function scRenderAlerts(games){
   });
   h+='</tbody></table>';
   h+='<div style="padding:8px 14px;border-top:1px solid var(--bdr);font-size:10px;color:var(--txt3)">'
-   +'Only swings of '+SC_ALERT_MIN.toFixed(2)+' points per shot or more on at least '+SC_SHARE_MIN+'% of attempts appear here. '
+   +'Only swings of '+SC_ALERT_MIN.toFixed(2)+' points per shot or more appear here, and only on slices carrying '
+   +'a normal share of the game. '
    +'An angle needs both halves to agree \u2014 a defence forcing shots into a range the offence is bad in, '
    +'or an offence strong where the defence is soft. A good defence against a good offence is not an angle.</div>';
   box.innerHTML=h+'</div>';
@@ -6757,7 +6760,22 @@ function scCloseTeam(){_scTeam=null;var b=document.getElementById('sc-detail');i
    0.17 is the 90th: worth interrupting you for on a night you did not. */
 var SC_EDGE_MIN=0.14;    /* 80th percentile -- shade a row in the matchup panel */
 var SC_ALERT_MIN=0.17;   /* 90th percentile -- raise a daily alert */
-var SC_SHARE_MIN=17;
+
+/* A flat share floor does not work across both categories. The four shot-clock
+   bands all sit near 20-30% of a team's shots, but the possession sources are
+   naturally uneven -- 31% off a defensive rebound against 9.8% after a made free
+   throw. A single 17% floor silently removed three of the five sources, including
+   off a turnover, which is the most valuable one on the board.
+
+   So the test is relative: a slice qualifies when it carries at least 65% of the
+   share it normally would, with a floor of 6% so nothing vanishingly thin can raise
+   an alert. That asks the same question of every slice -- is this a real part of
+   the game -- rather than holding a 10% category to a 30% category's standard. */
+var SC_SHARE_REL=0.65;
+var SC_SHARE_FLOOR=6;
+function scShareOK(share,leagueShare){
+  return share>=SC_SHARE_FLOOR && share>=leagueShare*SC_SHARE_REL;
+}
 function scFillMatchupPickers(){
   ['sc-mA','sc-mB'].forEach(function(id,n){
     var sel=document.getElementById(id);
@@ -6789,7 +6807,7 @@ function scMatchup(){
     if(!SC_DATA.o[att]||!SC_DATA.d[def])return null;
     var out=scEdges(att,def).map(function(x){
       return {band:x.band,kind:x.kind,share:x.share,shareGap:x.share-x.L[0],
-              proj:x.proj,edge:x.edge,off:x.off,def:x.def,L:x.L};
+              proj:x.proj,edge:x.edge,off:x.off,def:x.def,L:x.L,ok:x.ok};
     });
     return {att:att,def:def,bands:out};
   }
@@ -6807,9 +6825,10 @@ function scMatchup(){
          +'color:var(--txt3);padding:3px 12px;font-weight:700">'
          +(x.kind==='clock'?'BY SHOT CLOCK':'BY WHERE THE POSSESSION CAME FROM')+'</td></tr>';
       }
-      var flag=Math.abs(x.edge)>=SC_EDGE_MIN&&x.share>=SC_SHARE_MIN;
+      var flag=x.ok&&Math.abs(x.edge)>=SC_EDGE_MIN;
       var col=x.edge>0?'var(--grn2)':'var(--red2)';
-      h+='<tr'+(flag?' style="background:'+(x.edge>0?'rgba(46,125,50,.10)':'rgba(198,40,40,.10)')+'"':'')+'>'
+      h+='<tr'+(flag?' style="background:'+(x.edge>0?'rgba(46,125,50,.10)':'rgba(198,40,40,.10)')+'"'
+              :(x.ok?'':' style="opacity:.55"'))+'>'
        +'<td class="bold">'+x.band[1]+'<span style="color:var(--txt3);font-weight:400"> &middot; '+x.band[2]+'</span></td>'
        +'<td>'+x.share.toFixed(1)+'%<span style="color:var(--txt3);font-size:9px;margin-left:3px">'
        +(x.shareGap>=0?'+':'')+x.shareGap.toFixed(1)+'</span></td>'
@@ -6826,7 +6845,9 @@ function scMatchup(){
   /* the plain-English read: which band moved most, and why */
   function story(s){
     if(!s||!s.bands.length)return '';
-    var w=s.bands.slice().sort(function(a,b){return Math.abs(b.edge)-Math.abs(a.edge);})[0];
+    var w=s.bands.filter(function(x){return x.ok;})
+                 .sort(function(a,b){return Math.abs(b.edge)-Math.abs(a.edge);})[0];
+    if(!w)return '<span style="color:var(--txt3)">'+s.att+' with the ball: </span>no slice carries enough of the game to call an edge.';
     if(Math.abs(w.edge)<SC_EDGE_MIN)return '<span style="color:var(--txt3)">'+s.att+' with the ball: </span>nothing much to pick between them &mdash; every band lands within a rounding error of league.';
     var who=w.edge>0?s.att:s.def;
     var dir='<span style="color:var(--txt3)">'+s.att+' with the ball: </span>';
@@ -6840,7 +6861,7 @@ function scMatchup(){
   }
   var h='<div class="panel" style="margin-bottom:12px"><div class="panel-hdr">'
    +'<div class="panel-title"><div class="panel-title-dot"></div>MATCHUP</div>'
-   +'<div style="font-size:9.5px;color:var(--txt3);letter-spacing:1px">SHADED ROWS ARE THE EDGES</div></div>'
+   +'<div style="font-size:9.5px;color:var(--txt3);letter-spacing:1px">SHADED = EDGE \u00b7 FADED = TOO THIN TO CALL</div></div>'
    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0">'
    +'<div style="border-right:1px solid var(--bdr)">'+render(sA)+'</div>'
    +'<div>'+render(sB)+'</div></div>'
