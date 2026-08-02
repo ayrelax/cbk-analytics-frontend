@@ -1129,6 +1129,7 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
   <button class="nav-btn" onclick="showPage('matchups',this)">SITUATIONAL</button>
   <button class="nav-btn" onclick="showPage('teamprofile',this)">TEAM PROFILES</button>
   <button class="nav-btn" onclick="showPage('shotclock',this)">SHOT CLOCK</button>
+  <button class="nav-btn" onclick="showPage('playershots',this)">PLAYER SHOTS</button>
   <button class="nav-btn" onclick="showPage('specials',this)">GTP PROPS</button><button class="nav-btn" onclick="showPage('players',this)">PLAYER STATS</button>
   
   <button class="nav-btn" onclick="showPage('markets',this)">PLAYER MARKETS</button>
@@ -1656,6 +1657,19 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 <div id="sc-body"></div>
 <div id="sc-league"></div>
 </div>
+<div id="page-playershots" style="display:none">
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+  <select id="ps-team" class="field" style="max-width:210px" onchange="psLoadTeam()"><option value="">Pick a team…</option></select>
+  <span style="font-size:11px;color:var(--txt3)">vs</span>
+  <select id="ps-opp" class="field" style="max-width:210px" onchange="psRender()"><option value="">Opponent (optional)…</option></select>
+  <input id="ps-search" class="field" style="max-width:170px" placeholder="Search player…" oninput="psRender()"
+    autocomplete="off" spellcheck="false" data-lpignore="true" name="q-ps">
+  <span style="flex:1"></span>
+  <span style="font-size:10px;color:var(--txt3)" id="ps-count"></span>
+</div>
+<div id="ps-flags"></div>
+<div id="ps-body"></div>
+</div>
 <div id="page-tools" style="display:none">
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
 <div class="panel"><div class="panel-hdr"><div class="panel-title">Odds Converter</div></div><div style="padding:14px"><input class="field" id="conv-in" placeholder="-110" oninput="convertOdds()" style="margin-bottom:8px" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-conv-in"><div style="font-size:12px;color:var(--txt2)" id="conv-out">Decimal: -- Implied: --</div></div></div>
@@ -2038,7 +2052,7 @@ function _favSet(id){_favEdit=false;try{localStorage.setItem('cbk_fav_team',id||
 function _favPick(){_favEdit=true;_favRender();}
 function _favOpen(){var id=_favGet();if(id&&typeof goToTeam==='function')goToTeam(id);}
 function _favRender(){var box=document.getElementById('fav-team-wrap');if(!box)return;_favLoadTeams(function(){var fav=_favGet();var nm=fav?_favName(fav):'';if(fav&&nm&&!_favEdit){box.innerHTML='<span class="fav-team-link" onclick="_favOpen()" title="Open '+nm+' hub \u2014 schedule, roster, stats, indicators">\u2605 '+nm+'</span><span class="fav-team-edit" onclick="_favPick()" title="Change favorite team">\u25be</span>';}else{var opts='<option value="">\u2605 Favorite team\u2026</option>';_favTeams.forEach(function(t){opts+='<option value="'+t.id+'"'+(String(t.id)===String(fav)?' selected':'')+'>'+t.team+'</option>';});box.innerHTML='<select class="fav-team-sel" onchange="_favSet(this.value)">'+opts+'</select>';}});}
-function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='shotclock')initShotClock();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='matchups')loadMatchups();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();if(page==='linesheet')initLineSheet();if(page==='compliance')initCompliance();if(page==='matrix')initMtx();if(page==='altlines')initAlt();if(page==='bracket')initBrk();if(page==='misses')initMisses();if(page==='archive')initArchive();if(page==='doctrine')initDoctrine();}
+function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='shotclock')initShotClock();if(page==='playershots')initPlayerShots();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='matchups')loadMatchups();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();if(page==='linesheet')initLineSheet();if(page==='compliance')initCompliance();if(page==='matrix')initMtx();if(page==='altlines')initAlt();if(page==='bracket')initBrk();if(page==='misses')initMisses();if(page==='archive')initArchive();if(page==='doctrine')initDoctrine();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
 function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span class="tk-it"><span class="tk-mu">#'+(i+1)+' '+t.team.toUpperCase()+'</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
@@ -6523,6 +6537,163 @@ function scRenderAlerts(games){
    +'An angle needs both halves to agree \u2014 a defence forcing shots into a range the offence is bad in, '
    +'or an offence strong where the defence is soft. A good defence against a good offence is not an angle.</div>';
   box.innerHTML=h+'</div>';
+}
+/* ============ PLAYER SHOTS ==========================================================
+
+   Per-player versions of the same three splits the team tab uses: where on the
+   floor, where in the shot clock, and where the possession came from. Each slice
+   holds [share of the player's shots, FG%, points per shot].
+
+   The data lives in Supabase rather than in this file. It is about 900 KB for 2,302
+   players and the page is already 2 MB; embedding it would have made every load
+   carry a payload most visits never open. The tab pulls one team at a time.
+
+   Only players with 120 or more shots are carried. Below that the zone splits are
+   too thin to say anything -- a centre with 30 rim attempts tells you nothing you
+   did not already know from his position. */
+var PS_MIN_SLICE=8;      /* a slice needs this many shots to show at all */
+var _psRows=[];
+var _psTeams=[];
+async function initPlayerShots(){
+  if(_psTeams.length){psFillPickers();return;}
+  var res=await sb.from('teams').select('team').order('team',{ascending:true}).range(0,999);
+  _psTeams=((res&&res.data)||[]).map(function(t){return t.team;});
+  psFillPickers();
+}
+function psFillPickers(){
+  [['ps-team','Pick a team\u2026'],['ps-opp','Opponent (optional)\u2026']].forEach(function(p){
+    var sel=document.getElementById(p[0]);
+    if(!sel||sel.options.length>1)return;
+    var h='<option value="">'+p[1]+'</option>';
+    _psTeams.forEach(function(t){h+='<option value="'+t.replace(/"/g,'&quot;')+'">'+t+'</option>';});
+    sel.innerHTML=h;
+  });
+}
+async function psLoadTeam(){
+  var t=(document.getElementById('ps-team')||{}).value||'';
+  var body=document.getElementById('ps-body');
+  var flags=document.getElementById('ps-flags');
+  if(!t){_psRows=[];if(body)body.innerHTML='';if(flags)flags.innerHTML='';return;}
+  if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:10px">Loading\u2026</div>';
+  var res=await sb.from('player_shots').select('athlete_id,player_name,team,shots,splits')
+    .eq('team',t).order('shots',{ascending:false}).range(0,199);
+  if(res&&res.error){
+    if(body)body.innerHTML='<div style="font-size:11px;color:var(--red2);padding:10px">'
+      +'No player_shots table yet. Run load_player_shots.sql in the SQL editor.</div>';
+    return;
+  }
+  _psRows=(res&&res.data)||[];
+  psRender();
+}
+/* An edge needs both halves: the player has to be good in a zone AND the opponent
+   has to be soft there. Either on its own is just a fact about one team. */
+var PS_FLAG_PTS=0.12;    /* how far above league the player must be */
+var PS_FLAG_DEF=0.08;    /* and how far above league the defence concedes */
+var PS_FLAG_SHARE=15;    /* on at least this share of his shots */
+function psRender(){
+  var body=document.getElementById('ps-body');
+  var flags=document.getElementById('ps-flags');
+  if(!body)return;
+  var opp=(document.getElementById('ps-opp')||{}).value||'';
+  var q=((document.getElementById('ps-search')||{}).value||'').trim().toLowerCase();
+  var lg=SC_DATA.lg;
+  var D=opp?SC_DATA.d[opp]:null;
+  var rows=_psRows.filter(function(p){return !q||p.player_name.toLowerCase().indexOf(q)>=0;});
+  var cnt=document.getElementById('ps-count');
+  if(cnt)cnt.textContent=rows.length+' players'+(opp?(' \u00b7 vs '+opp):'');
+
+  /* flags first, so the answer is at the top */
+  var found=[];
+  if(D){
+    rows.forEach(function(p){
+      var sp=p.splits||{};
+      [['z',SC_ZONES],['b',SC_BANDS],['s',SC_SRC]].forEach(function(g){
+        var key=g[0];
+        g[1].forEach(function(k){
+          var v=(sp[key]||{})[k[0]];
+          var L=(lg[key==='z'?'z':(key==='b'?'b':'s')]||{})[k[0]];
+          var dv=(D[key==='z'?'z':(key==='b'?'b':'s')]||{})[k[0]];
+          if(!v||!L||!dv)return;
+          if(v[0]<PS_FLAG_SHARE)return;
+          var pEdge=v[2]-L[2];
+          var dEdge=dv[2]-L[2];
+          if(pEdge>=PS_FLAG_PTS&&dEdge>=PS_FLAG_DEF){
+            found.push({p:p,k:k,key:key,v:v,L:L,dv:dv,score:pEdge+dEdge});
+          }
+        });
+      });
+    });
+    found.sort(function(a,b){return b.score-a.score;});
+  }
+  if(flags){
+    if(!opp){
+      flags.innerHTML='<div style="font-size:10.5px;color:var(--txt3);padding:6px 2px 10px">'
+        +'Pick an opponent to flag where a player\u2019s strengths meet that defence\u2019s weaknesses.</div>';
+    }else{
+      var fh='<div class="panel" style="margin-bottom:12px"><div class="panel-hdr">'
+       +'<div class="panel-title"><div class="panel-title-dot"></div>WHERE THEY SHOULD GET THEIRS</div>'
+       +'<div style="font-size:9.5px;color:var(--txt3);letter-spacing:1px">vs '+fbEsc(opp).toUpperCase()+'</div></div>';
+      if(!found.length){
+        fh+='<div style="padding:12px 14px;font-size:11px;color:var(--txt3);line-height:1.6">'
+         +'Nothing stands out. A flag needs a player at least '+PS_FLAG_PTS.toFixed(2)+' points per shot above league '
+         +'in a slice, on at least '+PS_FLAG_SHARE+'% of his attempts, against a defence conceding at least '
+         +PS_FLAG_DEF.toFixed(2)+' above league in the same slice. Both halves have to agree.</div>';
+      }else{
+        fh+='<table class="data"><thead><tr><th>PLAYER</th><th>SLICE</th><th>HIS SHARE</th>'
+         +'<th>HIS PTS</th><th>D ALLOWS</th><th>READ</th></tr></thead><tbody>';
+        found.slice(0,14).forEach(function(f){
+          fh+='<tr><td class="bold">'+f.p.player_name+'</td>'
+           +'<td class="bold">'+f.k[1]+'<div style="font-size:9.5px;color:var(--txt3);font-weight:400">'+(f.k[2]||'')+'</div></td>'
+           +'<td>'+f.v[0].toFixed(1)+'%</td>'
+           +'<td style="color:var(--grn2);font-weight:700">'+f.v[2].toFixed(2)+'<span style="color:var(--txt3);font-size:9px;margin-left:3px">+'+(f.v[2]-f.L[2]).toFixed(2)+'</span></td>'
+           +'<td style="color:var(--red2);font-weight:700">'+f.dv[2].toFixed(2)+'<span style="color:var(--txt3);font-size:9px;margin-left:3px">+'+(f.dv[2]-f.L[2]).toFixed(2)+'</span></td>'
+           +'<td style="font-size:10.5px;line-height:1.5">Takes '+f.v[0].toFixed(0)+'% of his shots here at '
+           +f.v[2].toFixed(2)+' a shot. '+fbEsc(opp)+' gives up '+f.dv[2].toFixed(2)+' against a league '+f.L[2].toFixed(2)+'.</td></tr>';
+        });
+        fh+='</tbody></table>';
+      }
+      flags.innerHTML=fh+'</div>';
+    }
+  }
+
+  /* the table itself */
+  var h='<div class="panel"><div class="panel-hdr">'
+   +'<div class="panel-title"><div class="panel-title-dot"></div>PLAYER SHOT PROFILES</div>'
+   +'<div style="font-size:9.5px;color:var(--txt3);letter-spacing:1px">SHARE \u00b7 FG% \u00b7 PTS PER SHOT</div></div>';
+  if(!rows.length){
+    body.innerHTML=h+'<div style="padding:12px 14px;font-size:11px;color:var(--txt3)">'
+      +'No players with enough shots for this team.</div></div>';
+    return;
+  }
+  rows.forEach(function(p){
+    var sp=p.splits||{};
+    h+='<div style="border-top:1px solid var(--bdr);padding:9px 14px 4px">'
+     +'<span style="font-weight:700;font-size:12.5px">'+p.player_name+'</span>'
+     +'<span style="font-size:10px;color:var(--txt3);margin-left:8px">'+p.shots+' shots'
+     +(sp.ov?(' \u00b7 '+sp.ov[0].toFixed(1)+'% FG \u00b7 '+sp.ov[1].toFixed(2)+' per shot'):'')+'</span></div>';
+    h+='<table class="data"><thead><tr><th style="width:150px"></th>';
+    ['SHARE','FG%','PTS'].forEach(function(){});
+    h+='<th>SHARE</th><th>FG%</th><th>PTS</th><th style="border-left:1px solid var(--bdr)"></th>'
+     +'<th>SHARE</th><th>FG%</th><th>PTS</th><th style="border-left:1px solid var(--bdr)"></th>'
+     +'<th>SHARE</th><th>FG%</th><th>PTS</th></tr></thead><tbody>';
+    for(var i=0;i<Math.max(SC_ZONES.length,SC_BANDS.length,SC_SRC.length);i++){
+      h+='<tr>';
+      [[SC_ZONES,'z'],[SC_BANDS,'b'],[SC_SRC,'s']].forEach(function(g,gi){
+        var k=g[0][i];
+        if(!k){h+='<td colspan="4"'+(gi?' style="border-left:1px solid var(--bdr)"':'')+'></td>';return;}
+        var v=(sp[g[1]]||{})[k[0]];
+        var L=(lg[g[1]]||{})[k[0]];
+        h+='<td class="bold"'+(gi?' style="border-left:1px solid var(--bdr)"':'')+'>'+k[1]+'</td>';
+        if(!v){h+='<td colspan="3" class="muted">&mdash;</td>';return;}
+        var tone=(L&&v[2]-L[2]>0.08)?'var(--grn2)':((L&&v[2]-L[2]<-0.08)?'var(--red2)':'var(--txt1)');
+        h+='<td>'+v[0].toFixed(1)+'%</td><td>'+v[1].toFixed(1)+'%</td>'
+         +'<td style="color:'+tone+';font-weight:700">'+v[2].toFixed(2)+'</td>';
+      });
+      h+='</tr>';
+    }
+    h+='</tbody></table>';
+  });
+  body.innerHTML=h+'</div>';
 }
 function initShotClock(){ scFillMatchupPickers(); scRenderLeague(); scRender(); scLoadAlerts(); }
 function scSetSide(v,btn){
