@@ -918,6 +918,33 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 .buy-badge{display:inline-block;background:var(--amb);color:#fff;font-size:8px;font-weight:800;letter-spacing:.8px;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:1px}
 
 .gc-badge-buy{background:var(--amb)!important;color:#fff!important;border-color:var(--amb)!important;font-weight:800}
+
+/* ---- PR Update readability -------------------------------------------------
+   The card headings inherit a site-wide Courier New rule shared with about
+   fifteen other components. Rather than change that rule and disturb every one
+   of them, these overrides are scoped to the PR Update page only.
+
+   The cards also get a maximum width. On a wide monitor a full-bleed card
+   leaves a couple of team names marooned at opposite ends of the screen, which
+   is harder to read than the same information in a narrower column. */
+#page-prupdate .pru-matchup,
+#page-prupdate .pru-team-name,
+#page-prupdate .pru-header,
+#page-prupdate .pru-section-hdr,
+#page-prupdate .pru-team-pr,
+#page-prupdate .pru-spread,
+#page-prupdate .pru-adj,
+#page-prupdate .pru-adj-line{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  letter-spacing:0}
+#page-prupdate .pru-matchup{font-size:14px;letter-spacing:.2px}
+#page-prupdate .pru-team-name{font-size:12.5px;font-weight:700}
+#page-prupdate .pru-section-hdr{font-size:11px;font-weight:700;letter-spacing:1.4px}
+#page-prupdate .pru-spread{font-size:12px}
+
+/* keep the cards to a readable measure instead of the full monitor */
+#pru-games-body{max-width:920px}
+#pru-summary{max-width:920px}
 </style>
 </head>
 <body>
