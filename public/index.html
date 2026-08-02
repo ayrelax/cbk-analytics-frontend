@@ -52,8 +52,28 @@ body{background:var(--bg0);color:var(--txt1);font-family:-apple-system,BlinkMacS
 .nav-btn{padding:12px 18px;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--txt3);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;white-space:nowrap;font-family:inherit}
 .nav-btn:hover{color:var(--txt1);background:var(--bg2)}
 .nav-btn.active{color:var(--acc);border-bottom-color:var(--acc)}
-.ticker{background:var(--acc);padding:9px 0;overflow:hidden;white-space:nowrap}
-.ticker-track{display:inline-block;animation:ticker 60s linear infinite}
+.ticker{background:var(--acc);overflow:hidden;white-space:nowrap}
+/* Two lanes: today's board on top, ratings underneath running the other way so the
+   pair does not scan as one long stream. Hover pauses both -- a strip you cannot
+   stop is decoration rather than information. */
+.tk-row{display:flex;align-items:stretch;overflow:hidden}
+.tk-row:first-child{border-bottom:1px solid rgba(255,255,255,.16)}
+.tk-lbl{background:rgba(0,0,0,.20);display:flex;align-items:center;padding:0 13px;
+  font-family:'Courier New',monospace;font-size:9.5px;letter-spacing:2px;color:#fff;
+  font-weight:700;flex:0 0 auto;border-right:1px solid rgba(255,255,255,.18);z-index:3}
+.tk-body{overflow:hidden;flex:1 1 auto;position:relative}
+.tk-body:before,.tk-body:after{content:'';position:absolute;top:0;bottom:0;width:36px;z-index:2;pointer-events:none}
+.tk-body:before{left:0;background:linear-gradient(90deg,var(--acc),rgba(139,105,20,0))}
+.tk-body:after{right:0;background:linear-gradient(270deg,var(--acc),rgba(139,105,20,0))}
+.ticker:hover .ticker-track{animation-play-state:paused}
+.tk-rev{animation-duration:74s!important;animation-direction:reverse!important}
+.tk-it{display:inline-flex;align-items:center;gap:7px;margin:0 19px;
+  font-family:'Courier New',monospace;font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:#fff}
+.tk-mu{color:var(--acc2)}
+.tk-fin{font-size:8.5px;letter-spacing:1.4px;padding:2px 6px;border-radius:3px;
+  background:rgba(255,255,255,.17);color:rgba(255,255,255,.9)}
+.tk-sc{font-size:12.5px}
+.ticker-track{display:inline-block;animation:ticker 52s linear infinite;padding:7px 0}
 @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .ticker-track span{font-size:12px;letter-spacing:2px;color:#fff;margin:0 22px;font-weight:700}
 .ticker-track .tsep{color:var(--acc2);margin:0 6px}
@@ -942,9 +962,22 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 #page-prupdate .pru-section-hdr{font-size:11px;font-weight:700;letter-spacing:1.4px}
 #page-prupdate .pru-spread{font-size:12px}
 
-/* keep the cards to a readable measure instead of the full monitor */
-#pru-games-body{max-width:920px}
-#pru-summary{max-width:920px}
+/* Two games per row on a wide screen, one on a narrow one.
+
+   Each section's cards sit in their own grid rather than the page using CSS
+   columns. Multicol looked simpler but only balances reliably when a section has
+   enough cards to fill both tracks -- a section with two cards was stacking both
+   in the left column. A grid places every card explicitly, so the behaviour is
+   the same whether a section holds two games or twenty. */
+#pru-games-body{max-width:1500px}
+#pru-summary{max-width:1500px}
+.pru-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;align-items:start}
+.pru-grid .pru-card{margin-bottom:12px}
+
+@media (max-width:1180px){
+  .pru-grid{grid-template-columns:1fr}
+  #pru-games-body,#pru-summary{max-width:920px}
+}
 </style>
 </head>
 <body>
@@ -998,7 +1031,8 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
   <button class="nav-btn" id="nav-statsupload" onclick="showPage('statsupload',this)" style="display:none">STATS UPLOAD</button>
 </div>
 <div class="ticker" id="ticker-bar" style="display:none">
-  <div class="ticker-track" id="ticker-track"></div>
+  <div class="tk-row"><div class="tk-lbl">TODAY</div><div class="tk-body"><div class="ticker-track" id="ticker-games"></div></div></div>
+  <div class="tk-row"><div class="tk-lbl">RATINGS</div><div class="tk-body"><div class="ticker-track tk-rev" id="ticker-track"></div></div></div>
 </div>
 <div class="content">
 <div id="page-dashboard">
@@ -1857,7 +1891,41 @@ function _favRender(){var box=document.getElementById('fav-team-wrap');if(!box)r
 function showPage(page,btn){document.querySelectorAll('[id^="page-"]').forEach(function(el){el.style.display='none';});document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('page-'+page).style.display='block';btn.classList.add('active');try{localStorage.setItem('cbk_page',page);}catch(e){}if(page==='dashboard')loadDashboard();if(page==='ratings')loadTeams();if(page==='teamprofile'){initTeamProfileDropdown();var _t=null;try{_t=localStorage.getItem('cbk_team');}catch(e){}if(_t)goToTeam(_t);}if(page==='spreads')loadSpreads((function(){try{return localStorage.getItem('cbk_spreads_filter')||'today';}catch(e){return 'today';}})());if(page==='ncaa')initNCAA();if(page==='confwins')loadConfWins();if(page==='plays')loadPlays();if(page==='modelats')loadModelATS();if(page==='matchups')loadMatchups();if(page==='players')loadPlayerLeaders();if(page==='markets')loadPlayerMarkets();if(page==='travel')loadTravel();if(page==='statsupload'){}if(page==='specials')initSpecials();if(page==='prupdate')initPRUpdate();if(page==='conftourney')initConfTourney();if(page==='mte')initMTE();if(page==='powerindex')loadPowerIndex();if(page==='tourneyprops')initTourneyProps();if(page==='linesheet')initLineSheet();if(page==='compliance')initCompliance();if(page==='matrix')initMtx();if(page==='altlines')initAlt();if(page==='bracket')initBrk();if(page==='misses')initMisses();if(page==='archive')initArchive();if(page==='doctrine')initDoctrine();}
 function quickCalc(){var homeId=document.getElementById('qc-home-team').value;var awayId=document.getElementById('qc-away-team').value;var neutral=document.getElementById('qc-neutral').value==='1';var el=document.getElementById('qc-result');if(!homeId||!awayId){el.textContent='--';return;}var home=allTeams.find(function(t){return String(t.id)===homeId;});var away=allTeams.find(function(t){return String(t.id)===awayId;});if(!home||!away){el.textContent='--';return;}var sp=calcSpread(home.pr,neutral?0:home.hc,away.pr,neutral);var rsp=Math.round(sp*2)/2;var ml=spreadToMLJuiced(sp);var favTeam=rsp>=0?home.team:away.team;el.innerHTML='<span style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</span> &nbsp;<span style="color:var(--red2)">'+fmtOdds(ml.fav)+'</span> / <span style="color:var(--grn2)">'+fmtOdds(ml.dog)+'</span>';}
 function populateQCDropdowns(){var homeEl=document.getElementById('qc-home-team');var awayEl=document.getElementById('qc-away-team');if(!homeEl||homeEl.options.length>1)return;allTeams.forEach(function(t){var o1=document.createElement('option');o1.value=t.id;o1.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);homeEl.appendChild(o1);var o2=document.createElement('option');o2.value=t.id;o2.textContent=t.team+' ('+t.conference+') '+t.pr.toFixed(1);awayEl.appendChild(o2);});}
-function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span>#'+(i+1)+' '+t.team.toUpperCase()+' <span class="tsep">|</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
+function buildTicker(teams){var track=document.getElementById('ticker-track');var inner='';teams.slice(0,25).forEach(function(t,i){inner+='<span class="tk-it"><span class="tk-mu">#'+(i+1)+' '+t.team.toUpperCase()+'</span> '+t.pr.toFixed(1)+'</span>';});inner+=inner;track.innerHTML=inner;document.getElementById('ticker-bar').style.display='block';}
+/* The top lane: today's board. A game shows its spread until it is graded, then the
+   final score takes over. Finals lead so the strip opens on what has already happened
+   and finishes on what is still to come -- and the loop shortens as the night goes on
+   rather than growing.
+
+   Duplicating the content is what makes the scroll seamless: the animation translates
+   by exactly -50%, so the second copy is arriving as the first leaves. */
+function buildGameTicker(games){
+  var track=document.getElementById('ticker-games');
+  if(!track)return;
+  if(!games||!games.length){
+    track.innerHTML='<span class="tk-it"><span class="tk-mu">NO GAMES SCHEDULED</span></span>';
+    return;
+  }
+  var done=[],todo=[];
+  games.forEach(function(g){
+    if(!g.home||!g.away)return;
+    (g.home_score!=null&&g.away_score!=null?done:todo).push(g);
+  });
+  var inner='';
+  done.forEach(function(g){
+    inner+='<span class="tk-it"><span class="tk-fin">FINAL</span> <span class="tk-sc">'
+      +g.away.team.toUpperCase()+' '+g.away_score+'&nbsp;&nbsp;'
+      +g.home.team.toUpperCase()+' '+g.home_score+'</span></span>';
+  });
+  todo.forEach(function(g){
+    var sp=calcSpreadG(g),rsp=Math.round(sp*2)/2;
+    var fav=rsp>=0?g.home.team:g.away.team;
+    inner+='<span class="tk-it"><span class="tk-mu">'+g.away.team.toUpperCase()+' AT '
+      +g.home.team.toUpperCase()+'</span> '+fav.toUpperCase()+' '+fmtSp(-Math.abs(rsp))+'</span>';
+  });
+  track.innerHTML=inner+inner;
+}
+
 function getHeatClass(idx,total){var pct=idx/total;if(pct<0.2)return'pr-row-1';if(pct<0.4)return'pr-row-2';if(pct<0.6)return'pr-row-3';if(pct<0.8)return'pr-row-4';return'pr-row-5';}
 function getGameHeat(idx,total){var pct=idx/total;if(pct<0.2)return'game-heat-1';if(pct<0.4)return'game-heat-2';if(pct<0.6)return'game-heat-3';if(pct<0.8)return'game-heat-4';return'game-heat-5';}
 function renderDashPlays(){var el=document.getElementById('dash-plays');if(!el)return;var today=cbkToday();sb.from('plays').select('*').eq('play_date',today).order('id',{ascending:true}).then(function(res){var rows=res.data||[];var h='<div class="panel-hdr" style="margin-bottom:8px;padding:0"><div class="panel-title"><div class="panel-title-dot"></div>TODAY\u2019S PLAYS'+(rows.length?' <span style="color:var(--acc2);font-size:10px">\u00b7 '+rows.length+'</span>':'')+'</div><div onclick="cbkGoToPage(\'plays\')" style="cursor:pointer;font-size:9px;color:var(--acc);letter-spacing:1px">ALL PLAYS \u2192</div></div>';if(!rows.length){h+='<div style="color:var(--txt3);font-size:12px;padding:12px 4px">No plays posted today.</div>';el.innerHTML=h;return;}rows.forEach(function(r){var rs=String(r.result||'').toUpperCase();var rc=rs==='W'?'var(--grn2)':(rs==='L'?'var(--red2)':((rs==='P'||rs==='PUSH')?'var(--txt3)':'var(--amb2)'));var rlabel=rs==='W'?'WON':(rs==='L'?'LOST':((rs==='P'||rs==='PUSH')?'PUSH':'PENDING'));var pick=String(r.side||'').trim()||String(r.bet_type||'').trim()||'\u2014';var nums='';if(r.our_number!=null&&r.our_number!=='')nums+='our '+r.our_number;if(r.market_number!=null&&r.market_number!=='')nums+=(nums?'  \u00b7  ':'')+'mkt '+r.market_number;h+='<div style="background:var(--bg1);border:1px solid var(--bdr);border-left:3px solid '+rc+';border-radius:8px;padding:9px 11px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:11px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.event_name||'')+'</span>'+(r.person?'<span style="font-size:9px;color:var(--txt3);letter-spacing:1px;white-space:nowrap;flex-shrink:0">'+String(r.person).toUpperCase()+'</span>':'')+'</div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:3px"><span style="font-size:14px;font-weight:800;color:var(--txt1)">'+pick+(r.bet_type&&String(r.bet_type).toLowerCase().indexOf(String(r.side||"").toLowerCase())<0?' <span style=\"font-size:9px;color:var(--txt3);font-weight:700;letter-spacing:1px\">'+String(r.bet_type).toUpperCase()+'</span>':'')+'</span><span style="font-size:9px;font-weight:800;color:'+rc+';letter-spacing:.5px;flex-shrink:0">'+rlabel+'</span></div>'+(nums?'<div style="font-size:10px;color:var(--txt3);margin-top:3px">'+nums+'</div>':'')+(r.notes?'<div style="font-size:10px;color:var(--txt2);margin-top:4px;font-style:italic">'+r.notes+'</div>':'')+'</div>';});el.innerHTML=h;});}
@@ -1901,6 +1969,7 @@ var lhtml='';
 sortedGames.forEach(function(g,i){if(!g.home||!g.away)return;var sp=calcSpreadG(g);var ml=spreadToML(sp);var hf=sp>=0;var combPR=(g.home.pr+g.away.pr).toFixed(1);var favTeam=hf?g.home.team:g.away.team;var heatClass=getGameHeat(i,10);lhtml+='<tr class="'+heatClass+'"><td class="bold">'+TL(g.away.team)+' @ '+TL(g.home.team)+' <span onclick="openGamePreview('+g.away.id+','+g.home.id+','+(g.neutral_site?'true':'false')+')" style="cursor:pointer;color:var(--acc);font-size:9px;font-weight:700;border:1px solid var(--acc);border-radius:3px;padding:1px 5px;margin-left:6px" title="Game preview">PREVIEW</span></td><td><span class="comb-badge">'+combPR+'</span></td><td style="color:var(--acc);font-weight:700">'+favTeam+' '+fmtSp(-Math.abs(Math.round(sp*2)/2))+'</td><td class="odds-fav">'+fmtOdds(ml.fav)+'</td><td class="odds-dog">'+fmtOdds(ml.dog)+'</td></tr>';});
 if(!lhtml)lhtml='<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:20px">No upcoming games scheduled</td></tr>';
 document.getElementById('dash-lines-body').innerHTML=lhtml;
+try{buildGameTicker(_dayGames);}catch(e){}
 });
 fetch(API+'/health').then(function(r){return r.json();}).catch(function(){});
 loadDashboardATS();
@@ -3092,11 +3161,11 @@ function renderPRUpdateCards(){var body=document.getElementById('pru-games-body'
   if(staged.length){
     html+='<div class="pru-section-hdr" style="color:var(--grn2)">SCORES IN, READY TO APPROVE ('+staged.length+')'
       +'<span style="float:right;font-weight:400;letter-spacing:0;text-transform:none;font-size:10px;color:var(--txt3)">pulled from ESPN &middot; nothing graded yet</span></div>';
-    staged.forEach(function(g){html+=buildStagedCard(g);});
+    html+='<div class="pru-grid">';staged.forEach(function(g){html+=buildStagedCard(g);});html+='</div>';
     if(staged.length>1)html+='<div style="margin:10px 0 4px;text-align:right">'
       +'<button class="btn success" onclick="approveAllStaged()">APPROVE ALL '+staged.length+'</button></div>';
   }
-  if(finals.length){html+='<div class="pru-section-hdr" style="color:var(--amb)">NEEDS GRADING ('+finals.length+')</div>';finals.forEach(function(g){html+=buildActiveCard(g);});}if(scheduled.length){html+='<div class="pru-section-hdr" style="color:var(--txt3);margin-top:'+(finals.length?'20px':'0')+'">SCHEDULED ('+scheduled.length+')</div>';scheduled.forEach(function(g){html+=buildScheduledCard(g);});html+='<div style="margin:14px 0;text-align:right"><button class="btn danger" onclick="markAllFinal()">MARK ALL REMAINING FINAL</button></div>';}if(done.length){html+='<div class="pru-section-hdr" style="color:var(--grn2);margin-top:20px">COMPLETED ('+done.length+')</div>';done.forEach(function(g){if(!g.home||!g.away)return;var adj=g._adjResult||{ha:0,aa:0};var haStr=(adj.ha>=0?'+':'')+adj.ha;var aaStr=(adj.aa>=0?'+':'')+adj.aa;var haColor=adj.ha>0?'var(--grn2)':adj.ha<0?'var(--red2)':'var(--txt3)';var aaColor=adj.aa>0?'var(--grn2)':adj.aa<0?'var(--red2)':'var(--txt3)';var skipped=g._skipped;html+='<div class="pru-done-row" style="border-left:4px solid '+(skipped?'var(--bdr)':'var(--grn2)')+';opacity:'+(skipped?'0.45':'0.85')+'">';html+='<span style="color:var(--txt3);font-size:10px;min-width:70px">'+g.game_date+'</span>';html+='<span style="flex:1;font-weight:700">'+g.away.team+' @ '+g.home.team+'</span>';if(!skipped&&g._hs!=null){html+='<span style="color:var(--txt2);font-weight:700;margin-right:12px">'+g._as+' — '+g._hs+'</span>';html+='<span style="color:'+aaColor+';font-size:10px;margin-right:6px">'+g.away.team.substring(0,8)+' '+aaStr+'</span>';html+='<span style="color:'+haColor+';font-size:10px">'+g.home.team.substring(0,8)+' '+haStr+'</span>';html+='<span style="color:var(--grn2);margin-left:10px;font-weight:700">✓</span>';}else{html+='<span style="color:var(--txt3);font-size:10px">SKIPPED</span>';}html+='</div>';});}if(!staged.length&&!finals.length&&!scheduled.length&&!done.length){html='<div style="text-align:center;color:var(--txt3);padding:30px">No games to display</div>';}body.innerHTML=html;document.getElementById('pru-count').textContent=pruGames.length;document.getElementById('pru-needs').textContent=(finals.length+staged.length);document.getElementById('pru-approved').textContent=pruStats.approved;document.getElementById('pru-skipped').textContent=pruStats.skipped;document.getElementById('pru-pending').textContent=scheduled.length;}
+  if(finals.length){html+='<div class="pru-section-hdr" style="color:var(--amb)">NEEDS GRADING ('+finals.length+')</div>';html+='<div class="pru-grid">';finals.forEach(function(g){html+=buildActiveCard(g);});html+='</div>';}if(scheduled.length){html+='<div class="pru-section-hdr" style="color:var(--txt3);margin-top:'+(finals.length?'20px':'0')+'">SCHEDULED ('+scheduled.length+')</div>';html+='<div class="pru-grid">';scheduled.forEach(function(g){html+=buildScheduledCard(g);});html+='</div>';html+='<div style="margin:14px 0;text-align:right"><button class="btn danger" onclick="markAllFinal()">MARK ALL REMAINING FINAL</button></div>';}if(done.length){html+='<div class="pru-section-hdr" style="color:var(--grn2);margin-top:20px">COMPLETED ('+done.length+')</div>';done.forEach(function(g){if(!g.home||!g.away)return;var adj=g._adjResult||{ha:0,aa:0};var haStr=(adj.ha>=0?'+':'')+adj.ha;var aaStr=(adj.aa>=0?'+':'')+adj.aa;var haColor=adj.ha>0?'var(--grn2)':adj.ha<0?'var(--red2)':'var(--txt3)';var aaColor=adj.aa>0?'var(--grn2)':adj.aa<0?'var(--red2)':'var(--txt3)';var skipped=g._skipped;html+='<div class="pru-done-row" style="border-left:4px solid '+(skipped?'var(--bdr)':'var(--grn2)')+';opacity:'+(skipped?'0.45':'0.85')+'">';html+='<span style="color:var(--txt3);font-size:10px;min-width:70px">'+g.game_date+'</span>';html+='<span style="flex:1;font-weight:700">'+g.away.team+' @ '+g.home.team+'</span>';if(!skipped&&g._hs!=null){html+='<span style="color:var(--txt2);font-weight:700;margin-right:12px">'+g._as+' — '+g._hs+'</span>';html+='<span style="color:'+aaColor+';font-size:10px;margin-right:6px">'+g.away.team.substring(0,8)+' '+aaStr+'</span>';html+='<span style="color:'+haColor+';font-size:10px">'+g.home.team.substring(0,8)+' '+haStr+'</span>';html+='<span style="color:var(--grn2);margin-left:10px;font-weight:700">✓</span>';}else{html+='<span style="color:var(--txt3);font-size:10px">SKIPPED</span>';}html+='</div>';});}if(!staged.length&&!finals.length&&!scheduled.length&&!done.length){html='<div style="text-align:center;color:var(--txt3);padding:30px">No games to display</div>';}body.innerHTML=html;document.getElementById('pru-count').textContent=pruGames.length;document.getElementById('pru-needs').textContent=(finals.length+staged.length);document.getElementById('pru-approved').textContent=pruStats.approved;document.getElementById('pru-skipped').textContent=pruStats.skipped;document.getElementById('pru-pending').textContent=scheduled.length;}
 /* A game ESPN has reported final. Deliberately the same shape as the manual card so
    the page reads consistently, but the scores arrive filled in and the adjustment is
    shown up front -- approving should take one look and one click.
