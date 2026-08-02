@@ -5613,7 +5613,7 @@ var X_MKT={
    different columns in one workbook. Pinning it to H means one column holds every
    fraction no matter which block you are looking at. */
 var X_FRAC_COL=7;
-/* column J -- the away team goes in J2 and the home team in J3 */
+/* column J -- the away team goes in J1 and the home team in J2 */
 var X_TEAM_COL=9;
 function xBuildCSV(key,rows){
   var m=X_MKT[key];
@@ -5946,16 +5946,16 @@ function xaExport(){
     counts.push(X_MKT[m.k].label+' '+rows.length);
   });
   if(!blocks.length){alert('Nothing priced.');return;}
-  /* The two teams go in J2 and J3 -- away first, then home -- so the upload has the
+  /* The two teams go in J1 and J2 -- away first, then home -- so the upload has the
      matchup in a fixed place regardless of which markets priced or how many rows each
-     block ran to. Work-list names, same as everywhere else in the file. Rows 2 and 3
-     are the first two data rows, since row 1 is the opening block's header. */
+     block ran to. Work-list names, same as everywhere else in the file. J1 sits on the
+     first block's header row, which is otherwise empty out that far. */
   var text=blocks.join('\n\n');
   if(_xaTeams&&_xaTeams.length===2){
     var ls=text.split('\n');
     var names=[xTeam(_xaTeams[1]),xTeam(_xaTeams[0])];   /* away, then home */
     for(var n=0;n<2;n++){
-      var li=n+1;
+      var li=n;
       if(li>=ls.length)break;
       var cells=ls[li].split(',');
       while(cells.length<=X_TEAM_COL)cells.push('');
