@@ -6189,17 +6189,35 @@ function xaOutToggle(team,i){
   var r=_xaRoster[team]; if(!r||!r[i])return;
   r[i].out=!r[i].out;
   xaRenderRoster();
+  xaRosterChanged();
 }
 function xaSelToggle(mkt,team,name){
   if(!_xaSel[mkt]||!_xaSel[mkt][team])return;
   _xaSel[mkt][team][name]=!_xaSel[mkt][team][name];
   xaRenderRoster();
+  xaRosterChanged();
 }
 function xaSelAll(mkt,on){
   Object.keys(_xaSel[mkt]||{}).forEach(function(t){
     Object.keys(_xaSel[mkt][t]).forEach(function(n){_xaSel[mkt][t][n]=on;});
   });
   xaRenderRoster();
+  xaRosterChanged();
+}
+/* A roster change has to reprice every market, not just repaint the panel.
+   Debounced because clicking through several players in a row would otherwise
+   kick off an export run per click, and each run drives six sub-tabs. */
+var _xaReTimer=null;
+function xaRosterChanged(){
+  if(_xaReTimer)clearTimeout(_xaReTimer);
+  var out=document.getElementById('xa-output');
+  if(out&&!_xaBusy)out.style.opacity='0.45';
+  _xaReTimer=setTimeout(function(){
+    _xaReTimer=null;
+    if(_xaBusy){ xaRosterChanged(); return; }   /* a run is in flight; try again shortly */
+    if(out)out.style.opacity='';
+    xaBuild();
+  },550);
 }
 function xaMktTab(k){ _xaMktTab=k; xaRenderRoster(); }
 function xaRosterReset(){
@@ -6831,6 +6849,7 @@ async function propLoadGame(){
   var res=await sb.from('player_stats').select('player_name,team,ppg,rpg,apg,fg3m,mpg,usage_pct,games,team_id').in('team',[g.away.team,g.home.team]).not('ppg','is',null).range(0,499);
   if(res.error){out.innerHTML='<div style="color:var(--red2);font-size:12px">Error: '+res.error.message+'</div>';return;}
   var players=(res.data||[]).map(function(p){p.tpm3=(p.games&&p.games>0)?(p.fg3m/p.games):0;return p;});
+  players=xaApplyRoster(players,'props');
   // win prob for favorite from PR spread (same model as site)
   _propWinProb=propTeamWinProb(g);
   _propGenerate(players,g);
