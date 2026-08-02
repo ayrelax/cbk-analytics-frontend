@@ -1639,21 +1639,21 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
     <button class="seg-btn active" onclick="scSetSide('o',this)">OFFENCE</button>
     <button class="seg-btn" onclick="scSetSide('d',this)">DEFENCE</button>
   </div>
-  <input id="sc-search" class="field" style="max-width:190px" placeholder="Search team…"
+  <input id="sc-search" class="field" style="max-width:180px" placeholder="Search team…"
     oninput="scRender()" autocomplete="off" spellcheck="false" data-lpignore="true" name="q-sc">
-  <select id="sc-sort" class="field" style="max-width:230px" onchange="scRender()">
-    <option value="fast">Sort: most fast-break shots</option>
-    <option value="end">Sort: most end-of-clock shots</option>
-    <option value="pps_fast">Sort: best on the break</option>
-    <option value="pps_end">Sort: best late</option>
-    <option value="to">Sort: most shots off turnovers</option>
-    <option value="name">Sort: team name</option>
-  </select>
+  <span style="width:14px"></span>
+  <span style="font-size:10px;letter-spacing:1.4px;color:var(--acc);font-weight:700">MATCHUP</span>
+  <select id="sc-mA" class="field" style="max-width:180px" onchange="scMatchup()"><option value="">Away team…</option></select>
+  <span style="font-size:11px;color:var(--txt3)">at</span>
+  <select id="sc-mB" class="field" style="max-width:180px" onchange="scMatchup()"><option value="">Home team…</option></select>
+  <button class="btn" style="font-size:10px;padding:3px 9px" onclick="scClearMatchup()">CLEAR</button>
+  <span style="flex:1"></span>
   <span style="font-size:10px;color:var(--txt3)" id="sc-count"></span>
 </div>
-<div id="sc-league"></div>
+<div id="sc-match"></div>
 <div id="sc-body"></div>
 <div id="sc-detail"></div>
+<div id="sc-league"></div>
 </div>
 <div id="page-tools" style="display:none">
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
@@ -6367,7 +6367,7 @@ var SC_SRC=[['turnover','Off a turnover'],['dreb','Off a defensive rebound'],
 var _scSide='o';
 var _scTeam=null;
 
-function initShotClock(){ scRenderLeague(); scRender(); }
+function initShotClock(){ scFillMatchupPickers(); scRenderLeague(); scRender(); }
 function scSetSide(v,btn){
   _scSide=v;
   var seg=document.getElementById('sc-side');
@@ -6391,6 +6391,26 @@ function scNum(v,lg,dp,lowerBetter,suffix){
   return '<span style="color:'+c+';font-weight:700">'+v.toFixed(dp)+(suffix||'')+'</span>'
     +'<span style="color:var(--txt3);font-size:9px;margin-left:3px">'+sign+d.toFixed(dp)+'</span>';
 }
+var _scLgSort={idx:-1,dir:-1};
+function scLgSort(i){
+  if(_scLgSort.idx===i)_scLgSort.dir=-_scLgSort.dir;
+  else {_scLgSort.idx=i;_scLgSort.dir=-1;}
+  scRenderLeague();
+}
+function lth(idx,label){
+  var a=(_scLgSort.idx===idx)?('<span style="color:var(--acc)">'+(_scLgSort.dir<0?'\u25be':'\u25b4')+'</span>')
+                             :'<span style="opacity:.28">\u25be</span>';
+  return '<th style="cursor:pointer;user-select:none" onclick="scLgSort('+idx+')">'+label+' '+a+'</th>';
+}
+function lord(list,get){
+  if(_scLgSort.idx<0)return list;
+  return list.slice().sort(function(a,b){
+    var va=get(a),vb=get(b);
+    if(!va)return 1; if(!vb)return -1;
+    var d=vb[_scLgSort.idx]-va[_scLgSort.idx];
+    return _scLgSort.dir<0?d:-d;
+  });
+}
 function scRenderLeague(){
   var box=document.getElementById('sc-league');
   if(!box)return;
@@ -6399,9 +6419,9 @@ function scRenderLeague(){
    +'<div class="panel-title"><div class="panel-title-dot"></div>LEAGUE BASELINE</div>'
    +'<div style="font-size:9.5px;color:var(--txt3);letter-spacing:1px">'
    +SC_DATA.ns.toLocaleString()+' SHOTS \u00b7 '+SC_DATA.ng.toLocaleString()+' GAMES</div></div>';
-  h+='<table class="data"><thead><tr><th>SHOT CLOCK</th><th>SHARE</th><th>FG%</th>'
-   +'<th>PTS/SHOT</th><th>3PA SHARE</th><th>3P%</th><th>2P%</th></tr></thead><tbody>';
-  SC_BANDS.forEach(function(b){
+  h+='<table class="data"><thead><tr><th>SHOT CLOCK</th>'+lth(0,'SHARE')+lth(1,'FG%')
+   +lth(2,'PTS/SHOT')+lth(3,'3PA SHARE')+lth(4,'3P%')+lth(5,'2P%')+'</tr></thead><tbody>';
+  lord(SC_BANDS,function(b){return lg.b[b[0]];}).forEach(function(b){
     var v=lg.b[b[0]]; if(!v)return;
     h+='<tr><td class="bold">'+b[1]+'<span style="color:var(--txt3);font-weight:400"> &middot; '+b[2]+'</span></td>'
      +'<td>'+v[0].toFixed(1)+'%</td><td class="bold">'+v[1].toFixed(1)+'%</td>'
@@ -6414,9 +6434,9 @@ function scRenderLeague(){
    +'34.4%, 34.3% across the first three bands and only drops to 31.5% right at the end. Two-point accuracy '
    +'falls from 61.9% to 44.4% over the same span. A three is a three whenever it is taken; a two gets much '
    +'harder as the defence sets.</div>';
-  h+='<table class="data"><thead><tr><th>POSSESSION CAME FROM</th><th>SHARE</th><th>FG%</th>'
-   +'<th>PTS/SHOT</th><th>3PA SHARE</th><th>3P%</th><th>2P%</th></tr></thead><tbody>';
-  SC_SRC.forEach(function(k){
+  h+='<table class="data"><thead><tr><th>POSSESSION CAME FROM</th>'+lth(0,'SHARE')+lth(1,'FG%')
+   +lth(2,'PTS/SHOT')+lth(3,'3PA SHARE')+lth(4,'3P%')+lth(5,'2P%')+'</tr></thead><tbody>';
+  lord(SC_SRC,function(k){return lg.s[k[0]];}).forEach(function(k){
     var v=lg.s[k[0]]; if(!v)return;
     h+='<tr><td class="bold">'+k[1]+'</td><td>'+v[0].toFixed(1)+'%</td>'
      +'<td class="bold">'+v[1].toFixed(1)+'%</td><td class="bold">'+v[2].toFixed(2)+'</td>'
@@ -6432,6 +6452,23 @@ function scRenderLeague(){
 /* The team table. Every number is shown against the league baseline, because a
    raw figure means little on its own -- 21% of shots on the break is only useful
    once you know the league is at 19.8%. */
+/* Sorting is by clicking a column rather than a dropdown. _scSort holds which
+   column and direction; clicking the active column flips it. Every sortable header
+   carries an arrow so the current sort is visible without hunting for it. */
+var _scSort={key:'fast.0',dir:-1};
+function scSort(key){
+  if(_scSort.key===key)_scSort.dir=-_scSort.dir;
+  else {_scSort.key=key;_scSort.dir=-1;}
+  scRender();
+}
+function scArrow(key){
+  if(_scSort.key!==key)return '<span style="opacity:.28">\u25be</span>';
+  return '<span style="color:var(--acc)">'+(_scSort.dir<0?'\u25be':'\u25b4')+'</span>';
+}
+function scTh(key,label,extra){
+  return '<th style="cursor:pointer;user-select:none;'+(extra||'')+'" onclick="scSort(\''+key+'\')">'
+    +label+' '+scArrow(key)+'</th>';
+}
 function scRender(){
   var box=document.getElementById('sc-body');
   if(!box)return;
@@ -6439,32 +6476,43 @@ function scRender(){
   var lg=SC_DATA.lg;
   var q=(document.getElementById('sc-search')||{}).value||'';
   q=q.trim().toLowerCase();
-  var sort=(document.getElementById('sc-sort')||{}).value||'fast';
   var rows=Object.keys(src).filter(function(t){return !q||t.toLowerCase().indexOf(q)>=0;});
-  function get(t,b,idx){var p=src[t];return (p&&p.b[b])?p.b[b][idx]:-999;}
-  function gsrc(t,k,idx){var p=src[t];return (p&&p.s[k])?p.s[k][idx]:-999;}
-  var cmp={
-    fast:function(a,b){return get(b,'fast',0)-get(a,'fast',0);},
-    end:function(a,b){return get(b,'end',0)-get(a,'end',0);},
-    pps_fast:function(a,b){return get(b,'fast',2)-get(a,'fast',2);},
-    pps_end:function(a,b){return get(b,'end',2)-get(a,'end',2);},
-    to:function(a,b){return gsrc(b,'turnover',0)-gsrc(a,'turnover',0);},
-    name:function(a,b){return a<b?-1:1;}
-  }[sort];
-  rows.sort(cmp);
+
+  /* a sort key is either "name" or "<group>.<index>", where group is a band or a
+     possession source and index is a column within that group's row */
+  function val(t,key){
+    var p=src[t];
+    if(!p)return -999;
+    var parts=key.split('.');
+    var g=parts[0], idx=+parts[1];
+    var v=(p.b[g]||p.s[g]);
+    return v?v[idx]:-999;
+  }
+  if(_scSort.key==='name'){
+    rows.sort(function(a,b){return (a<b?-1:1)*(-_scSort.dir);});
+  }else{
+    rows.sort(function(a,b){
+      var d=val(b,_scSort.key)-val(a,_scSort.key);
+      return _scSort.dir<0?d:-d;
+    });
+  }
   var cnt=document.getElementById('sc-count');
   if(cnt)cnt.textContent=rows.length+' teams \u00b7 '+(_scSide==='o'?'what they do':'what they allow');
   var lowerBetter=(_scSide==='d');
   var h='<div class="panel"><div class="panel-hdr">'
    +'<div class="panel-title"><div class="panel-title-dot"></div>'
    +(_scSide==='o'?'OFFENCE BY SHOT CLOCK':'DEFENCE BY SHOT CLOCK')+'</div>'
-   +'<div style="font-size:9.5px;color:var(--txt3);letter-spacing:1px">SHARE OF SHOTS \u00b7 PTS PER SHOT \u00b7 vs LEAGUE</div></div>';
-  h+='<table class="data"><thead><tr><th>TEAM</th>';
+   +'<div style="font-size:9.5px;color:var(--txt3);letter-spacing:1px">CLICK ANY COLUMN TO SORT</div></div>';
+  h+='<table class="data"><thead><tr>'+scTh('name','TEAM');
   SC_BANDS.forEach(function(b){h+='<th colspan="2" style="text-align:center;border-left:1px solid var(--bdr)">'+b[1]+'</th>';});
-  h+='<th style="border-left:1px solid var(--bdr)">OFF TO</th></tr>'
-   +'<tr><th style="font-size:8.5px">&nbsp;</th>';
-  SC_BANDS.forEach(function(){h+='<th style="font-size:8.5px;border-left:1px solid var(--bdr)">SHARE</th><th style="font-size:8.5px">PTS</th>';});
-  h+='<th style="font-size:8.5px;border-left:1px solid var(--bdr)">SHARE</th></tr></thead><tbody>';
+  h+='<th colspan="2" style="text-align:center;border-left:1px solid var(--bdr)">OFF TO</th></tr><tr><th></th>';
+  SC_BANDS.forEach(function(b){
+    h+=scTh(b[0]+'.0','SHARE','font-size:8.5px;border-left:1px solid var(--bdr)')
+      +scTh(b[0]+'.2','PTS','font-size:8.5px');
+  });
+  h+=scTh('turnover.0','SHARE','font-size:8.5px;border-left:1px solid var(--bdr)')
+    +scTh('turnover.2','PTS','font-size:8.5px');
+  h+='</tr></thead><tbody>';
   rows.forEach(function(t){
     var p=src[t];
     h+='<tr style="cursor:pointer" onclick="scShowTeam(\''+t.replace(/'/g,"\\'")+'\')">'
@@ -6476,7 +6524,8 @@ function scRender(){
        +'<td>'+scNum(v[2],L[2],2,lowerBetter)+'</td>';
     });
     var to=p.s['turnover'], Lto=lg.s['turnover'];
-    h+='<td style="border-left:1px solid var(--bdr)">'+(to?scNum(to[0],Lto[0],1,false,'%'):'&mdash;')+'</td>';
+    h+='<td style="border-left:1px solid var(--bdr)">'+(to?scNum(to[0],Lto[0],1,false,'%'):'&mdash;')+'</td>'
+     +'<td>'+(to?scNum(to[2],Lto[2],2,lowerBetter):'&mdash;')+'</td>';
     h+='</tr>';
   });
   h+='</tbody></table>';
@@ -6492,12 +6541,29 @@ function scShowTeam(t){
   var box=document.getElementById('sc-detail');
   if(!box)return;
   var lg=SC_DATA.lg;
+  /* The detail rows sort too. _scDetSort holds a column index and direction, and
+     both the band table and the source table use it, so clicking PTS/SHOT orders
+     both by that column at once. */
+  function dth(idx,label){
+    var a=(_scDetSort.idx===idx)?('<span style="color:var(--acc)">'+(_scDetSort.dir<0?'\u25be':'\u25b4')+'</span>')
+                                :'<span style="opacity:.28">\u25be</span>';
+    return '<th style="cursor:pointer;user-select:none" onclick="scDetSort('+idx+')">'+label+' '+a+'</th>';
+  }
+  function ord(list,get){
+    if(_scDetSort.idx<0)return list;
+    return list.slice().sort(function(a,b){
+      var va=get(a),vb=get(b);
+      if(!va)return 1; if(!vb)return -1;
+      var d=vb[_scDetSort.idx]-va[_scDetSort.idx];
+      return _scDetSort.dir<0?d:-d;
+    });
+  }
   function tbl(p,title,lowerBetter){
     if(!p)return '<div style="font-size:11px;color:var(--txt3);padding:10px">No data.</div>';
     var h='<div style="font-size:10px;font-weight:700;letter-spacing:1.6px;color:var(--acc);padding:9px 14px 4px">'+title+'</div>';
-    h+='<table class="data"><thead><tr><th>SHOT CLOCK</th><th>SHARE</th><th>FG%</th><th>PTS/SHOT</th>'
-     +'<th>3PA SHARE</th><th>3P%</th><th>2P%</th></tr></thead><tbody>';
-    SC_BANDS.forEach(function(b){
+    h+='<table class="data"><thead><tr><th>SHOT CLOCK</th>'+dth(0,'SHARE')+dth(1,'FG%')+dth(2,'PTS/SHOT')
+     +dth(3,'3PA SHARE')+dth(4,'3P%')+dth(5,'2P%')+'</tr></thead><tbody>';
+    ord(SC_BANDS,function(b){return p.b[b[0]];}).forEach(function(b){
       var v=p.b[b[0]], L=lg.b[b[0]];
       if(!v)return;
       h+='<tr><td class="bold">'+b[1]+'<span style="color:var(--txt3);font-weight:400"> &middot; '+b[2]+'</span></td>'
@@ -6506,9 +6572,9 @@ function scShowTeam(t){
        +'<td>'+scNum(v[4],L[4],1,lowerBetter,'%')+'</td><td>'+scNum(v[5],L[5],1,lowerBetter,'%')+'</td></tr>';
     });
     h+='</tbody></table>';
-    h+='<table class="data"><thead><tr><th>POSSESSION FROM</th><th>SHARE</th><th>FG%</th><th>PTS/SHOT</th>'
-     +'<th>3PA SHARE</th><th>3P%</th><th>2P%</th></tr></thead><tbody>';
-    SC_SRC.forEach(function(k){
+    h+='<table class="data"><thead><tr><th>POSSESSION FROM</th>'+dth(0,'SHARE')+dth(1,'FG%')+dth(2,'PTS/SHOT')
+     +dth(3,'3PA SHARE')+dth(4,'3P%')+dth(5,'2P%')+'</tr></thead><tbody>';
+    ord(SC_SRC,function(k){return p.s[k[0]];}).forEach(function(k){
       var v=p.s[k[0]], L=lg.s[k[0]];
       if(!v)return;
       h+='<tr><td class="bold">'+k[1]+'</td>'
@@ -6528,7 +6594,117 @@ function scShowTeam(t){
   box.innerHTML=h;
   box.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+var _scDetSort={idx:-1,dir:-1};
+function scDetSort(i){
+  if(_scDetSort.idx===i)_scDetSort.dir=-_scDetSort.dir;
+  else {_scDetSort.idx=i;_scDetSort.dir=-1;}
+  if(_scTeam)scShowTeam(_scTeam);
+}
 function scCloseTeam(){_scTeam=null;var b=document.getElementById('sc-detail');if(b)b.innerHTML='';}
+/* ---- Matchup ---------------------------------------------------------------
+   Puts one team's offence against the other's defence and looks for places where
+   the two agree. An edge is not just "this defence is good" -- it is a band where
+   the defence pushes shots into a range AND the offence is weak in that range.
+   Those two facts compounding is what makes an exploitable matchup rather than a
+   general mismatch.
+
+   For each band the projected points per shot is the league figure plus the
+   offence's edge over league plus the defence's edge over league. Crude, but it is
+   the same additive form used elsewhere in the platform and it does not pretend to
+   more precision than the data supports. The share is the average of how often the
+   offence goes there and how often the defence forces teams there.
+
+   The band is flagged when the projected figure moves at least 0.06 points per
+   shot from league and the band carries at least a fifth of the shots -- enough to
+   matter over a game rather than a curiosity in a small slice. */
+var SC_EDGE_MIN=0.06;
+var SC_SHARE_MIN=17;
+function scFillMatchupPickers(){
+  ['sc-mA','sc-mB'].forEach(function(id,n){
+    var sel=document.getElementById(id);
+    if(!sel||sel.options.length>1)return;
+    var names=Object.keys(SC_DATA.o).sort();
+    var h='<option value="">'+(n?'Home team\u2026':'Away team\u2026')+'</option>';
+    names.forEach(function(t){h+='<option value="'+t.replace(/"/g,'&quot;')+'">'+t+'</option>';});
+    sel.innerHTML=h;
+  });
+}
+function scClearMatchup(){
+  ['sc-mA','sc-mB'].forEach(function(id){var s=document.getElementById(id);if(s)s.value='';});
+  var b=document.getElementById('sc-match'); if(b)b.innerHTML='';
+}
+function scMatchup(){
+  var A=(document.getElementById('sc-mA')||{}).value||'';
+  var B=(document.getElementById('sc-mB')||{}).value||'';
+  var box=document.getElementById('sc-match');
+  if(!box)return;
+  if(!A||!B){box.innerHTML='';return;}
+  if(A===B){box.innerHTML='<div style="font-size:11px;color:var(--amb);padding:8px">Pick two different teams.</div>';return;}
+  var lg=SC_DATA.lg;
+
+  /* one direction: attacker's offence against defender's defence */
+  function side(att,def){
+    var o=SC_DATA.o[att], d=SC_DATA.d[def];
+    if(!o||!d)return null;
+    var out=[];
+    SC_BANDS.forEach(function(b){
+      var ov=o.b[b[0]], dv=d.b[b[0]], L=lg.b[b[0]];
+      if(!ov||!dv||!L)return;
+      var share=(ov[0]+dv[0])/2;
+      var proj=L[2]+(ov[2]-L[2])+(dv[2]-L[2]);
+      out.push({band:b,share:share,shareGap:share-L[0],proj:proj,edge:proj-L[2],
+                off:ov,def:dv,L:L});
+    });
+    return {att:att,def:def,bands:out};
+  }
+  function render(s){
+    if(!s)return '<div style="font-size:11px;color:var(--txt3);padding:10px">No data.</div>';
+    var h='<div style="font-size:10px;font-weight:700;letter-spacing:1.4px;color:var(--acc);padding:9px 14px 5px">'
+      +cbkJersey(s.att,'')+s.att.toUpperCase()+' ATTACKING '+s.def.toUpperCase()+'</div>';
+    h+='<table class="data"><thead><tr><th>SHOT CLOCK</th><th>SHARE</th>'
+      +'<th>THEIR PTS</th><th>D ALLOWS</th><th>PROJECTED</th><th>EDGE</th></tr></thead><tbody>';
+    s.bands.forEach(function(x){
+      var flag=Math.abs(x.edge)>=SC_EDGE_MIN&&x.share>=SC_SHARE_MIN;
+      var col=x.edge>0?'var(--grn2)':'var(--red2)';
+      h+='<tr'+(flag?' style="background:'+(x.edge>0?'rgba(46,125,50,.10)':'rgba(198,40,40,.10)')+'"':'')+'>'
+       +'<td class="bold">'+x.band[1]+'<span style="color:var(--txt3);font-weight:400"> &middot; '+x.band[2]+'</span></td>'
+       +'<td>'+x.share.toFixed(1)+'%<span style="color:var(--txt3);font-size:9px;margin-left:3px">'
+       +(x.shareGap>=0?'+':'')+x.shareGap.toFixed(1)+'</span></td>'
+       +'<td>'+x.off[2].toFixed(2)+'</td><td>'+x.def[2].toFixed(2)+'</td>'
+       +'<td class="bold">'+x.proj.toFixed(2)+'</td>'
+       +'<td style="color:'+col+';font-weight:700">'+(x.edge>=0?'+':'')+x.edge.toFixed(2)
+       +(flag?' <span style="font-size:8.5px;letter-spacing:1px;padding:1px 5px;border-radius:3px;background:'
+         +(x.edge>0?'rgba(46,125,50,.20)':'rgba(198,40,40,.20)')+'">'
+         +(x.edge>0?'OFFENCE':'DEFENCE')+'</span>':'')+'</td></tr>';
+    });
+    return h+'</tbody></table>';
+  }
+  var sA=side(A,B), sB=side(B,A);
+  /* the plain-English read: which band moved most, and why */
+  function story(s){
+    if(!s||!s.bands.length)return '';
+    var w=s.bands.slice().sort(function(a,b){return Math.abs(b.edge)-Math.abs(a.edge);})[0];
+    if(Math.abs(w.edge)<SC_EDGE_MIN)return '<span style="color:var(--txt3)">'+s.att+' with the ball: </span>nothing much to pick between them &mdash; every band lands within a rounding error of league.';
+    var who=w.edge>0?s.att:s.def;
+    var dir='<span style="color:var(--txt3)">'+s.att+' with the ball: </span>';
+    var dShare=w.def[0]-w.L[0];
+    var forced=dShare>1.5?(s.def+' pushes '+dShare.toFixed(1)+' points more of the shot chart into this range than average, and '):'';
+    return dir+'<b>'+who+' has the edge.</b> In the '+w.band[1]+' band ('+w.band[2].toLowerCase()+'), '
+      +forced+s.att+' scores '+w.off[2].toFixed(2)+' per shot against a league '+w.L[2].toFixed(2)
+      +' while '+s.def+' concedes '+w.def[2].toFixed(2)+'. Together that projects '+w.proj.toFixed(2)
+      +', a swing of '+(w.edge>=0?'+':'')+w.edge.toFixed(2)+' on roughly '+w.share.toFixed(0)+'% of the shots.';
+  }
+  var h='<div class="panel" style="margin-bottom:12px"><div class="panel-hdr">'
+   +'<div class="panel-title"><div class="panel-title-dot"></div>MATCHUP</div>'
+   +'<div style="font-size:9.5px;color:var(--txt3);letter-spacing:1px">SHADED ROWS ARE THE EDGES</div></div>'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0">'
+   +'<div style="border-right:1px solid var(--bdr)">'+render(sA)+'</div>'
+   +'<div>'+render(sB)+'</div></div>'
+   +'<div style="padding:10px 14px;border-top:1px solid var(--bdr);font-size:11px;line-height:1.6;color:var(--txt2)">'
+   +story(sA)+'<br><br>'+story(sB)+'</div></div>';
+  box.innerHTML=h;
+}
+
 function xaRestrictHTML(){
   var teams=[];
   if(_xaTeams&&_xaTeams.length)teams=_xaTeams;
