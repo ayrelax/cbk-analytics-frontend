@@ -3057,7 +3057,89 @@ function ncaaRunSim(){
 /* =================== END NCAA TOURNAMENT v2 =================== */
 function initPRUpdate(){var today=cbkToday();document.getElementById('pru-date').value=today;}
 function loadPRUpdateGames(mode){var body=document.getElementById('pru-games-body');body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:20px">Loading...</div>';pruStats={approved:0,skipped:0};var q=sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)');if(mode==='all'){q=q.eq('pr_processed',false).neq('status','scheduled');}else{var date=document.getElementById('pru-date').value;if(!date)return;q=q.eq('game_date',date);}q.order('game_date',{ascending:true}).range(0,300).then(function(res){pruGames=res.data||[];if(!pruGames.length){body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:30px;font-size:12px">No games found</div>';document.getElementById('pru-summary').style.display='none';return;}document.getElementById('pru-summary').style.display='block';renderPRUpdateCards();});}
-function renderPRUpdateCards(){var body=document.getElementById('pru-games-body');var scheduled=pruGames.filter(function(g){return g.status==='scheduled'&&!g.pr_processed;});var finals=pruGames.filter(function(g){return g.status==='final'&&!g.pr_processed&&!g._skipped;});var done=pruGames.filter(function(g){return g.pr_processed||g._skipped;});var html='';if(finals.length){html+='<div class="pru-section-hdr" style="color:var(--amb)">NEEDS GRADING ('+finals.length+')</div>';finals.forEach(function(g){html+=buildActiveCard(g);});}if(scheduled.length){html+='<div class="pru-section-hdr" style="color:var(--txt3);margin-top:'+(finals.length?'20px':'0')+'">SCHEDULED ('+scheduled.length+')</div>';scheduled.forEach(function(g){html+=buildScheduledCard(g);});html+='<div style="margin:14px 0;text-align:right"><button class="btn danger" onclick="markAllFinal()">MARK ALL REMAINING FINAL</button></div>';}if(done.length){html+='<div class="pru-section-hdr" style="color:var(--grn2);margin-top:20px">COMPLETED ('+done.length+')</div>';done.forEach(function(g){if(!g.home||!g.away)return;var adj=g._adjResult||{ha:0,aa:0};var haStr=(adj.ha>=0?'+':'')+adj.ha;var aaStr=(adj.aa>=0?'+':'')+adj.aa;var haColor=adj.ha>0?'var(--grn2)':adj.ha<0?'var(--red2)':'var(--txt3)';var aaColor=adj.aa>0?'var(--grn2)':adj.aa<0?'var(--red2)':'var(--txt3)';var skipped=g._skipped;html+='<div class="pru-done-row" style="border-left:4px solid '+(skipped?'var(--bdr)':'var(--grn2)')+';opacity:'+(skipped?'0.45':'0.85')+'">';html+='<span style="color:var(--txt3);font-size:10px;min-width:70px">'+g.game_date+'</span>';html+='<span style="flex:1;font-weight:700">'+g.away.team+' @ '+g.home.team+'</span>';if(!skipped&&g._hs!=null){html+='<span style="color:var(--txt2);font-weight:700;margin-right:12px">'+g._as+' — '+g._hs+'</span>';html+='<span style="color:'+aaColor+';font-size:10px;margin-right:6px">'+g.away.team.substring(0,8)+' '+aaStr+'</span>';html+='<span style="color:'+haColor+';font-size:10px">'+g.home.team.substring(0,8)+' '+haStr+'</span>';html+='<span style="color:var(--grn2);margin-left:10px;font-weight:700">✓</span>';}else{html+='<span style="color:var(--txt3);font-size:10px">SKIPPED</span>';}html+='</div>';});}if(!finals.length&&!scheduled.length&&!done.length){html='<div style="text-align:center;color:var(--txt3);padding:30px">No games to display</div>';}body.innerHTML=html;document.getElementById('pru-count').textContent=pruGames.length;document.getElementById('pru-needs').textContent=finals.length;document.getElementById('pru-approved').textContent=pruStats.approved;document.getElementById('pru-skipped').textContent=pruStats.skipped;document.getElementById('pru-pending').textContent=scheduled.length;}
+function renderPRUpdateCards(){var body=document.getElementById('pru-games-body');
+  /* Games ESPN has already finished and staged. They carry a score but nothing has
+     been graded and no rating has moved -- approving is still a deliberate act. */
+  var staged=pruGames.filter(function(g){return g.status==='pending_approval'&&!g.pr_processed&&!g._skipped;});
+  var scheduled=pruGames.filter(function(g){return g.status==='scheduled'&&!g.pr_processed;});var finals=pruGames.filter(function(g){return g.status==='final'&&!g.pr_processed&&!g._skipped;});var done=pruGames.filter(function(g){return g.pr_processed||g._skipped;});var html='';
+  if(staged.length){
+    html+='<div class="pru-section-hdr" style="color:var(--grn2)">SCORES IN, READY TO APPROVE ('+staged.length+')'
+      +'<span style="float:right;font-weight:400;letter-spacing:0;text-transform:none;font-size:10px;color:var(--txt3)">pulled from ESPN &middot; nothing graded yet</span></div>';
+    staged.forEach(function(g){html+=buildStagedCard(g);});
+    if(staged.length>1)html+='<div style="margin:10px 0 4px;text-align:right">'
+      +'<button class="btn success" onclick="approveAllStaged()">APPROVE ALL '+staged.length+'</button></div>';
+  }
+  if(finals.length){html+='<div class="pru-section-hdr" style="color:var(--amb)">NEEDS GRADING ('+finals.length+')</div>';finals.forEach(function(g){html+=buildActiveCard(g);});}if(scheduled.length){html+='<div class="pru-section-hdr" style="color:var(--txt3);margin-top:'+(finals.length?'20px':'0')+'">SCHEDULED ('+scheduled.length+')</div>';scheduled.forEach(function(g){html+=buildScheduledCard(g);});html+='<div style="margin:14px 0;text-align:right"><button class="btn danger" onclick="markAllFinal()">MARK ALL REMAINING FINAL</button></div>';}if(done.length){html+='<div class="pru-section-hdr" style="color:var(--grn2);margin-top:20px">COMPLETED ('+done.length+')</div>';done.forEach(function(g){if(!g.home||!g.away)return;var adj=g._adjResult||{ha:0,aa:0};var haStr=(adj.ha>=0?'+':'')+adj.ha;var aaStr=(adj.aa>=0?'+':'')+adj.aa;var haColor=adj.ha>0?'var(--grn2)':adj.ha<0?'var(--red2)':'var(--txt3)';var aaColor=adj.aa>0?'var(--grn2)':adj.aa<0?'var(--red2)':'var(--txt3)';var skipped=g._skipped;html+='<div class="pru-done-row" style="border-left:4px solid '+(skipped?'var(--bdr)':'var(--grn2)')+';opacity:'+(skipped?'0.45':'0.85')+'">';html+='<span style="color:var(--txt3);font-size:10px;min-width:70px">'+g.game_date+'</span>';html+='<span style="flex:1;font-weight:700">'+g.away.team+' @ '+g.home.team+'</span>';if(!skipped&&g._hs!=null){html+='<span style="color:var(--txt2);font-weight:700;margin-right:12px">'+g._as+' — '+g._hs+'</span>';html+='<span style="color:'+aaColor+';font-size:10px;margin-right:6px">'+g.away.team.substring(0,8)+' '+aaStr+'</span>';html+='<span style="color:'+haColor+';font-size:10px">'+g.home.team.substring(0,8)+' '+haStr+'</span>';html+='<span style="color:var(--grn2);margin-left:10px;font-weight:700">✓</span>';}else{html+='<span style="color:var(--txt3);font-size:10px">SKIPPED</span>';}html+='</div>';});}if(!finals.length&&!scheduled.length&&!done.length){html='<div style="text-align:center;color:var(--txt3);padding:30px">No games to display</div>';}body.innerHTML=html;document.getElementById('pru-count').textContent=pruGames.length;document.getElementById('pru-needs').textContent=(finals.length+staged.length);document.getElementById('pru-approved').textContent=pruStats.approved;document.getElementById('pru-skipped').textContent=pruStats.skipped;document.getElementById('pru-pending').textContent=scheduled.length;}
+/* A game ESPN has reported final. Deliberately the same shape as the manual card so
+   the page reads consistently, but the scores arrive filled in and the adjustment is
+   shown up front -- approving should take one look and one click.
+
+   The score inputs are the same ids approvePR() already reads, just hidden. That means
+   approving a staged game runs the exact same grading pipeline as a manual one --
+   ratings, pr_history, cover margin, ATS rebuild, upset detection -- with no second
+   copy of that logic to keep in step. EDIT SCORE simply reveals them. */
+function buildStagedCard(g){
+  if(!g.home||!g.away)return'';
+  var sp=calcSpreadG(g),rsp=Math.round(sp*2)/2;
+  var favTeam=rsp>=0?g.home.team:g.away.team;
+  var isConf=g.home.conference===g.away.conference;
+  var hs=g.home_score,as_=g.away_score;
+  var adj=calcPRAdj(hs,as_,g.home.pr,g.home.hc,g.away.pr);
+  var awayWon=as_>hs;
+  function sc(v,win){return '<span style="font-size:20px;font-weight:800;color:'+(win?'var(--txt1)':'var(--txt3)')+'">'+v+'</span>';}
+  function delta(v){var c=v>0?'var(--grn2)':v<0?'var(--red2)':'var(--txt3)';
+    return '<span style="color:'+c+';font-weight:700">'+(v>=0?'+':'')+v+'</span>';}
+  var h='<div class="pru-card" id="pru-card-'+g.id+'" style="border-left:4px solid var(--grn2)">';
+  h+='<div class="pru-header"><div><div class="pru-matchup">'+g.away.team+' @ '+g.home.team+'</div>'
+    +'<div style="font-size:10px;color:var(--txt3);margin-top:3px">'+g.game_date+' &nbsp;|&nbsp; '
+    +(isConf?'CONF':'NON-CONF')+'&nbsp;|&nbsp;<span style="color:var(--grn2);font-weight:700">FINAL FROM ESPN</span>'
+    +'</div></div><div class="pru-spread">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</div></div>';
+  h+='<div style="display:flex;align-items:center;justify-content:center;gap:18px;padding:9px 0 4px">'
+    +'<div style="text-align:center;min-width:118px"><div style="font-size:11px;color:var(--txt3);margin-bottom:1px">'+g.away.team+'</div>'+sc(as_,awayWon)+'</div>'
+    +'<div style="color:var(--txt3);font-size:12px">&mdash;</div>'
+    +'<div style="text-align:center;min-width:118px"><div style="font-size:11px;color:var(--txt3);margin-bottom:1px">'+g.home.team+'</div>'+sc(hs,!awayWon)+'</div>'
+    +'</div>';
+  /* hidden but real: approvePR reads these ids */
+  h+='<div class="pru-score-row" id="pru-edit-'+g.id+'" style="display:none">'
+    +'<span style="font-size:11px;color:var(--txt3);min-width:90px">'+g.away.team.substring(0,12)+':</span>'
+    +'<input class="pru-score-inp" type="number" id="away-score-'+g.id+'" value="'+as_+'" oninput="calcPRPreview('+g.id+')" autocomplete="off" spellcheck="false" data-lpignore="true" name="q-away-score-'+g.id+'">'
+    +'<span style="font-size:11px;color:var(--txt3);margin:0 8px">&mdash;</span>'
+    +'<span style="font-size:11px;color:var(--txt3);min-width:90px">'+g.home.team.substring(0,12)+':</span>'
+    +'<input class="pru-score-inp" type="number" id="home-score-'+g.id+'" value="'+hs+'" oninput="calcPRPreview('+g.id+')" autocomplete="off" spellcheck="false" data-lpignore="true" name="q-home-score-'+g.id+'">'
+    +'</div>';
+  h+='<div class="pru-adj" id="pru-adj-'+g.id+'" style="display:block;margin-top:2px">'
+    +'<div class="pru-adj-line"><span style="color:var(--txt3)">'+g.away.team+':</span><span>'
+    +delta(adj.aa)+' <span style="color:var(--txt3)">&rarr; '+(g.away.pr+adj.aa).toFixed(1)+'</span></span></div>'
+    +'<div class="pru-adj-line"><span style="color:var(--txt3)">'+g.home.team+':</span><span>'
+    +delta(adj.ha)+' <span style="color:var(--txt3)">&rarr; '+(g.home.pr+adj.ha).toFixed(1)+'</span></span></div>'
+    +'<div style="font-size:10px;color:var(--txt3);margin-top:4px">'+adj.r+'</div></div>';
+  h+='<div class="pru-actions">'
+    +'<button class="btn success" onclick="approvePR('+g.id+')">APPROVE</button>'
+    +'<button class="btn" onclick="editStaged('+g.id+')">EDIT SCORE</button>'
+    +'<button class="btn" onclick="skipPR('+g.id+')">SKIP</button>'
+    +'<span id="pru-status-'+g.id+'" style="font-size:11px;margin-left:8px"></span></div>';
+  return h+'</div>';
+}
+/* Reveal the score inputs so a wrong ESPN score can be corrected before approving.
+   Nothing else changes -- the same APPROVE button still does the grading. */
+function editStaged(gameId){
+  var row=document.getElementById('pru-edit-'+gameId);
+  if(!row)return;
+  row.style.display=row.style.display==='none'?'flex':'none';
+  if(row.style.display!=='none'){var f=document.getElementById('away-score-'+gameId);if(f)f.focus();}
+}
+/* Approve every staged game in one pass. Sequential rather than parallel: each one
+   writes two team ratings, and firing them all at once risks two games involving the
+   same team racing each other. */
+async function approveAllStaged(){
+  var staged=pruGames.filter(function(g){return g.status==='pending_approval'&&!g.pr_processed&&!g._skipped;});
+  if(!staged.length)return;
+  if(!confirm('Approve all '+staged.length+' games? Each will move both teams\' ratings.'))return;
+  for(var i=0;i<staged.length;i++){
+    await approvePR(staged[i].id);
+  }
+  cbkToast('Done',staged.length+' games approved','success');
+}
 function buildScheduledCard(g){if(!g.home||!g.away)return'';var sp=calcSpreadG(g);var rsp=Math.round(sp*2)/2;var favTeam=rsp>=0?g.home.team:g.away.team;var isConf=g.home.conference===g.away.conference;var html='<div class="pru-card" id="pru-card-'+g.id+'" style="border-left:4px solid var(--bdr)">';html+='<div class="pru-header"><div><div class="pru-matchup">'+g.away.team+' @ '+g.home.team+'</div><div style="font-size:10px;color:var(--txt3);margin-top:3px">'+g.game_date+' &nbsp;|&nbsp; '+(isConf?'CONF':'NON-CONF')+'&nbsp;|&nbsp;<span style="color:var(--txt3)">SCHEDULED</span></div></div><div class="pru-spread">'+favTeam+' '+fmtSp(-Math.abs(rsp))+'</div></div>';html+='<div class="pru-teams"><div class="pru-team"><div class="pru-team-name">'+g.away.team+'</div><div class="pru-team-pr">PR: '+g.away.pr.toFixed(1)+'</div></div><div class="pru-vs">@</div><div class="pru-team"><div class="pru-team-name">'+g.home.team+'</div><div class="pru-team-pr">PR: '+g.home.pr.toFixed(1)+'</div></div></div>';
 html+='<div class="pru-actions"><button class="btn primary" onclick="markGameFinal('+g.id+')">MARK FINAL</button><button class="btn danger" onclick="deleteGame('+g.id+')">DELETE</button></div>';
 return html+'</div>';}
