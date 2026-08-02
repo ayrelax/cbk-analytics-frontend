@@ -366,7 +366,106 @@ table.data tbody tr:hover{background:var(--bg2)}
 
 
 /* ===== DARK MODE THEMES (body-class overrides of the :root vars) ===== */
-body.cbk-warm{--bg0:#17120b;--bg1:#211a11;--bg2:#2b2318;--bg3:#372d1f;--bg4:#453927;--acc:#e8c25c;--acc2:#cdb079;--acc3:#f2cd54;--grn:#63d17a;--grn2:#63d17a;--red:#f28b8b;--red2:#f28b8b;--amb:#ffb74d;--amb2:#ffc670;--pur:#c79be6;--txt1:#f6f0e3;--txt2:#e4dac8;--txt3:#bcae90;--bdr:#372d1e;--bdr2:#4e402b}
+/* ---- High-contrast black -----------------------------------------------------
+   Pure black behind pure white is 21:1 contrast, the highest a screen can give.
+   Everything else is tuned up from the light palette rather than merely inverted:
+   the gold, green and red all needed lifting to stay legible against black.
+
+   The variables alone are not enough. Around ninety colours are written directly
+   into rules and inline styles rather than pulled from the palette -- panel headers,
+   table stripes, badges, callouts -- and every one of them would glare. The block
+   below catches them. */
+/* BLACK: a true black page with clearly separated surfaces above it.
+
+   The previous palette had the right idea but the layers were too close together
+   to read. Panels sat 3.0 in perceptual lightness above the page, and a step under
+   about 3.5 does not register as a different surface -- so panels, table headers
+   and inset blocks all dissolved into one flat black field. Text contrast was
+   never the problem; structure was.
+
+   Layers now step by roughly 7 points of lightness each, and borders are lifted
+   from 18 to 30 so an edge is actually an edge. Page stays pure black. */
+body.cbk-warm{
+  --bg0:#000000;--bg1:#15171b;--bg2:#212429;--bg3:#2e323a;--bg4:#3d424c;
+  --acc:#ffd24a;--acc2:#e0c88f;--acc3:#ffdd6b;
+  --grn:#6bf593;--grn2:#6bf593;--red:#ff8b8b;--red2:#ff8b8b;
+  --amb:#ffc046;--amb2:#ffd27a;--pur:#d8b0ff;
+  --txt1:#ffffff;--txt2:#f0f2f5;--txt3:#b9bfc9;
+  --bdr:#41474f;--bdr2:#575e69}
+
+/* panel and table headers */
+body.cbk-warm .cbk-drawer-hdr,
+body.cbk-warm .panel-hdr,
+body.cbk-warm table.data th,
+body.cbk-warm .quick-calc,
+body.cbk-warm .gc-odds,
+body.cbk-warm .pru-section-hdr{background:var(--bg2)}
+/* zebra striping and hover, which are what make a dense table readable */
+/* Anything painted on the accent colour. In light mode --acc is a dark gold and
+   white text sits on it comfortably. In black mode --acc becomes a bright yellow,
+   where white text measures 1.4 to 1 -- effectively unreadable. These elements
+   flip to near-black text on the same background instead.
+
+   .btn.primary already had this treatment; the other nine did not. */
+body.cbk-warm .cbox-hdr,
+body.cbk-warm .team-header,
+body.cbk-warm .sim-market-hdr,
+body.cbk-warm .edit-region-col-hdr,
+body.cbk-warm .ct-seedgroup-hdr,
+body.cbk-warm .fav-team-link,
+body.cbk-warm .seg-btn.active,
+body.cbk-warm .amn,
+body.cbk-warm .doc-num,
+body.cbk-warm .cbox-hdr-sub{color:#0a0a0b!important}
+body.cbk-warm table.data tr:nth-child(even) td{background:#1c1f24}
+body.cbk-warm table.data tr:hover td{background:#2b2f37}
+body.cbk-warm table.data td{border-color:var(--bdr)}
+/* badges and highlight rows */
+body.cbk-warm .comb-badge,
+body.cbk-warm .roster-starter td,
+body.cbk-warm .b-col-hdr,
+body.cbk-warm .b-team.win,
+body.cbk-warm .edit-seed-row.playin-row,
+body.cbk-warm .gc-badge-neutral,
+body.cbk-warm .game-heat-5 td:first-child{background:var(--bg3);color:var(--txt1)}
+body.cbk-warm .roster-bench td{background:var(--bg1)}
+/* status colours keep their meaning but on dark grounds */
+body.cbk-warm .playin-win,
+body.cbk-warm .gc-badge-final,
+body.cbk-warm .gc-odds.gc-odds-final{background:#0d2417;color:var(--grn2)}
+body.cbk-warm .live-badge,
+body.cbk-warm .gc-badge-live{background:#2a1010;color:var(--red2)}
+/* anything still carrying a light background inline */
+body.cbk-warm [style*="#fdf9f4"],body.cbk-warm [style*="#fdf3e0"],
+body.cbk-warm [style*="#f2ebe1"],body.cbk-warm [style*="#f8f4ef"],
+body.cbk-warm [style*="#ffffff"],body.cbk-warm [style*="#fff\""]{
+  background-color:var(--bg2)!important}
+body.cbk-warm [style*="#fdeaea"],body.cbk-warm [style*="#fef2f2"]{
+  background-color:#2a1010!important}
+body.cbk-warm [style*="#f0fdf4"]{background-color:#0d2417!important}
+body.cbk-warm [style*="#e8c4c4"]{border-color:#4a2626!important}
+/* the ticker sits on the accent, which is now bright -- darken it and flip the text */
+body.cbk-warm .ticker,body.cbk-warm .tk-body:before,body.cbk-warm .tk-body:after{
+  background:#171205}
+body.cbk-warm .tk-body:before{background:linear-gradient(90deg,#171205,rgba(23,18,5,0))}
+body.cbk-warm .tk-body:after{background:linear-gradient(270deg,#171205,rgba(23,18,5,0))}
+body.cbk-warm .tk-lbl{background:rgba(255,255,255,.07)}
+/* Filled buttons keep white text in the light themes, where the fills are dark.
+   Here the fills are bright by necessity -- gold, green and red all had to be
+   lifted to read against black -- so white on them drops to about 1.4:1. Dark
+   text on the same fills gives 10:1 or better. */
+body.cbk-warm .btn.primary,
+body.cbk-warm .btn.success,
+body.cbk-warm .btn.danger,
+body.cbk-warm .btn.warn{color:#0a0a0b;font-weight:700}
+body.cbk-warm .btn.primary:hover,
+body.cbk-warm .btn.success:hover,
+body.cbk-warm .btn.danger:hover,
+body.cbk-warm .btn.warn:hover{color:#000}
+/* the same problem anywhere a bright fill carries text */
+body.cbk-warm .comb-badge,
+body.cbk-warm .live-badge,
+body.cbk-warm .fresh-badge{color:var(--txt1)}
 body.cbk-true{--bg0:#0f1216;--bg1:#171b21;--bg2:#1e232b;--bg3:#272d37;--bg4:#343c48;--acc:#e6c15a;--acc2:#cdb488;--acc3:#f0cb5a;--grn:#4ade80;--grn2:#4ade80;--red:#f87171;--red2:#f87171;--amb:#fbbf24;--amb2:#fcd34d;--pur:#c084fc;--txt1:#f5f7fa;--txt2:#d4dae2;--txt3:#9fabba;--bdr:#2c333d;--bdr2:#404a58}
 /* smooth theme transition */
 body,.panel,.nav,.nav-btn,.btn,.field,table,td,th,.card,input,select{transition:background-color .3s ease,color .3s ease,border-color .3s ease}
@@ -1508,7 +1607,7 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
 <div id="sp-game-view"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game. Loads the top 7 scorers per team and prices who leads the game.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="sp-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('sp')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-sp"><select id="sp-game" class="field" style="max-width:340px" onchange="spLoadGame()"><option value="">Select a game...</option></select><span id="sp-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div></div>
 <div id="sp-day-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a date. Loads the top 25 scorers among allowed teams playing that day (Power 5 + your 12 mid-majors). Uncheck to trim the field.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><select id="sp-day-date" class="field" style="max-width:200px" onchange="spLoadDay()"><option value="">Select a date...</option></select></div></div>
 <div id="sp-props-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Pick a game and it auto-generates ~30 player props across points, rebounds, assists, threes, 1st-half, combines, each-to, or, and win-parlays. Uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="prop-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('prop')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-prop"><select id="prop-game" class="field" style="max-width:340px" onchange="propLoadGame()"><option value="">Select a game...</option></select><span id="prop-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="prop-output"></div></div><div id="sp-first3-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores the first 3-point field goal. Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from 3PM + 3PA per game and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="f3-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('f3')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-f3"><select id="f3-game" class="field" style="max-width:340px" onchange="f3LoadGame()"><option value="">Select a game...</option></select><span id="f3-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="f3-players" style="margin-bottom:14px"></div><div id="f3-output"></div></div><div id="sp-firstsc-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Which player scores first (any points, free throws count). Players listed by PPG; top 5 per team checked as starters — adjust to match the real lineups. Odds from PPG, usage, FT rate and minutes.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="fs-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('fs')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fs"><select id="fs-game" class="field" style="max-width:340px" onchange="fsLoadGame()"><option value="">Select a game...</option></select><span id="fs-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span></div><div id="fs-players" style="margin-bottom:14px"></div><div id="fs-output"></div></div><div id="sp-sitprops-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:10px">Backtested on 5,336 games of play-by-play joined to your stored closing lines. Pick a market, then how you want the spread grouped.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><input id="sit-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('sit')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-sit"><select id="sit-game" class="field" style="max-width:320px" onchange="sitGameChange()"><option value="">Select a game...</option></select><span id="sit-gnote" style="font-size:10px;color:var(--txt3)"></span><button class="btn" style="font-size:11px;padding:4px 14px;background:var(--acc);color:#1a1208;font-weight:800" onclick="sitExportGame()">EXPORT CSV</button></div><div class="search-bar" style="gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><div class="seg" style="display:inline-flex"><button class="seg-btn on" onclick="sitSetProp('race',this)">RACE TO X</button><button class="seg-btn" onclick="sitSetProp('led',this)">% GAME LED</button><button class="seg-btn" onclick="sitSetProp('f4',this)">FIRST 4 MIN</button><button class="seg-btn" onclick="sitSetProp('max',this)">LARGEST LEAD</button><button class="seg-btn" onclick="sitSetProp('early',this)">BOTH SCORE 1ST MIN</button><button class="seg-btn" onclick="sitSetProp('t5',this)">3S IN 1ST 5 MIN</button></div><div class="seg" id="sit-viewband" style="display:inline-flex"><button class="seg-btn on" onclick="sitSetView('1',this)">EVERY POINT</button><button class="seg-btn" onclick="sitSetView('2',this)">BANDS OF 2</button><button class="seg-btn" onclick="sitSetView('3',this)">BANDS OF 3</button></div><button class="btn" style="font-size:10px;padding:4px 12px" onclick="sitExportCSV()">EXPORT TABLE</button></div><div id="sit-output"></div></div>
-<div id="sp-exportall-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Prices every market for one game and writes them to a single CSV. Daily Top 25 is excluded, being a slate market rather than a game market.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="xa-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('xa')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-xa"><select id="xa-game" class="field" style="max-width:340px" onchange="xaBuild()"><option value="">Select a game...</option></select><span id="xa-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span><button id="xa-btn" class="btn" style="font-size:11px;padding:4px 14px;background:var(--acc);color:#1a1208;font-weight:800" onclick="xaExport()">EXPORT CSV</button></div><div id="xa-output"></div></div>
+<div id="sp-exportall-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Prices every market for one game and writes them to a single CSV. Daily Top 25 is excluded, being a slate market rather than a game market.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="xa-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('xa')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-xa"><select id="xa-game" class="field" style="max-width:340px" onchange="xaBuild()"><option value="">Select a game...</option></select><span id="xa-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span><button id="xa-btn" class="btn" style="font-size:11px;padding:4px 14px;background:var(--acc);color:#1a1208;font-weight:800" onclick="xaExport()">EXPORT CSV</button></div><div id="xa-roster"></div><div id="xa-output"></div></div>
 <div id="sp-firstbasket-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Six-way market: each team by two-point field goal, three-point field goal or free throw. Priced from net efficiency (who scores first) and each team's own shot profile (how).</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="fb-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('fb')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fb"><select id="fb-game" class="field" style="max-width:340px" onchange="fbLoadGame()"><option value="">Select a game...</option></select><span id="fb-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span><span style="font-size:11px;color:var(--txt3)">overround</span><input id="fb-overround" class="field" style="width:70px" value="1.12" onchange="fbRender()"></div><div id="fb-output"></div></div>
 <div id="sp-gamespec-view" style="display:none"><div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Fixed game specials — pick a game and the team names fill in automatically. Default odds are -10000; edit each one, uncheck any you don't want, then export.</div><div class="search-bar" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px"><input id="gs-gsearch" class="field" style="max-width:150px" placeholder="Search team…" oninput="gameSearch('gs')" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-gs"><select id="gs-game" class="field" style="max-width:340px" onchange="gsLoadGame()"><option value="">Select a game...</option></select><span id="gs-gnote" style="font-size:10px;color:var(--txt3);margin-left:6px"></span><span style="font-size:11px;color:var(--txt3);margin-left:10px">total</span><input id="gs-total" class="field" style="width:72px" placeholder="151" onchange="gsSetTotal(this.value)" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" name="q-gstot"><button class="btn" style="font-size:10px;padding:3px 9px" onclick="gsResetTotal()">RESET</button></div><div id="gs-output"></div></div>
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
@@ -4594,6 +4693,7 @@ async function spLoadGame(){
   var byTeam={};teams.forEach(function(t){byTeam[t]=[];});
   (res.data||[]).forEach(function(p){if(byTeam[p.team]&&byTeam[p.team].length<7)byTeam[p.team].push(p);});
   _spPlayers=[];teams.forEach(function(t){byTeam[t].forEach(function(p){p._on=true;_spPlayers.push(p);});});
+  _spPlayers=xaApplyRoster(_spPlayers);
   _spOverrides={};
   spRenderPlayers();
   spPrice();
@@ -5910,6 +6010,197 @@ var XA_MARKETS=[
    load:function(){sitGameChange();return Promise.resolve();}}
 ];
 /* per-market compliance reference for the Export All tab */
+/* ---- Roster control for Export All ---------------------------------------------
+   One roster for the whole export. A player can be left out of the market
+   entirely, or marked OUT -- which is different: an excluded player simply is not
+   priced, whereas a player who is OUT has his production redistributed to the
+   team-mates who would actually absorb it.
+
+   How the redistribution works. Vacated usage does not spread evenly, so each
+   remaining team-mate gets a weight:
+
+       weight = usage^1.6  x  replacement bonus
+
+   The exponent above 1 is what tilts the share toward the players who already
+   carry the offence -- at 1.6 a 28% usage guard absorbs roughly two and a half
+   times what a 15% usage forward does, rather than twice. Low-usage bench players
+   still pick up a little, which is what happens in practice, but they are not
+   treated as equal claimants.
+
+   The replacement bonus goes to the direct backup: the highest-minutes remaining
+   player in the same listed role. He gets 1.9x, reflecting that he inherits the
+   minutes as well as a share of the shots.
+
+   Two caps keep it honest. No player absorbs more than 45% of what was vacated,
+   so a single team-mate cannot swallow a star's whole workload. And nobody is
+   pushed past 38% usage, which is roughly the ceiling anyone sustains over a
+   season. Anything left after the caps is dropped rather than forced somewhere it
+   does not belong. */
+var XA_OUT_POW=1.6;        /* tilt toward high-usage players */
+var XA_OUT_BACKUP=1.9;     /* the direct replacement's bonus */
+var XA_OUT_MAXSHARE=0.45;  /* most of one player's load any team-mate can absorb */
+var XA_OUT_MAXUSG=38;      /* usage ceiling nobody is pushed past */
+var _xaRoster={};          /* team -> [{player_name, ppg, mpg, usage_pct, role, on, out}] */
+var _xaRosterGid=null;
+
+function xaRedistribute(list){
+  /* list is one team's players, already carrying .out flags. Returns a copy with
+     ppg / mpg / usage_pct adjusted for whoever is out. */
+  var out=list.filter(function(p){return p.out;});
+  var stay=list.filter(function(p){return !p.out&&p.on;});
+  var adj={};
+  stay.forEach(function(p){
+    adj[p.player_name]={ppg:+p.ppg||0,mpg:+p.mpg||0,usage_pct:+p.usage_pct||0,
+                        gain:0,name:p.player_name,role:p.role||'',base:+p.usage_pct||0};
+  });
+  if(!out.length||!stay.length)return adj;
+
+  out.forEach(function(o){
+    var vacU=+o.usage_pct||0, vacP=+o.ppg||0, vacM=+o.mpg||0;
+    /* the direct backup: same role, most minutes among those still available */
+    var backup=null;
+    stay.forEach(function(p){
+      if((p.role||'')!==(o.role||''))return;
+      if(!backup||(+p.mpg||0)>(+backup.mpg||0))backup=p;
+    });
+    var w={},tot=0;
+    stay.forEach(function(p){
+      var u=Math.max(1,+p.usage_pct||0);
+      var x=Math.pow(u,XA_OUT_POW);
+      if(backup&&p.player_name===backup.player_name)x*=XA_OUT_BACKUP;
+      w[p.player_name]=x; tot+=x;
+    });
+    if(!tot)return;
+    stay.forEach(function(p){
+      var share=Math.min(w[p.player_name]/tot,XA_OUT_MAXSHARE);
+      var a=adj[p.player_name];
+      a.usage_pct=Math.min(XA_OUT_MAXUSG,a.usage_pct+vacU*share);
+      a.ppg+=vacP*share;
+      /* minutes go almost entirely to the direct backup rather than spreading */
+      if(backup&&p.player_name===backup.player_name)a.mpg=Math.min(38,a.mpg+vacM*0.7);
+      else a.mpg=Math.min(38,a.mpg+vacM*0.3*share);
+      a.gain=a.ppg-(+p.ppg||0);
+    });
+  });
+  return adj;
+}
+/* Applied by each sub-tab after it loads its players. Drops anyone excluded or out,
+   and rewrites the survivors' numbers so every market prices the same roster. */
+function xaApplyRoster(players){
+  if(!players||!players.length)return players;
+  var any=false;
+  Object.keys(_xaRoster).forEach(function(t){
+    _xaRoster[t].forEach(function(p){if(p.out||!p.on)any=true;});
+  });
+  if(!any)return players;
+  var byTeam={};
+  players.forEach(function(p){(byTeam[p.team]=byTeam[p.team]||[]).push(p);});
+  var keep=[];
+  Object.keys(byTeam).forEach(function(t){
+    var roster=_xaRoster[t];
+    if(!roster){byTeam[t].forEach(function(p){keep.push(p);});return;}
+    var state={};roster.forEach(function(r){state[r.player_name]=r;});
+    var merged=byTeam[t].map(function(p){
+      var st=state[p.player_name];
+      return {player_name:p.player_name,team:p.team,ppg:p.ppg,mpg:p.mpg,
+              usage_pct:p.usage_pct,role:p.role||(st?st.role:''),
+              on:st?st.on:true,out:st?st.out:false,_src:p};
+    });
+    var adj=xaRedistribute(merged);
+    merged.forEach(function(m){
+      if(m.out||!m.on)return;
+      var a=adj[m.player_name];
+      var p=m._src;
+      if(a){p.ppg=Math.round(a.ppg*10)/10;p.mpg=Math.round(a.mpg*10)/10;
+            p.usage_pct=Math.round(a.usage_pct*10)/10;}
+      keep.push(p);
+    });
+  });
+  return keep;
+}
+/* Loads both squads once per game. Top nine by scoring per side is deep enough to
+   cover a rotation without listing walk-ons. */
+async function xaLoadRoster(g){
+  _xaRoster={}; _xaRosterGid=null;
+  var box=document.getElementById('xa-roster');
+  if(!g||!g.home||!g.away){if(box)box.innerHTML='';return;}
+  if(box)box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px">Loading rosters...</div>';
+  var teams=[g.away.team,g.home.team];
+  var res=await sb.from('player_stats').select('player_name,team,ppg,mpg,usage_pct,role')
+    .in('team',teams).not('ppg','is',null).order('ppg',{ascending:false}).range(0,999);
+  var rows=(res&&res.data)||[];
+  teams.forEach(function(t){
+    _xaRoster[t]=rows.filter(function(p){return p.team===t;}).slice(0,9).map(function(p){
+      return {player_name:p.player_name,team:t,ppg:+p.ppg||0,mpg:+p.mpg||0,
+              usage_pct:+p.usage_pct||0,role:p.role||'',on:true,out:false};
+    });
+  });
+  _xaRosterGid=String(g.id);
+  xaRenderRoster();
+}
+function xaRosterToggle(team,i,what){
+  var r=_xaRoster[team]; if(!r||!r[i])return;
+  if(what==='on'){ r[i].on=!r[i].on; if(!r[i].on)r[i].out=false; }
+  else { r[i].out=!r[i].out; if(r[i].out)r[i].on=true; }
+  xaRenderRoster();
+}
+function xaRosterReset(){
+  Object.keys(_xaRoster).forEach(function(t){
+    _xaRoster[t].forEach(function(p){p.on=true;p.out=false;});
+  });
+  xaRenderRoster();
+}
+function xaRenderRoster(){
+  var box=document.getElementById('xa-roster');
+  if(!box)return;
+  var teams=Object.keys(_xaRoster);
+  if(!teams.length){box.innerHTML='';return;}
+  var nOut=0,nOff=0;
+  teams.forEach(function(t){_xaRoster[t].forEach(function(p){if(p.out)nOut++;else if(!p.on)nOff++;});});
+  var h='<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;margin-bottom:12px">'
+   +'<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--bdr)">'
+   +'<div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--acc)">ROSTER</div>'
+   +'<div style="font-size:10px;color:var(--txt3)">'
+   +(nOut?('<b style="color:var(--red2)">'+nOut+' out</b> \u00b7 usage redistributed'):'full strength')
+   +(nOff?(' \u00b7 '+nOff+' excluded'):'')
+   +' &nbsp;<button class="btn" style="font-size:10px;padding:2px 8px" onclick="xaRosterReset()">RESET</button></div></div>'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0">';
+  teams.forEach(function(t,ti){
+    var adj=xaRedistribute(_xaRoster[t]);
+    h+='<div style="padding:10px 14px'+(ti===0?';border-right:1px solid var(--bdr)':'')+'">'
+      +'<div style="font-weight:700;font-size:12px;color:var(--acc);margin-bottom:6px">'+t+'</div>'
+      +'<div style="display:grid;grid-template-columns:16px 1fr 52px 48px 40px;gap:4px;font-size:9px;'
+      +'color:var(--txt3);letter-spacing:1px;padding-bottom:3px;border-bottom:1px solid var(--bdr)">'
+      +'<span></span><span>PLAYER</span><span style="text-align:right">PPG</span>'
+      +'<span style="text-align:right">USG</span><span style="text-align:center">OUT</span></div>';
+    _xaRoster[t].forEach(function(p,i){
+      var a=adj[p.player_name];
+      var moved=a&&!p.out&&p.on&&Math.abs(a.ppg-p.ppg)>0.05;
+      var ppg=moved?('<span style="color:var(--txt3)">'+p.ppg.toFixed(1)+'</span> <span style="color:var(--grn2);font-weight:700">'+a.ppg.toFixed(1)+'</span>')
+                   :(p.out?'<span style="color:var(--txt3);text-decoration:line-through">'+p.ppg.toFixed(1)+'</span>':p.ppg.toFixed(1));
+      var usg=moved?('<span style="color:var(--grn2);font-weight:700">'+a.usage_pct.toFixed(0)+'</span>')
+                   :(p.usage_pct?p.usage_pct.toFixed(0):'\u2014');
+      var dim=(!p.on||p.out)?'opacity:.5;':'';
+      h+='<div style="display:grid;grid-template-columns:16px 1fr 52px 48px 40px;gap:4px;align-items:center;'
+        +'font-size:11px;padding:2px 0;'+dim+'">'
+        +'<input type="checkbox" '+(p.on?'checked':'')+' onchange="xaRosterToggle(\''+t.replace(/'/g,"\\'")+'\','+i+',\'on\')" style="cursor:pointer">'
+        +'<span style="'+(p.out?'text-decoration:line-through':'')+'">'+p.player_name
+        +(p.role?' <span style="color:var(--txt3);font-size:9px">'+p.role+'</span>':'')+'</span>'
+        +'<span style="text-align:right">'+ppg+'</span>'
+        +'<span style="text-align:right">'+usg+'</span>'
+        +'<span style="text-align:center"><input type="checkbox" '+(p.out?'checked':'')
+        +' onchange="xaRosterToggle(\''+t.replace(/'/g,"\\'")+'\','+i+',\'out\')" style="cursor:pointer;accent-color:var(--red2)"></span>'
+        +'</div>';
+    });
+    h+='</div>';
+  });
+  h+='</div><div style="font-size:10px;color:var(--txt3);padding:7px 14px;border-top:1px solid var(--bdr);line-height:1.5">'
+   +'Unchecking a player leaves him out of the market. Marking him <b>OUT</b> redistributes his '
+   +'usage and scoring to the team-mates who would absorb it \u2014 mostly the direct replacement '
+   +'and the high-usage players, with the rest tapering down. Changes apply to every market on the '
+   +'export.</div></div>';
+  box.innerHTML=h;
+}
 function xaRestrictHTML(){
   var teams=[];
   if(_xaTeams&&_xaTeams.length)teams=_xaTeams;
@@ -6008,6 +6299,9 @@ async function xaBuild(){
   _xaTeams=g?[g.home.team,g.away.team]:[];
   _mkGameId=gid;
   _xaOverride={};
+  /* the roster has to be loaded and applied before any market prices, otherwise the
+     first sub-tab would price the full squad and the rest a reduced one */
+  if(_xaRosterGid!==String(gid)){ await xaLoadRoster(g); }
   _xaBusy=true;
   var out=document.getElementById('xa-output');
   var status={};
@@ -6574,6 +6868,7 @@ function f3RenderPlayers(){
     });
     h+='</div>';
   });
+  _f3Players=xaApplyRoster(_f3Players);
   h+='</div>';
   box.innerHTML=h;
 }
@@ -6667,6 +6962,7 @@ async function fsLoadGame(){
   [g.away.team,g.home.team].forEach(function(t){
     byTeam[t].forEach(function(p,idx){p._on=(idx<5);_fsPlayers.push(p);});
   });
+  _fsPlayers=xaApplyRoster(_fsPlayers);
   _fsOverrides={};
   fsRenderPlayers();
   fsPrice();
@@ -7646,7 +7942,7 @@ function mxCardHtml(teamId){
 }
 
 /* ===== THEME TOGGLE (Light / Warm Dark / True Dark) ===== */
-var _cbkThemes=[{cls:'',icon:'\u2600',lbl:'LIGHT'},{cls:'cbk-warm',icon:'\ud83c\udf19',lbl:'WARM'},{cls:'cbk-true',icon:'\ud83c\udf19',lbl:'DARK'}];
+var _cbkThemes=[{cls:'',icon:'\u2600',lbl:'LIGHT'},{cls:'cbk-warm',icon:'\u25d1',lbl:'BLACK'},{cls:'cbk-true',icon:'\ud83c\udf19',lbl:'DARK'}];
 function cbkApplyTheme(i){
   var t=_cbkThemes[i]||_cbkThemes[0];
   document.body.classList.remove('cbk-warm','cbk-true');
