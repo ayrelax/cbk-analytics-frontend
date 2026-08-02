@@ -1,0 +1,56 @@
+name: Fetch scores
+
+# Sweeps ESPN for finished games and stages them on PR Update for approval.
+# Nothing is graded and no rating moves -- approving is still a manual act.
+#
+# Runs every 30 minutes from 11pm to 8am UTC, which covers roughly 3pm to
+# midnight Pacific: from the earliest tips through to the last west-coast final.
+# Outside those hours there is nothing to find, so it stays quiet.
+#
+# The two crons are one window that crosses midnight UTC. Cron cannot express
+# "23:00 to 08:00" in a single line, so it is split rather than run all day.
+on:
+  schedule:
+    - cron: '0,30 23 * * *'      # 23:00 and 23:30 UTC
+    - cron: '0,30 0-8 * * *'     # midnight through 08:30 UTC
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date to sweep, YYYY-MM-DD (blank = today and yesterday)'
+        required: false
+      dry_run:
+        description: 'Print what would be staged without writing'
+        required: false
+        type: choice
+        options: ['0', '1']
+        default: '1'
+
+# If a run is still going when the next one fires, let it finish rather than
+# stacking. Two runs writing the same games would be harmless but pointless.
+concurrency:
+  group: fetch-scores
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet requests
+
+      - name: Stage finished scores
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SCORE_DATE: ${{ github.event.inputs.date }}
+          # A scheduled run always writes. A manual run defaults to a dry run,
+          # so testing from the Actions tab cannot touch the database by accident.
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: python scripts/fetch_scores.py
