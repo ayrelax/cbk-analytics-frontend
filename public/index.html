@@ -6398,19 +6398,32 @@ async function scLoadAlerts(){
   }
   scRenderAlerts(games);
 }
+/* Every comparable slice of a matchup: the four shot-clock bands and the five
+   possession sources. Both are held to the same threshold, since a team that is
+   badly exposed off turnovers is exposed whether or not the shot clock says so. */
 function scEdges(att,def){
   var o=SC_DATA.o[att], d=SC_DATA.d[def], lg=SC_DATA.lg;
   if(!o||!d)return [];
   var out=[];
-  SC_BANDS.forEach(function(b){
-    var ov=o.b[b[0]], dv=d.b[b[0]], L=lg.b[b[0]];
-    if(!ov||!dv||!L)return;
-    var share=(ov[0]+dv[0])/2;
-    if(share<SC_SHARE_MIN)return;
-    var proj=L[2]+(ov[2]-L[2])+(dv[2]-L[2]);
-    out.push({band:b,share:share,proj:proj,edge:proj-L[2],off:ov,def:dv,L:L,
-              forced:dv[0]-L[0]});
-  });
+  function scan(list,key,kind){
+    list.forEach(function(b){
+      var ov=o[key][b[0]], dv=d[key][b[0]], L=lg[key][b[0]];
+      if(!ov||!dv||!L)return;
+      var share=(ov[0]+dv[0])/2;
+      if(share<SC_SHARE_MIN)return;
+      var proj=L[2]+(ov[2]-L[2])+(dv[2]-L[2]);
+      out.push({band:b,kind:kind,share:share,proj:proj,edge:proj-L[2],
+                off:ov,def:dv,L:L,forced:dv[0]-L[0]});
+    });
+  }
+  scan(SC_BANDS,'b','clock');
+  /* sources carry their own two-part label so the alert table reads the same way
+     for both kinds: a short tag on top, the plain-English name underneath */
+  scan(SC_SRC.map(function(k){
+    var short={turnover:'OFF TO',dreb:'OFF DREB',made_fg:'AFTER FG',
+               made_ft:'AFTER FT',oreb:'OFF OREB'}[k[0]]||k[1];
+    return [k[0],short,k[1].replace(/^Off an? /,'').replace(/^After a /,'')];
+  }),'s','source');
   return out;
 }
 function scRenderAlerts(games){
@@ -6729,15 +6742,21 @@ function scCloseTeam(){_scTeam=null;var b=document.getElementById('sc-detail');i
 /* Thresholds are set from the real distribution rather than picked. Across 8,344
    sampled band-matchups the absolute edge runs:
 
-       50th 0.070   75th 0.130   80th 0.145   90th 0.180   95th 0.220
+       50th 0.070   75th 0.120   80th 0.140   90th 0.170   95th 0.210
+
+   Measured across both categories -- the four shot-clock bands and the five
+   possession sources -- on 12,923 comparisons. An earlier version only sampled the
+   bands, and only the bands were ever scanned; the possession sources were shown
+   but never checked, which meant a matchup could hinge on what a team does off a
+   turnover and nothing would say so.
 
    The first version of this used 0.06, which shaded 60% of rows -- more highlighted
    than plain, which is decoration rather than signal.
 
-   0.145 is the 80th percentile: a row worth noticing on a matchup you are already
-   looking at. 0.18 is the 90th: worth interrupting you for on a night you were not. */
-var SC_EDGE_MIN=0.145;   /* 80th percentile -- shade a row in the matchup panel */
-var SC_ALERT_MIN=0.18;   /* 90th percentile -- raise a daily alert */
+   0.14 is the 80th percentile: worth noticing on a matchup you already have open.
+   0.17 is the 90th: worth interrupting you for on a night you did not. */
+var SC_EDGE_MIN=0.14;    /* 80th percentile -- shade a row in the matchup panel */
+var SC_ALERT_MIN=0.17;   /* 90th percentile -- raise a daily alert */
 var SC_SHARE_MIN=17;
 function scFillMatchupPickers(){
   ['sc-mA','sc-mB'].forEach(function(id,n){
@@ -6762,18 +6781,15 @@ function scMatchup(){
   if(A===B){box.innerHTML='<div style="font-size:11px;color:var(--amb);padding:8px">Pick two different teams.</div>';return;}
   var lg=SC_DATA.lg;
 
-  /* one direction: attacker's offence against defender's defence */
+  /* One direction: the attacker's offence against the defender's defence. Uses the
+     same scEdges the daily scan uses, so the panel and the alerts can never disagree
+     about what counts as an edge -- and both cover the possession sources as well as
+     the shot-clock bands. */
   function side(att,def){
-    var o=SC_DATA.o[att], d=SC_DATA.d[def];
-    if(!o||!d)return null;
-    var out=[];
-    SC_BANDS.forEach(function(b){
-      var ov=o.b[b[0]], dv=d.b[b[0]], L=lg.b[b[0]];
-      if(!ov||!dv||!L)return;
-      var share=(ov[0]+dv[0])/2;
-      var proj=L[2]+(ov[2]-L[2])+(dv[2]-L[2]);
-      out.push({band:b,share:share,shareGap:share-L[0],proj:proj,edge:proj-L[2],
-                off:ov,def:dv,L:L});
+    if(!SC_DATA.o[att]||!SC_DATA.d[def])return null;
+    var out=scEdges(att,def).map(function(x){
+      return {band:x.band,kind:x.kind,share:x.share,shareGap:x.share-x.L[0],
+              proj:x.proj,edge:x.edge,off:x.off,def:x.def,L:x.L};
     });
     return {att:att,def:def,bands:out};
   }
@@ -6781,9 +6797,16 @@ function scMatchup(){
     if(!s)return '<div style="font-size:11px;color:var(--txt3);padding:10px">No data.</div>';
     var h='<div style="font-size:10px;font-weight:700;letter-spacing:1.4px;color:var(--acc);padding:9px 14px 5px">'
       +cbkJersey(s.att,'')+s.att.toUpperCase()+' ATTACKING '+s.def.toUpperCase()+'</div>';
-    h+='<table class="data"><thead><tr><th>SHOT CLOCK</th><th>SHARE</th>'
+    h+='<table class="data"><thead><tr><th>SLICE</th><th>SHARE</th>'
       +'<th>THEIR PTS</th><th>D ALLOWS</th><th>PROJECTED</th><th>EDGE</th></tr></thead><tbody>';
+    var lastKind=null;
     s.bands.forEach(function(x){
+      if(x.kind!==lastKind){
+        lastKind=x.kind;
+        h+='<tr><td colspan="6" style="background:var(--bg2);font-size:8.5px;letter-spacing:1.6px;'
+         +'color:var(--txt3);padding:3px 12px;font-weight:700">'
+         +(x.kind==='clock'?'BY SHOT CLOCK':'BY WHERE THE POSSESSION CAME FROM')+'</td></tr>';
+      }
       var flag=Math.abs(x.edge)>=SC_EDGE_MIN&&x.share>=SC_SHARE_MIN;
       var col=x.edge>0?'var(--grn2)':'var(--red2)';
       h+='<tr'+(flag?' style="background:'+(x.edge>0?'rgba(46,125,50,.10)':'rgba(198,40,40,.10)')+'"':'')+'>'
@@ -6809,7 +6832,8 @@ function scMatchup(){
     var dir='<span style="color:var(--txt3)">'+s.att+' with the ball: </span>';
     var dShare=w.def[0]-w.L[0];
     var forced=dShare>1.5?(s.def+' pushes '+dShare.toFixed(1)+' points more of the shot chart into this range than average, and '):'';
-    return dir+'<b>'+who+' has the edge.</b> In the '+w.band[1]+' band ('+w.band[2].toLowerCase()+'), '
+    var where=(w.kind==='source')?('possessions '+w.band[2].toLowerCase()):('the '+w.band[1]+' band ('+w.band[2].toLowerCase()+')');
+    return dir+'<b>'+who+' has the edge.</b> In '+where+', '
       +forced+s.att+' scores '+w.off[2].toFixed(2)+' per shot against a league '+w.L[2].toFixed(2)
       +' while '+s.def+' concedes '+w.def[2].toFixed(2)+'. Together that projects '+w.proj.toFixed(2)
       +', a swing of '+(w.edge>=0?'+':'')+w.edge.toFixed(2)+' on roughly '+w.share.toFixed(0)+'% of the shots.';
