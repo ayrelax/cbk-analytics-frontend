@@ -4617,7 +4617,7 @@ var SIT_BLOCK={
   t5  :null
 };
 var SIT_BLOCK_TBD={t5:'TBD \u2014 need to request from compliance'};
-var SIT_LABEL={race:'Race To X Points',led:'Percentage Of Game Led',f4:'First 4 Minutes',max:'Largest Lead Of Game',early:'Both Teams To Score In The First Minute',t5:'Threes Made In First 5 Minutes'};
+var SIT_LABEL={race:'Race To X Points',led:'Percentage of Game Led',f4:'First 4 Minutes',max:'Largest Lead Of Game',early:'Both Teams to Score in the First Minute',t5:'Threes Made In First 5 Minutes'};
 /* ================= SITUATIONAL: PRICE ONE GAME =================
 /* Build every situational selection for one game.
    Column layout the platform wants:
@@ -4719,8 +4719,8 @@ function sitBuildRows(){
   });
   /* percentage of game led */
   var lp=price(band.led_over/100);
-  add('Percentage Of Game Led',fav,' Lead Percentage Over',lp[0],band.led_line.toFixed(1));
-  add('Percentage Of Game Led',fav,' Lead Percentage Under',lp[1],band.led_line.toFixed(1));
+  add('Percentage of Game Led',fav,' Lead Percentage Over',lp[0],band.led_line.toFixed(1));
+  add('Percentage of Game Led',fav,' Lead Percentage Under',lp[1],band.led_line.toFixed(1));
   /* first four minutes, three separate markets.
      The stored line rounds to the nearest half, which lands on a whole number for
      small spreads. Ties are 8.7% of games, so a whole-number line pushes far too
@@ -4748,8 +4748,8 @@ function sitBuildRows(){
      number in the line column since the market is the event itself, not a threshold.
      Priced off the total alone -- spread and venue tested as noise. 5% hold. */
   var ep=sitEarlyP(_sitEarlyTotal);
-  add('Both Teams To Score In The First Minute',null,'Yes',sitOdds(sitR5(propAmer(ep,SIT_EARLY_HOLD))),'');
-  add('Both Teams To Score In The First Minute',null,'No', sitOdds(sitR5(propAmer(1-ep,SIT_EARLY_HOLD))),'');
+  add('Both Teams to Score in the First Minute',null,'Yes',sitOdds(sitR5(propAmer(ep,SIT_EARLY_HOLD))),'');
+  add('Both Teams to Score in the First Minute',null,'No', sitOdds(sitR5(propAmer(1-ep,SIT_EARLY_HOLD))),'');
   /* threes in the first five minutes, a five-way ladder off the same total */
   var t5=sitT5Probs(_sitT5Total,sitT5Exp3());
   ['0','1','2','3','4+'].forEach(function(lab,k){
@@ -5708,7 +5708,7 @@ function xaRestrictHTML(){
       /* Situational covers four markets with different state rules, so it gets a row
          each rather than one line that would understate the restrictions. */
       [['race','Situational \u2014 Race To X Points'],
-       ['led','Situational \u2014 Percentage Of Game Led'],
+       ['led','Situational \u2014 Percentage of Game Led'],
        ['f4','Situational \u2014 First 4 Minutes'],
        ['max','Situational \u2014 Largest Lead Of Game'],
        ['early','Situational \u2014 Both Teams Score In The First Minute'],
@@ -6739,8 +6739,8 @@ function gsPriceAll(spread,total,favTeam,dogTeam,fav3,dog3){
      show through, so this stays on spread and total. Same result for the first-field-
      goal and score-first-both-halves markets, where team FG% moved nothing. */
   out['Both Teams To Make Their 1st Three Point Attempt']=gsLogit(GS_FITS3.t3both,sp,total);
-  out['Both Teams To Score In The First 90 Seconds']=gsBothScore60(total,90);
-  out['Both Teams To Score In The First 2 Minutes']=gsBothScore60(total,120);
+  out['Both Teams to Score in the First 90 Seconds']=gsBothScore60(total,90);
+  out['Both Teams to Score in the First 2 Minutes']=gsBothScore60(total,120);
   [70,80,90,95].forEach(function(X){
     out['Each Team To Score '+X+'+ Points In Game']=gsEachTeam(sim,X);
   });
