@@ -544,25 +544,26 @@ body.cbk-warm .gc-badge-nonconf,body.cbk-true .gc-badge-nonconf{background:var(-
 /* ============ CBK v2 additions ============ */
 .tbl{font-variant-numeric:tabular-nums}
 .tnum{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;font-variant-numeric:tabular-nums;letter-spacing:-0.2px}
-/* A small jersey in the team's colour, used wherever a team is listed on the
-   ratings screens. Drawn in CSS rather than as an image so it inherits the team
-   colour at render time and costs no requests.
+/* A basketball jersey in the team's colour, used wherever a team is listed on the
+   ratings screens. Drawn with a clip-path polygon rather than boxes and pseudo-
+   elements: a tank needs concave armholes and a scooped neck, and neither is
+   possible with rectangles.
 
-   The shape is one box for the body with two pseudo-elements for the sleeves, plus
-   a lighter notch for the collar. Kept to 13px tall so it sits on a table row
-   without changing the line height. */
-.cbk-jsy{display:inline-block;position:relative;width:12px;height:13px;margin-right:7px;
-  vertical-align:-2px;background:currentColor;border-radius:1px 1px 2px 2px;flex:0 0 auto}
-.cbk-jsy:before,.cbk-jsy:after{content:'';position:absolute;top:0;width:4px;height:6px;
-  background:currentColor;border-radius:1px}
-.cbk-jsy:before{left:-3px;transform:skewY(12deg)}
-.cbk-jsy:after{right:-3px;transform:skewY(-12deg)}
-/* the collar: a notch cut out of the top centre */
-.cbk-jsy>i{position:absolute;top:0;left:50%;transform:translateX(-50%);
-  width:5px;height:3px;background:var(--bg1);border-radius:0 0 3px 3px;display:block}
-/* on a shaded row the collar has to match that background instead */
-tr.heat1 .cbk-jsy>i,tr.heat2 .cbk-jsy>i,tr.heat3 .cbk-jsy>i,
-tr:nth-child(even) .cbk-jsy>i{background:inherit}
+   The outline is traced clockwise from the top of the left strap -- across the neck
+   scoop, down the outside of the right strap, out and down to the hem, then back up
+   the left side. The diagonals from strap to body are the armholes.
+
+   Kept to 13px tall so it sits on a table row without changing the line height. */
+.cbk-jsy{display:inline-block;width:13px;height:13px;margin-right:7px;
+  vertical-align:-2px;background:currentColor;flex:0 0 auto;
+  clip-path:polygon(
+    16% 0%,  36% 0%,                       /* left strap */
+    42% 14%, 50% 20%, 58% 14%,             /* neck scoop */
+    64% 0%,  84% 0%,                       /* right strap */
+    84% 26%, 100% 46%,                     /* right armhole, cut deep */
+    100% 100%, 0% 100%,                    /* hem */
+    0% 46%,  16% 26%                       /* left armhole */
+  )}
 .cbk-cbar{display:inline-block;width:3px;height:12px;border-radius:1px;margin-right:6px;vertical-align:-1px}
 .cbk-dot{display:inline-block;width:9px;height:9px;border-radius:50%}
 .cbk-sheet-hdr{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;border-bottom:2px solid var(--acc);margin-bottom:10px;gap:12px}
@@ -8772,7 +8773,7 @@ var CBK_GAME_BLOCK=["Washington DC", "Delaware", "Maine", "Nebraska", "Rhode Isl
 /* Returns the jersey markup for a team. Colour is set on the element so both the
    body and the sleeves pick it up through currentColor. */
 function cbkJersey(team,conf){
-  return '<span class="cbk-jsy" style="color:'+cbkTeamColor(team,conf)+'"><i></i></span>';
+  return '<span class="cbk-jsy" style="color:'+cbkTeamColor(team,conf)+'"></span>';
 }
 function cbkTeamColor(t,conf){
   if(t&&CBK_COLORS[t])return CBK_COLORS[t];
