@@ -2464,7 +2464,11 @@ function pmRenderAdmin(){var el=document.getElementById('pm-admin');if(!el)retur
 function pmRenderAdminList(){var el=document.getElementById('pm-a-list');if(!el)return;var h='<table class="data" style="font-size:11px;width:100%;max-width:640px"><thead><tr><th>MARKET</th><th>PLAYER</th><th>PROJ</th><th>MISS</th><th></th></tr></thead><tbody>';_pmData.slice().sort(function(a,b){return (a.market+a.player_name)<(b.market+b.player_name)?-1:1;}).forEach(function(r){h+='<tr><td class="muted">'+(r.market==='ppg'?'PPG':'3PM')+'</td><td>'+r.player_name+'</td><td class="muted">'+(r.proj!=null?r.proj:'')+'</td><td><input type="number" min="0" max="25" value="'+(r.missed||0)+'" onchange="pmSetMissed('+r.id+',this.value)" style="width:46px;font-size:11px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fld"></td><td><span onclick="pmDel('+r.id+')" style="cursor:pointer;color:var(--red2);font-weight:700">\u2715</span></td></tr>';});if(!_pmData.length)h+='<tr><td colspan="5" class="muted" style="padding:8px">No entries yet.</td></tr>';h+='</tbody></table>';el.innerHTML=h;}
 function pmAdd(){var m=document.getElementById('pm-a-market').value;var pn=String(document.getElementById('pm-a-player').value||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!pn)return;var proj=parseFloat(document.getElementById('pm-a-proj').value);var team='';var byName={};(_plPlayers||[]).forEach(function(o){byName[String(o.name||'').toLowerCase()]=o;});var p=byName[pn.toLowerCase()];if(p)team=p.team;sb.from('player_markets').insert([{market:m,player_name:pn,team:team,proj:isNaN(proj)?null:proj}]).then(function(){document.getElementById('pm-a-player').value='';document.getElementById('pm-a-proj').value='';pmLoad(function(){pmRenderBody();pmRenderAdminList();});});}
 function pmDel(id){sb.from('player_markets').delete().eq('id',id).then(function(){pmLoad(function(){pmRenderBody();pmRenderAdminList();});});}
-function loadTeamProfile(){var sel=document.getElementById('team-select');var teamId=sel.value;if(!teamId)return;currentTeamId=teamId;try{localStorage.setItem('cbk_team',teamId);}catch(e){}var content=document.getElementById('team-profile-content');content.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px">Loading...</div>';sb.from('teams').select('*').eq('id',teamId).single().then(function(res){var team=res.data;if(!team)return;currentTeamData=team;Promise.all([sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).order('game_date',{ascending:true}).range(0,39),sb.from('rosters').select('*').eq('team_id',teamId),sb.from('injuries').select('*').eq('team_id',teamId).eq('active',true),sb.from('teams').select('id,team,pr,hc').order('team',{ascending:true}),sb.from('pr_history').select('pr,recorded_at').eq('team_id',teamId).order('recorded_at',{ascending:true}),sb.from('player_stats').select('*').eq('team_id',teamId).order('mpg',{ascending:false})]).then(function(results){var games=results[0].data||[];var roster=results[1].data||[];var injuries=results[2].data||[];var allTeamsList=results[3].data||[];var prHistory=results[4].data||[];var playerStats=results[5].data||[];
+function loadTeamProfile(){var sel=document.getElementById('team-select');var teamId=sel.value;if(!teamId)return;currentTeamId=teamId;try{localStorage.setItem('cbk_team',teamId);}catch(e){}var content=document.getElementById('team-profile-content');content.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px">Loading...</div>';sb.from('teams').select('*').eq('id',teamId).single().then(function(res){var team=res.data;if(!team)return;currentTeamData=team;Promise.all([sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).order('game_date',{ascending:true}).range(0,39),sb.from('rosters').select('*').eq('team_id',teamId),sb.from('injuries').select('*').eq('team_id',teamId).order('created_at',{ascending:false}),sb.from('teams').select('id,team,pr,hc').order('team',{ascending:true}),sb.from('pr_history').select('pr,recorded_at').eq('team_id',teamId).order('recorded_at',{ascending:true}),sb.from('player_stats').select('*').eq('team_id',teamId).order('mpg',{ascending:false})]).then(function(results){var games=results[0].data||[];var roster=results[1].data||[];var allInjuries=results[2].data||[];
+  /* the table keeps cleared injuries rather than deleting them, so the history was
+     already there -- it just was not being read back */
+  var injuries=allInjuries.filter(function(x){return x.active;});
+  var injHistory=allInjuries.filter(function(x){return !x.active;});var allTeamsList=results[3].data||[];var prHistory=results[4].data||[];var playerStats=results[5].data||[];
   /* addInjury opens after this render, so the roster is stashed for its picker.
      Already ordered by minutes descending from the query. */
   _tpRoster=playerStats||[];var totalInjAdj=injuries.reduce(function(s,i){return s+i.impact;},0);var effPR=team.pr-totalInjAdj;var confGames=games.filter(function(g){return g.home&&g.away&&g.home.conference===g.away.conference;});var totalExpW=0;var confExpW=0;games.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);totalExpW+=wp;});confGames.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);confExpW+=wp;});
@@ -2498,7 +2502,35 @@ injuries.forEach(function(inj){
    +(isAdmin?('<button class="btn" style="font-size:9px;padding:3px 7px" onclick="injSnooze('+inj.id+',7)">STILL OUT</button>'
      +'<button class="btn success" style="font-size:9px;padding:3px 8px" onclick="clearInjury('+inj.id+','+team.id+')">HEALTHY</button>'):'')
    +'</div>';
-});html+='</div>';}else{html+='<div style="padding:14px;color:var(--txt3);font-size:12px">No active injuries</div>';}html+='</div></div><div>';
+});html+='</div>';}else{html+='<div style="padding:14px;color:var(--txt3);font-size:12px">No active injuries</div>';}
+if(injHistory.length){
+  html+='<div style="border-top:1px solid var(--bdr);padding:8px 12px 4px;display:flex;'
+   +'align-items:center;justify-content:space-between;cursor:pointer" onclick="injToggleHistory()">'
+   +'<span style="font-size:9.5px;letter-spacing:1.6px;color:var(--txt3);font-weight:700">'
+   +'HISTORY ('+injHistory.length+')</span>'
+   +'<span id="inj-hist-arrow" style="font-size:9px;color:var(--txt3)">\u25be</span></div>'
+   +'<div id="inj-hist" style="display:none">';
+  injHistory.forEach(function(h){
+    var span='';
+    if(h.started_on&&h.cleared_on){
+      var d=Math.round((new Date(h.cleared_on)-new Date(h.started_on))/86400000);
+      span=(d>0?(d+' days'):'same day');
+    }else if(h.cleared_on){ span='cleared '+h.cleared_on; }
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:5px 12px;'
+     +'border-bottom:1px solid var(--bdr);font-size:11px;opacity:.75">'
+     +'<div style="flex:1"><span style="font-weight:600">'+h.player_name+'</span>'
+     +'<span style="color:var(--txt3);font-size:9.5px;margin-left:6px">'
+     +(h.started_on||'')+(span?(' \u00b7 '+span):'')+(h.notes?(' \u00b7 '+h.notes):'')+'</span></div>'
+     +'<div style="color:var(--txt3);font-size:10px">-'+h.impact+'</div>'
+     +(isAdmin?('<button class="btn" style="font-size:8.5px;padding:2px 6px" '
+       +'onclick="injReactivate('+h.id+')">OUT AGAIN</button>'
+       +'<button class="btn danger" style="font-size:8.5px;padding:2px 6px" '
+       +'onclick="injDelete('+h.id+',\''+String(h.player_name).replace(/'/g,"\\'")+'\')">DELETE</button>'):'')
+     +'</div>';
+  });
+  html+='</div>';
+}
+html+='</div></div><div>';
 var rosterMap={};roster.forEach(function(r){rosterMap[r.slot]=r;});
 function rosterRow(slot,label,isStarter){var r=rosterMap[slot]||{};var rowClass=isStarter?'roster-starter':'roster-bench';if(isAdmin){var row='<tr class="'+rowClass+'"><td class="roster-slot-label">'+label+'</td>';['player_name','height','year','mpg','ppg','rpg','apg','spg','bpg','fg_pct','ft_pct','three_pct','notes'].forEach(function(f){var w=f==='player_name'?'120px':f==='notes'?'130px':f==='height'?'45px':f==='year'?'35px':'42px';row+='<td><input style="width:'+w+';background:transparent;border:none;border-bottom:1px solid var(--bdr2);font-family:inherit;font-size:11px;color:var(--txt1)" data-slot="'+slot+'" data-field="'+f+'" value="'+(r[f]||'')+'" placeholder="'+(f==='player_name'?'Name':'')+'" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fld"></td>';});return row+'</tr>';}else{return'<tr class="'+rowClass+'"><td class="roster-slot-label">'+label+'</td><td class="bold">'+(r.player_name||'--')+'</td><td class="muted">'+(r.height||'--')+'</td><td class="muted">'+(r.year||'--')+'</td><td>'+(r.mpg||'--')+'</td><td class="acc" style="font-weight:700">'+(r.ppg||'--')+'</td><td>'+(r.rpg||'--')+'</td><td>'+(r.apg||'--')+'</td><td>'+(r.spg||'--')+'</td><td>'+(r.bpg||'--')+'</td><td>'+(r.fg_pct||'--')+'</td><td>'+(r.ft_pct||'--')+'</td><td>'+(r.three_pct||'--')+'</td><td class="muted">'+(r.notes||'')+'</td></tr>';}}
 html+='<div class="panel"><div class="panel-hdr"><div class="panel-title">Roster</div>'+(isAdmin?'<button class="btn primary" onclick="saveRoster('+team.id+')">SAVE ROSTER</button>':'')+'</div>';html+='<div style="padding:7px 12px;font-size:10px;color:var(--txt3);letter-spacing:1px;border-bottom:1px solid var(--bdr);background:#fdf3e0;font-weight:700">STARTERS</div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><thead><tr><th>POS</th><th>PLAYER</th><th>HT</th><th>YR</th><th>MPG</th><th>PPG</th><th>RPG</th><th>APG</th><th>SPG</th><th>BPG</th><th>FG%</th><th>FT%</th><th>3P%</th><th>NOTES</th></tr></thead><tbody>';STARTER_SLOTS.forEach(function(slot,si){html+=rosterRow(slot,STARTER_LABELS[si],true);});html+='</tbody></table></div>';html+='<div style="padding:7px 12px;font-size:10px;color:var(--txt3);letter-spacing:1px;border-bottom:1px solid var(--bdr);border-top:1px solid var(--bdr);background:var(--bg2);font-weight:700">BENCH</div><div style="overflow-x:auto"><table class="data" style="font-size:11px"><tbody>';BENCH_SLOTS.forEach(function(slot){html+=rosterRow(slot,slot,false);});html+='</tbody></table></div></div>';
@@ -2661,7 +2693,40 @@ function injSnooze(injId,days){
   sb.from('injuries').update({recheck_date:d.toISOString().slice(0,10)})
     .eq('id',injId).then(function(){cbkToast('Pushed back','Recheck in '+days+' days','success');loadTeamProfile();});
 }
-function clearInjury(injId,teamId){if(!isAdmin)return;sb.from('injuries').update({active:false}).eq('id',injId).then(function(){loadTeamProfile();});}
+/* Marking someone healthy keeps the row and stamps the date, so the history can
+   say how long he actually missed rather than just that he was hurt at some point. */
+function clearInjury(injId,teamId){
+  if(!isAdmin)return;
+  sb.from('injuries').update({active:false,cleared_on:new Date().toISOString().slice(0,10)})
+    .eq('id',injId).then(function(){cbkToast('Cleared','Marked healthy','success');loadTeamProfile();});
+}
+function injToggleHistory(){
+  var b=document.getElementById('inj-hist'),a=document.getElementById('inj-hist-arrow');
+  if(!b)return;
+  var open=(b.style.display!=='none');
+  b.style.display=open?'none':'block';
+  if(a)a.textContent=open?'\u25be':'\u25b4';
+}
+/* Same injury flaring up again -- reopen it rather than making a second entry, so
+   the history does not fill with duplicates of one problem. */
+function injReactivate(injId){
+  if(!isAdmin)return;
+  sb.from('injuries').update({active:true,cleared_on:null,
+    recheck_date:injRecheckDate('indefinite',null,null),
+    started_on:new Date().toISOString().slice(0,10)})
+    .eq('id',injId).then(function(){cbkToast('Reopened','Marked out again','success');loadTeamProfile();});
+}
+/* Removes the record entirely. For entries that should never have been logged --
+   distinct from clearing, which is the normal way an injury ends. */
+function injDelete(injId,name){
+  if(!isAdmin)return;
+  if(!confirm('Delete the record for '+name+'? This removes it from the history for good.'))return;
+  sb.from('injuries').delete().eq('id',injId).then(function(res){
+    if(res&&res.error){cbkToast('Error',res.error.message,'error');return;}
+    cbkToast('Deleted','Record removed','success');
+    loadTeamProfile();
+  });
+}
 function calcH2H(teamId,teamPR,teamHC){var sel=document.getElementById('h2h-opp');var opt=sel.options[sel.selectedIndex];var oppPR=parseFloat(opt.getAttribute('data-pr'));var oppHC=parseFloat(opt.getAttribute('data-hc'));var loc=document.getElementById('h2h-loc').value;var sp;if(loc==='home')sp=calcSpread(teamPR,teamHC,oppPR,false);else if(loc==='away')sp=calcSpread(oppPR,oppHC,teamPR,false);else sp=calcSpread(teamPR,0,oppPR,true);var displaySp=loc==='away'?-sp:sp;var ml=spreadToML(displaySp);var r=Math.round(displaySp*2)/2;var favTeam=r>=0?currentTeamData.team:opt.text.split(' (')[0];document.getElementById('h2h-result').innerHTML='<span style="color:var(--txt1)">'+favTeam+'</span> '+fmtSp(-Math.abs(r))+' &nbsp;|&nbsp; ML: <span class="odds-fav">'+fmtOdds(ml.fav)+'</span> / <span class="odds-dog">'+fmtOdds(ml.dog)+'</span>';}
 function spQuickCalc(){
   var h=parseFloat(document.getElementById('sp-qc-home').value);
