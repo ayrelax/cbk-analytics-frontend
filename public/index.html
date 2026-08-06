@@ -2463,6 +2463,157 @@ function pmRenderAdmin(){var el=document.getElementById('pm-admin');if(!el)retur
 function pmRenderAdminList(){var el=document.getElementById('pm-a-list');if(!el)return;var h='<table class="data" style="font-size:11px;width:100%;max-width:640px"><thead><tr><th>MARKET</th><th>PLAYER</th><th>PROJ</th><th>MISS</th><th></th></tr></thead><tbody>';_pmData.slice().sort(function(a,b){return (a.market+a.player_name)<(b.market+b.player_name)?-1:1;}).forEach(function(r){h+='<tr><td class="muted">'+(r.market==='ppg'?'PPG':'3PM')+'</td><td>'+r.player_name+'</td><td class="muted">'+(r.proj!=null?r.proj:'')+'</td><td><input type="number" min="0" max="25" value="'+(r.missed||0)+'" onchange="pmSetMissed('+r.id+',this.value)" style="width:46px;font-size:11px;padding:2px 4px;background:var(--bg2);color:var(--txt1);border:1px solid var(--bdr2);border-radius:4px" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" name="q-fld"></td><td><span onclick="pmDel('+r.id+')" style="cursor:pointer;color:var(--red2);font-weight:700">\u2715</span></td></tr>';});if(!_pmData.length)h+='<tr><td colspan="5" class="muted" style="padding:8px">No entries yet.</td></tr>';h+='</tbody></table>';el.innerHTML=h;}
 function pmAdd(){var m=document.getElementById('pm-a-market').value;var pn=String(document.getElementById('pm-a-player').value||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!pn)return;var proj=parseFloat(document.getElementById('pm-a-proj').value);var team='';var byName={};(_plPlayers||[]).forEach(function(o){byName[String(o.name||'').toLowerCase()]=o;});var p=byName[pn.toLowerCase()];if(p)team=p.team;sb.from('player_markets').insert([{market:m,player_name:pn,team:team,proj:isNaN(proj)?null:proj}]).then(function(){document.getElementById('pm-a-player').value='';document.getElementById('pm-a-proj').value='';pmLoad(function(){pmRenderBody();pmRenderAdminList();});});}
 function pmDel(id){sb.from('player_markets').delete().eq('id',id).then(function(){pmLoad(function(){pmRenderBody();pmRenderAdminList();});});}
+/* ============================ CONFERENCE WIN DISTRIBUTION ============================
+   The profile already computes a win probability for every conference game and adds
+   them up into an expected-wins number. That single number hides the shape: 9.4
+   expected wins from twelve coin-flips looks nothing like 9.4 from nine near-locks
+   and three no-hopes, and the second is far easier to bet against.
+
+   Two layers:
+
+   1. Poisson-binomial. Each game has its own probability, so the exact distribution
+      over total wins comes from convolving the games one at a time. This is more
+      accurate than a plain binomial, which would force every game to share one
+      average probability and understate the tails.
+
+   2. Strength uncertainty. Poisson-binomial assumes the power rating is exactly
+      right. It isn't. A team's true strength is uncertain, and that error is shared
+      across all of its games rather than being independent per game -- which is what
+      makes the real distribution wider than the naive one. The rating is nudged by a
+      normal offset and the whole distribution recomputed across a grid of offsets,
+      then blended. CWD_CONFIDENCE controls the spread: higher means more trust in
+      the rating and a tighter chart.
+
+   Paste anywhere inside the main <script> block, then call cwdRender() from
+   loadTeamProfile once _cwdProbs has been filled. */
+
+var CWD_CONFIDENCE = 25;   /* higher = tighter. 25 is roughly +/- 1.2 points of PR */
+var _cwdProbs = [];        /* per-game win probabilities, filled by loadTeamProfile */
+var _cwdSpreads = [];      /* matching model spreads, used to re-price under a shifted rating */
+
+/* Poisson-binomial: convolve one game at a time.
+   dist[k] = probability of exactly k wins. */
+function cwdPoissonBinomial(ps) {
+  var dist = [1];
+  for (var i = 0; i < ps.length; i++) {
+    var p = ps[i], next = new Array(dist.length + 1);
+    for (var k = 0; k < next.length; k++) next[k] = 0;
+    for (var k = 0; k < dist.length; k++) {
+      next[k]     += dist[k] * (1 - p);
+      next[k + 1] += dist[k] * p;
+    }
+    dist = next;
+  }
+  return dist;
+}
+
+/* Re-price every game with the team's rating shifted by d points, then blend the
+   resulting distributions weighted by how likely that shift is. */
+function cwdDistribution(spreads, isHomeArr, sigma) {
+  var GRID = 13, out = null, wsum = 0;
+  for (var gi = 0; gi < GRID; gi++) {
+    var z = -3 + (6 * gi) / (GRID - 1);
+    var w = Math.exp(-0.5 * z * z);
+    var d = z * sigma;
+
+    var ps = [];
+    for (var i = 0; i < spreads.length; i++) {
+      var sp = spreads[i] + (isHomeArr[i] ? d : -d);
+      var abs = Math.abs(Math.round(sp * 2) / 2);
+      var fp = SP[String(-abs)];
+      if (fp === undefined) fp = 0.5;
+      ps.push(isHomeArr[i] ? (sp >= 0 ? fp : 1 - fp) : (sp < 0 ? fp : 1 - fp));
+    }
+
+    var dist = cwdPoissonBinomial(ps);
+    if (!out) { out = dist.map(function (x) { return x * w; }); }
+    else { for (var k = 0; k < out.length; k++) out[k] += dist[k] * w; }
+    wsum += w;
+  }
+  return out.map(function (x) { return x / wsum; });
+}
+
+function cwdRender(spreads, isHomeArr) {
+  if (!spreads || !spreads.length) return '';
+
+  var sigma = 6 / Math.sqrt(CWD_CONFIDENCE);
+  var dist = cwdDistribution(spreads, isHomeArr, sigma);
+  var n = spreads.length;
+
+  var mean = 0;
+  for (var k = 0; k < dist.length; k++) mean += k * dist[k];
+
+  /* 80% credible interval -- where the season lands four times out of five */
+  var lo = null, hi = null, cum = 0;
+  for (var k = 0; k < dist.length; k++) {
+    cum += dist[k];
+    if (lo === null && cum >= 0.10) lo = k;
+    if (hi === null && cum >= 0.90) hi = k;
+  }
+  if (lo === null) lo = 0;
+  if (hi === null) hi = n;
+
+  /* A 20-game conference gives 21 bars, most of them invisible. Show only the
+     range carrying real probability -- everything outside is rounding dust. */
+  var FLOOR = 0.002;
+  var first = 0, last = dist.length - 1;
+  while (first < last && dist[first] < FLOOR) first++;
+  while (last > first && dist[last] < FLOOR) last--;
+  var trimmed = (first > 0) || (last < dist.length - 1);
+  var shown = dist.slice(first, last + 1);
+  var span = shown.length;
+
+  /* With many bars there is no room for a number over every one. */
+  var labelEvery = span <= 14 ? 1 : (span <= 20 ? 2 : 3);
+  var showPct = span <= 16;
+  var gap = span <= 14 ? 3 : (span <= 20 ? 2 : 1);
+  var tickSize = span <= 16 ? 10 : 9;
+
+  var peak = Math.max.apply(null, shown);
+  var modal = dist.indexOf(Math.max.apply(null, dist));
+
+  var bars = shown.map(function (p, i) {
+    var k = first + i;
+    var h = peak > 0 ? (p / peak) * 100 : 0;
+    var isModal = (k === modal);
+    var inBand = (k >= lo && k <= hi);
+    var pct = p * 100;
+    var top = (showPct && pct >= 1) ? Math.round(pct) : '';
+    var tick = (isModal || ((k - first) % labelEvery === 0)) ? k : '';
+    return '<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;'
+      + 'align-items:center;gap:3px;min-width:0">'
+      + '<div style="font-family:\'Courier New\',monospace;font-size:9px;color:var(--txt3);'
+      + 'height:12px">' + top + '</div>'
+      + '<div title="' + k + ' wins: ' + pct.toFixed(1) + '%" style="width:100%;height:' + Math.max(h, 1) + '%;'
+      + 'min-height:2px;background:' + (isModal ? 'var(--acc)' : (inBand ? 'var(--acc2)' : 'var(--bdr2)')) + ';'
+      + 'border-radius:3px 3px 0 0"></div>'
+      + '<div style="font-family:\'Courier New\',monospace;font-size:' + tickSize + 'px;'
+      + 'color:' + (isModal ? 'var(--acc)' : 'var(--txt3)') + ';font-weight:' + (isModal ? '700' : '400') + '">'
+      + tick + '</div>'
+      + '</div>';
+  }).join('');
+
+  return ''
+    + '<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:9px;'
+    + 'padding:14px;margin-top:14px">'
+    + '<div style="font-family:\'Courier New\',monospace;font-size:11px;letter-spacing:2px;'
+    + 'color:var(--acc);font-weight:700;text-transform:uppercase">Conference Win Distribution</div>'
+    + '<div style="font-size:11px;color:var(--txt3);margin-top:4px">'
+    + 'Poisson-binomial over ' + n + ' conference games, widened for rating uncertainty '
+    + '(confidence ' + CWD_CONFIDENCE + ').<br>'
+    + 'Mean <b style="color:var(--txt1)">' + mean.toFixed(1) + '</b> wins &middot; '
+    + 'most likely <b style="color:var(--txt1)">' + modal + '</b> &middot; '
+    + '80% of seasons land between <b style="color:var(--txt1)">' + lo + '</b> and '
+    + '<b style="color:var(--txt1)">' + hi + '</b>'
+    + (trimmed ? '<br><span style="opacity:.75">Outcomes below ' + first + ' and above ' + last
+        + ' wins are under 0.2% each and are not drawn.</span>' : '')
+    + '</div>'
+    + '<div style="display:flex;align-items:flex-end;gap:' + gap + 'px;height:150px;margin-top:12px">'
+    + bars
+    + '</div>'
+    + '</div>';
+}
+
 function loadTeamProfile(){var sel=document.getElementById('team-select');var teamId=sel.value;if(!teamId)return;currentTeamId=teamId;try{localStorage.setItem('cbk_team',teamId);}catch(e){}var content=document.getElementById('team-profile-content');content.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px">Loading...</div>';sb.from('teams').select('*').eq('id',teamId).single().then(function(res){var team=res.data;if(!team)return;currentTeamData=team;Promise.all([sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference), away:away_team_id(id,team,pr,hc,conference)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).order('game_date',{ascending:true}).range(0,39),sb.from('rosters').select('*').eq('team_id',teamId),sb.from('injuries').select('*').eq('team_id',teamId).order('created_at',{ascending:false}),sb.from('teams').select('id,team,pr,hc').order('team',{ascending:true}),sb.from('pr_history').select('pr,recorded_at').eq('team_id',teamId).order('recorded_at',{ascending:true}),sb.from('player_stats').select('*').eq('team_id',teamId).order('mpg',{ascending:false})]).then(function(results){var games=results[0].data||[];var roster=results[1].data||[];var allInjuries=results[2].data||[];
   /* the table keeps cleared injuries rather than deleting them, so the history was
      already there -- it just was not being read back */
@@ -2470,12 +2621,13 @@ function loadTeamProfile(){var sel=document.getElementById('team-select');var te
   var injHistory=allInjuries.filter(function(x){return !x.active;});var allTeamsList=results[3].data||[];var prHistory=results[4].data||[];var playerStats=results[5].data||[];
   /* addInjury opens after this render, so the roster is stashed for its picker.
      Already ordered by minutes descending from the query. */
-  _tpRoster=playerStats||[];var totalInjAdj=injuries.reduce(function(s,i){return s+i.impact;},0);var effPR=team.pr-totalInjAdj;var confGames=games.filter(function(g){return g.home&&g.away&&g.home.conference===g.away.conference;});var totalExpW=0;var confExpW=0;games.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);totalExpW+=wp;});confGames.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);confExpW+=wp;});
+  _tpRoster=playerStats||[];var totalInjAdj=injuries.reduce(function(s,i){return s+i.impact;},0);var effPR=team.pr-totalInjAdj;var confGames=games.filter(function(g){return g.home&&g.away&&g.home.conference===g.away.conference;});var totalExpW=0;var confExpW=0;games.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);totalExpW+=wp;});var _cwdSp=[],_cwdHome=[];confGames.forEach(function(g){if(!g.home||!g.away)return;var isHome=String(g.home_team_id)===String(teamId);var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);confExpW+=wp;_cwdSp.push(sp);_cwdHome.push(isHome);});
 var html='';
 var wins=0,losses=0;
 games.forEach(function(g){if(g.home_score==null||g.away_score==null)return;var isHome=String(g.home_team_id)===String(teamId);var won=isHome?(g.home_score>g.away_score):(g.away_score>g.home_score);if(won)wins++;else losses++;});
 html+='<div class="team-header"><div style="display:flex;align-items:center;min-width:0">'+(function(){var lg=teamLogo(team.team);return lg?'<img src="'+lg+'" style="width:52px;height:52px;object-fit:contain;margin-right:16px;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3))" onerror="this.style.display=\'none\'">':'';})()+'<div><div class="team-header-name">'+team.team+'</div><div class="team-header-sub">'+team.conference+'&nbsp;|&nbsp;Coach: '+(team.coach||'--')+'</div><div style="margin-top:8px;font-size:13px;font-weight:700;color:#fff;letter-spacing:1px">'+wins+'-'+losses+'<span style="font-size:10px;opacity:0.7;margin-left:6px">W-L</span></div></div><div style="flex:1;padding:0 16px">'+(prHistory.length>0||team.pr_preseason?buildPRSparkline(prHistory,team.pr,team.pr_preseason):'<div style="font-size:10px;opacity:0.6;color:#fff">PR chart available after first game</div>')+'</div></div><div style="text-align:right"><div style="font-size:28px;font-weight:700;color:#fff">'+team.pr.toFixed(1)+'</div><div style="font-size:11px;opacity:0.8">POWER RATING'+(totalInjAdj>0?' (EFF: '+effPR.toFixed(1)+')':'')+'</div>'+(team.pr_preseason?'<div style="font-size:10px;opacity:0.6;color:#fff">Pre: '+parseFloat(team.pr_preseason).toFixed(1)+'</div>':'')+'</div></div>';
 html+='<div class="team-stat-row"><div class="team-stat"><div class="team-stat-label">Overall Exp W</div><div class="team-stat-val">'+totalExpW.toFixed(1)+'</div><div class="team-stat-sub">from '+games.length+' games</div></div><div class="team-stat"><div class="team-stat-label">Conf Exp W</div><div class="team-stat-val">'+confExpW.toFixed(1)+'</div><div class="team-stat-sub">from '+confGames.length+' conf games</div></div><div class="team-stat"><div class="team-stat-label">Home Court</div><div class="team-stat-val" style="color:var(--amb)">'+team.hc.toFixed(1)+'</div><div class="team-stat-sub">pts advantage</div></div><div class="team-stat"><div class="team-stat-label">Injury Adj</div><div class="team-stat-val" style="color:var(--red2)">-'+totalInjAdj.toFixed(1)+'</div><div class="team-stat-sub">'+injuries.length+' player(s) out</div></div></div>';
+html+=cwdRender(_cwdSp,_cwdHome);
 html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div>';
 html+='<div class="panel"><div class="panel-hdr"><div class="panel-title">Schedule ('+games.length+' games)</div></div><table class="data" style="font-size:11px"><thead><tr><th>#</th><th>OPP</th><th>LOC</th><th>CONF</th><th>SPREAD</th><th>WIN%</th><th>RESULT</th></tr></thead><tbody>';
 for(var i=0;i<40;i++){var g=games[i];if(!g){html+='<tr><td class="muted">'+(i+1)+'</td><td class="muted" colspan="6" style="color:var(--bdr2)">--</td></tr>';continue;}var isHome=String(g.home_team_id)===String(teamId);var opp=isHome?g.away:g.home;if(!opp){html+='<tr><td class="muted">'+(i+1)+'</td><td colspan="6" class="muted">--</td></tr>';continue;}var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);var teamSpRaw=isHome?-sp:sp;var teamSp=Math.round(teamSpRaw*2)/2;var loc=g.neutral_site?'N':(isHome?'H':'A');var isConf=g.home&&g.away&&g.home.conference===g.away.conference;var result='--';if(g.home_score!=null&&g.away_score!=null){var won=isHome?(g.home_score>g.away_score):(g.away_score>g.home_score);var myScore=isHome?g.home_score:g.away_score;var oppScore=isHome?g.away_score:g.home_score;result=(won?'W':'L')+' '+myScore+'-'+oppScore;}var rClass=result.startsWith('W')?'up':result.startsWith('L')?'dn':'muted';var spColor=teamSp<=0?'color:var(--red2)':'color:var(--grn2)';html+='<tr><td class="muted">'+(i+1)+'</td><td class="bold">'+TL(opp.team)+'</td><td class="muted">'+loc+'</td><td class="muted">'+(isConf?'Y':'N')+'</td><td style="font-weight:700;'+spColor+';cursor:pointer;text-decoration:underline" title="Game preview" onclick="openGamePreview('+g.away_team_id+','+g.home_team_id+','+(g.neutral_site?'true':'false')+')">'+fmtSp(teamSp)+'</td><td class="muted">'+(wp*100).toFixed(1)+'%</td><td class="'+rClass+'">'+result+'</td></tr>';}
