@@ -1,13 +1,17 @@
 name: Update shot clock
 
-# Rebuilds shot_clock_data from ESPN play-by-play. Runs weekly rather than
-# nightly: these are season-long tendencies over roughly 2,000 possessions per
-# team, so one night of games moves a team's numbers by a fraction of a percent.
-# The upstream parquet is republished on its own schedule anyway.
+# Rebuilds shot_clock_data from ESPN play-by-play (the same parquet hoopR reads).
 #
-# 09:00 UTC Monday is about 1am Pacific, well after Sunday's last west-coast
-# final has settled. Also runnable by hand from the Actions tab.
+# Three ways to run:
+#  1. push    -- committing this file or the script starts a run immediately.
+#                Added because the "Run workflow" button was failing to queue.
+#  2. weekly  -- Mondays 09:00 UTC, about 1am Pacific.
+#  3. manual  -- the Actions tab, when the button is behaving.
 on:
+  push:
+    paths:
+      - '.github/workflows/update-shot-clock.yml'
+      - 'scripts/update_shot_clock.py'
   schedule:
     - cron: '0 9 * * 1'
   workflow_dispatch:
@@ -15,12 +19,6 @@ on:
       season:
         description: 'Season to rebuild, e.g. 2026 (blank = current)'
         required: false
-      dry_run:
-        description: 'Print the league table without writing'
-        required: false
-        type: choice
-        options: ['0', '1']
-        default: '1'
 
 concurrency:
   group: update-shot-clock
@@ -44,8 +42,5 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          SEASON: ${{ github.event.inputs.season }}
-          # A scheduled run always writes. A manual run defaults to a dry run so
-          # testing from the Actions tab cannot touch the database by accident.
-          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          SEASON: ${{ github.event.inputs.season || '2026' }}
         run: python scripts/update_shot_clock.py
