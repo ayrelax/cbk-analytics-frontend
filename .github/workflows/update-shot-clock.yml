@@ -1,22 +1,24 @@
-name: Update shot clock
+name: Update from play-by-play
 
-# Rebuilds shot_clock_data from ESPN play-by-play -- the same parquet files hoopR
-# reads, fetched directly, so no R is needed.
+# Rebuilds shot_clock_data and player_shots from ESPN play-by-play -- the same
+# parquet files hoopR reads, fetched directly, so no R is needed.
 #
-# Deliberately minimal. An earlier version had a concurrency group and an input
-# expression; both were removed because a run was dying at "Set up job" before
-# any code executed, and neither earned its place in a job that runs weekly.
+# Both scripts live in one job on purpose. GitHub's hosted runners regularly fail
+# to pick jobs up ("job was not acquired by Runner of type hosted"), so asking for
+# one machine beats asking for two. The second step runs even if the first fails,
+# so a bad shot-clock run doesn't take player shots down with it.
 #
-# Runs when this file or the script is committed, and every Monday at 09:00 UTC
-# (about 1am Pacific). The season is worked out by the script itself.
+# Daily rather than weekly: a failed run then costs a day, not a week.
+# 09:00 UTC is about 1am Pacific -- after the last west-coast final.
 
 on:
   push:
     paths:
       - '.github/workflows/update-shot-clock.yml'
       - 'scripts/update_shot_clock.py'
+      - 'scripts/update_player_shots.py'
   schedule:
-    - cron: '0 9 * * 1'
+    - cron: '0 9 * * *'
   workflow_dispatch:
 
 permissions:
@@ -24,8 +26,8 @@ permissions:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -41,3 +43,10 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/update_shot_clock.py
+
+      - name: Rebuild player_shots
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/update_player_shots.py
