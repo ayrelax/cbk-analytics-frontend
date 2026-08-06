@@ -1,0 +1,51 @@
+name: Update shot clock
+
+# Rebuilds shot_clock_data from ESPN play-by-play. Runs weekly rather than
+# nightly: these are season-long tendencies over roughly 2,000 possessions per
+# team, so one night of games moves a team's numbers by a fraction of a percent.
+# The upstream parquet is republished on its own schedule anyway.
+#
+# 09:00 UTC Monday is about 1am Pacific, well after Sunday's last west-coast
+# final has settled. Also runnable by hand from the Actions tab.
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      season:
+        description: 'Season to rebuild, e.g. 2026 (blank = current)'
+        required: false
+      dry_run:
+        description: 'Print the league table without writing'
+        required: false
+        type: choice
+        options: ['0', '1']
+        default: '1'
+
+concurrency:
+  group: update-shot-clock
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet pandas pyarrow requests
+
+      - name: Rebuild shot_clock_data
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SEASON: ${{ github.event.inputs.season }}
+          # A scheduled run always writes. A manual run defaults to a dry run so
+          # testing from the Actions tab cannot touch the database by accident.
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: python scripts/update_shot_clock.py
