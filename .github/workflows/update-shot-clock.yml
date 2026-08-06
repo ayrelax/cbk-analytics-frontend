@@ -1,12 +1,15 @@
 name: Update shot clock
 
-# Rebuilds shot_clock_data from ESPN play-by-play (the same parquet hoopR reads).
+# Rebuilds shot_clock_data from ESPN play-by-play -- the same parquet files hoopR
+# reads, fetched directly, so no R is needed.
 #
-# Three ways to run:
-#  1. push    -- committing this file or the script starts a run immediately.
-#                Added because the "Run workflow" button was failing to queue.
-#  2. weekly  -- Mondays 09:00 UTC, about 1am Pacific.
-#  3. manual  -- the Actions tab, when the button is behaving.
+# Deliberately minimal. An earlier version had a concurrency group and an input
+# expression; both were removed because a run was dying at "Set up job" before
+# any code executed, and neither earned its place in a job that runs weekly.
+#
+# Runs when this file or the script is committed, and every Monday at 09:00 UTC
+# (about 1am Pacific). The season is worked out by the script itself.
+
 on:
   push:
     paths:
@@ -15,14 +18,9 @@ on:
   schedule:
     - cron: '0 9 * * 1'
   workflow_dispatch:
-    inputs:
-      season:
-        description: 'Season to rebuild, e.g. 2026 (blank = current)'
-        required: false
 
-concurrency:
-  group: update-shot-clock
-  cancel-in-progress: false
+permissions:
+  contents: read
 
 jobs:
   update:
@@ -42,5 +40,4 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          SEASON: ${{ github.event.inputs.season || '2026' }}
         run: python scripts/update_shot_clock.py
