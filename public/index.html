@@ -1288,7 +1288,7 @@ body.cbk-capturing .doc-arg,body.cbk-capturing .doc-obj{break-inside:avoid}
   <button class="btn primary" id="sp-btn-today" onclick="loadSpreads('today')">TODAY</button>
   <button class="btn" id="sp-btn-all" onclick="loadSpreads('all')">ALL OPEN</button>
   <button class="btn" id="sp-btn-final" onclick="loadSpreads('final')">RESULTS</button>
-  <span id="spreads-mode-label" style="font-size:10px;color:var(--txt3);letter-spacing:1px;margin-left:4px"></span>
+  <button class="btn" onclick="gsExportBoard()" title="Download the board on screen as CSV">EXPORT ALL</button><span id="spreads-mode-label" style="font-size:10px;color:var(--txt3);letter-spacing:1px;margin-left:4px"></span>
   <span id="spreads-count" style="font-size:10px;color:var(--txt3);margin-left:8px"></span>
 </div>
 <div id="spreads-layout-split" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start">
@@ -3172,7 +3172,9 @@ function cbkByTipoff(a, b){
   if(!b.home || !b.away) return -1;
   return (b.home.pr + b.away.pr) - (a.home.pr + a.away.pr);
 }
+var _spreadsFilter='today';
 function loadSpreads(filter){
+  _spreadsFilter=filter;
   try{localStorage.setItem('cbk_spreads_filter',filter);}catch(e){}
   var today=cbkToday();
   var label=document.getElementById('spreads-mode-label');
@@ -3528,6 +3530,47 @@ function gpAngles(g,away,home,fav,rsp){
   return '<div class="psm-sechdr">Edges &amp; Fades</div>'
     +'<div class="gp-ang"><table>'+body+'</table></div>';
 }
+/* Export the board currently on screen. Mirrors what the table shows: rotation,
+   both teams, my spread and first half on the favourite, moneyline on both sides.
+   Regular board first, then the extra board, in the same order as the page. */
+var _sprGames=[];
+function gsExportBoard(){
+  if(!_sprGames.length){alert('No games loaded to export.');return;}
+  function rot(g){
+    var a=(g.away_rot!=null?parseInt(g.away_rot,10):null);
+    var h=(g.home_rot!=null?parseInt(g.home_rot,10):null);
+    return {a:a,h:h,extra:((a!=null&&a>=100000)||(h!=null&&h>=100000))};
+  }
+  var reg=[],ext=[];
+  _sprGames.forEach(function(g){ if(g.home&&g.away)(rot(g).extra?ext:reg).push(g); });
+
+  var out=[['Board','Rot','Team','Opponent','Site','My Spread','ML','1st Half','Total','Date','Tip']];
+  function push(list,label){
+    list.forEach(function(g){
+      var sp=calcSpreadG(g), rsp=Math.round(sp*2)/2, ml=spreadToMLJuiced(sp);
+      var hf=sp>=0, r=rot(g);
+      var line=fmtSp(-Math.abs(rsp)), h1=firstHalfSpread(rsp)||'';
+      var tot=(g.closing_total!=null?g.closing_total:(g.opening_total!=null?g.opening_total:''));
+      var tip=g.commence_time?new Date(g.commence_time).toLocaleString():'';
+      out.push([label,(r.a!=null?r.a:''),g.away.team,g.home.team,'away',
+                (!hf?line:''),(!hf?ml.fav:ml.dog),(!hf?h1:''),tot,g.game_date,tip]);
+      out.push([label,(r.h!=null?r.h:''),g.home.team,g.away.team,
+                (g.neutral_site?'neutral':'home'),
+                (hf?line:''),(hf?ml.fav:ml.dog),(hf?h1:''),tot,g.game_date,tip]);
+    });
+  }
+  push(reg,'Regular'); push(ext,'Extra');
+
+  var csv=out.map(function(r){
+    return r.map(function(c){
+      c=(c===null||c===undefined)?'':String(c);
+      return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;
+    }).join(',');
+  }).join('\n');
+
+  var lbl=(typeof _spreadsFilter!=='undefined'&&_spreadsFilter)?_spreadsFilter:'board';
+  xDownload('game_spreads_'+lbl+'_'+cbkToday()+'.csv',csv);
+}
 function buildGameCards(games,isFinal,isToday){
   /* Board layout: two rows per game, only the favourite carries numbers.
      Rotation numbers lead; six-digit numbers are the extra board and are split
@@ -3601,6 +3644,7 @@ function buildGameCards(games,isFinal,isToday){
     return html;
   }
 
+  _sprGames=games.slice();
   if(!reg.length&&!ext.length)return '';
   var out='<div class="bd"><table><colgroup><col class="c1"><col><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup>'
     +'<tr><th>ROT</th><th>TEAM</th><th class="ra">MY SPREAD</th><th class="ra">ML</th><th class="ra">1ST HALF</th><th></th></tr>';
