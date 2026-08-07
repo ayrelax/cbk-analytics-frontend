@@ -2536,14 +2536,19 @@ function cwdDistribution(spreads, isHomeArr, sigma) {
 function cwdRender(spreads, isHomeArr) {
   if (!spreads || !spreads.length) return '';
 
+  /* Fixed dark card: charcoal ground, cyan bars. Deliberately not tied to the
+     page theme -- the panel is meant to read as its own object. */
+  var C = { bg:'#1A1815', bd:'#332F2A', hdr:'#5FD3E0', sub:'#948C80',
+            val:'#F2EDE5', tick:'#B5AC9E',
+            peak:'#3FC5D6', band:'#2A7F94', tail:'#2E3A3E' };
+
   var sigma = 6 / Math.sqrt(CWD_CONFIDENCE);
   var dist = cwdDistribution(spreads, isHomeArr, sigma);
-  var n = spreads.length;
+  var n = spreads.length, k;
 
-  var mean = 0, k;
+  var mean = 0;
   for (k = 0; k < dist.length; k++) mean += k * dist[k];
 
-  /* 80% credible interval */
   var lo = null, hi = null, cum = 0;
   for (k = 0; k < dist.length; k++) {
     cum += dist[k];
@@ -2553,7 +2558,6 @@ function cwdRender(spreads, isHomeArr) {
   if (lo === null) lo = 0;
   if (hi === null) hi = n;
 
-  /* Trim the dust so a 20-game league does not draw 21 bars, most invisible. */
   var FLOOR = 0.002, first = 0, last = dist.length - 1;
   while (first < last && dist[first] < FLOOR) first++;
   while (last > first && dist[last] < FLOOR) last--;
@@ -2564,58 +2568,51 @@ function cwdRender(spreads, isHomeArr) {
   var peak = Math.max.apply(null, shown);
   var modal = dist.indexOf(Math.max.apply(null, dist));
 
-  /* Heights in pixels, not percentages. A percentage height needs a resolved
-     parent height, and the flex row here sizes to content -- which is why an
-     earlier version drew nothing but labels. */
-  var PLOT = 132;
+  /* Pixel heights, not percentages -- a percentage needs a resolved parent height
+     and this flex row sizes to content. */
+  var PLOT = 118;
   var gap = span <= 14 ? 4 : (span <= 20 ? 3 : 2);
-  var labelEvery = span <= 14 ? 1 : (span <= 20 ? 2 : 3);
+  var labelEvery = span <= 16 ? 1 : (span <= 22 ? 2 : 3);
   var showPct = span <= 18;
 
   var bars = shown.map(function (p, i) {
     var kk = first + i;
     var h = peak > 0 ? Math.round((p / peak) * PLOT) : 0;
-    if (h < 2) h = 2;
-    var isModal = (kk === modal);
+    if (h < 3) h = 3;
+    var isPeak = (kk === modal);
     var inBand = (kk >= lo && kk <= hi);
     var pct = p * 100;
-    var top = (showPct && pct >= 0.5) ? pct.toFixed(0) + '%' : '';
-    var tick = (isModal || ((kk - first) % labelEvery === 0)) ? kk : '';
-    var col = isModal ? 'var(--acc)' : (inBand ? 'var(--acc2)' : 'var(--bdr2)');
-    return '<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;'
-      + 'align-items:center;justify-content:flex-end">'
-      + '<div style="font-family:\'Courier New\',monospace;font-size:9px;line-height:12px;'
-      + 'height:12px;color:' + (isModal ? 'var(--acc)' : 'var(--txt3)') + '">' + top + '</div>'
-      + '<div title="' + kk + ' wins: ' + pct.toFixed(1) + '%" '
-      + 'style="width:100%;height:' + h + 'px;background:' + col + ';'
-      + 'border-radius:3px 3px 0 0"></div>'
-      + '<div style="font-family:\'Courier New\',monospace;font-size:10px;line-height:16px;'
-      + 'height:16px;color:' + (isModal ? 'var(--acc)' : 'var(--txt3)') + ';'
-      + 'font-weight:' + (isModal ? '700' : '400') + '">' + tick + '</div>'
+    var top = (showPct && pct >= 0.5) ? Math.round(pct) + '%' : '';
+    var tick = (isPeak || ((kk - first) % labelEvery === 0)) ? kk : '';
+    return '<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center">'
+      + '<div style="font-family:\'Courier New\',monospace;font-size:12px;font-weight:700;'
+      + 'line-height:16px;height:16px;color:' + (isPeak ? C.peak : C.sub) + '">' + top + '</div>'
+      + '<div title="' + kk + ' wins: ' + pct.toFixed(1) + '%" style="width:100%;height:' + h + 'px;'
+      + 'background:' + (isPeak ? C.peak : (inBand ? C.band : C.tail)) + ';border-radius:3px 3px 0 0"></div>'
+      + '<div style="font-family:\'Courier New\',monospace;font-size:14px;font-weight:700;'
+      + 'line-height:20px;height:20px;color:' + (isPeak ? C.peak : C.tick) + '">' + tick + '</div>'
       + '</div>';
   }).join('');
 
   return ''
-    + '<div style="background:var(--bg1);border:1px solid var(--bdr);border-radius:9px;'
-    + 'padding:14px;margin-top:14px">'
-    + '<div style="font-family:\'Courier New\',monospace;font-size:11px;letter-spacing:2px;'
-    + 'color:var(--acc);font-weight:700;text-transform:uppercase">Conference Win Distribution</div>'
-    + '<div style="font-size:11px;color:var(--txt3);margin-top:4px;line-height:1.55">'
+    + '<div style="background:' + C.bg + ';border:1px solid ' + C.bd + ';border-radius:9px;'
+    + 'padding:16px;margin-top:14px">'
+    + '<div style="font-family:\'Courier New\',monospace;font-size:12px;letter-spacing:2px;'
+    + 'color:' + C.hdr + ';font-weight:700">CONFERENCE WIN DISTRIBUTION</div>'
+    + '<div style="font-size:12px;color:' + C.sub + ';margin-top:5px;line-height:1.55">'
     + 'Poisson-binomial over ' + n + ' conference games, widened for rating uncertainty '
-    + '(confidence ' + CWD_CONFIDENCE + ' &asymp; &plusmn;' + sigma.toFixed(1) + ' pts of rating).<br>'
-    + 'Mean <b style="color:var(--txt1)">' + mean.toFixed(1) + '</b> wins &middot; '
-    + 'most likely <b style="color:var(--txt1)">' + modal + '</b> &middot; '
-    + '80% of seasons land between <b style="color:var(--txt1)">' + lo + '</b> and '
-    + '<b style="color:var(--txt1)">' + hi + '</b>'
-    + (trimmed ? '<br><span style="opacity:.7">Below ' + first + ' and above ' + last
+    + '(confidence ' + CWD_CONFIDENCE + ' &asymp; &plusmn;' + sigma.toFixed(1) + ' pts).<br>'
+    + 'Mean <b style="color:' + C.val + '">' + mean.toFixed(1) + '</b> wins &middot; '
+    + 'most likely <b style="color:' + C.val + '">' + modal + '</b> &middot; '
+    + '80% of seasons land between <b style="color:' + C.val + '">' + lo + '</b> and '
+    + '<b style="color:' + C.val + '">' + hi + '</b>'
+    + (trimmed ? '<br><span style="opacity:.65">Below ' + first + ' and above ' + last
         + ' wins are under 0.2% each and are not drawn.</span>' : '')
     + '</div>'
-    + '<div style="display:flex;align-items:flex-end;gap:' + gap + 'px;'
-    + 'margin-top:12px;padding-bottom:2px;border-bottom:1px solid var(--bdr)">'
-    + bars
-    + '</div>'
-    + '<div style="font-family:\'Courier New\',monospace;font-size:9px;color:var(--txt3);'
-    + 'margin-top:6px;text-align:center">conference wins</div>'
+    + '<div style="display:flex;align-items:flex-end;gap:' + gap + 'px;margin-top:14px;'
+    + 'padding-bottom:2px;border-bottom:1.5px solid ' + C.bd + '">' + bars + '</div>'
+    + '<div style="font-family:\'Courier New\',monospace;font-size:12px;font-weight:700;'
+    + 'letter-spacing:1.5px;color:' + C.sub + ';margin-top:8px;text-align:center">CONFERENCE WINS</div>'
     + '</div>';
 }
 
