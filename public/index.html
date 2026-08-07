@@ -20,6 +20,23 @@ body{background:var(--bg0);color:var(--txt1);font-family:-apple-system,BlinkMacS
    e.g. <span style="color:var(--txt3)">Sharpen</span> -- and an inline style
    beats any selector no matter how specific. The exceptions below carry more
    specificity than the blanket rule, so gold titles still win. */
+/* The tip-off pill sets background inline and the theme toggle sets it in CSS,
+   both to var(--bg2) -- a pale box built for the old cream bar. On the dark
+   chrome they read as blank rectangles, so both need overriding. */
+#tipoff,#cbk-theme-toggle,.top-bar button,.top-bar .btn{
+  background:rgba(255,255,255,.07)!important;
+  border:1px solid rgba(255,255,255,.20)!important;
+  color:var(--chrtx)!important}
+#tipoff:hover,#cbk-theme-toggle:hover,.top-bar button:hover,.top-bar .btn:hover{
+  background:rgba(255,255,255,.13)!important}
+#tipoff .tk-mu,#tipoff span[style*="--txt3"]{color:var(--chrmu)!important}
+/* the countdown and the TIP-OFF label are the two bits worth the gold */
+#tipoff span:first-child,#cbk-theme-toggle{color:var(--chrac)!important}
+#cbk-hamburger{background:transparent!important;border:none!important;
+  color:var(--chrtx)!important}
+/* the starred team pill already reads well -- leave its gold alone */
+.top-bar .fav-team,.top-bar .team-pill{background:var(--acc)!important;
+  color:var(--chr)!important;border-color:var(--acc)!important}
 .top-bar *,.panel-hdr *,.ticker *,.bd-xb *{color:var(--chrtx)!important}
 .top-bar .logo,.panel-hdr .panel-title,.ticker .tk-lbl{color:var(--chrac)!important}
 .top-bar .logo span,.top-bar .muted,.ticker .tk-mu,
