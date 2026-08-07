@@ -77,9 +77,9 @@ body{background:var(--bg0);color:var(--txt1);font-family:-apple-system,BlinkMacS
 .cbk-ham-lbl{font-size:11px;font-weight:700;letter-spacing:1.5px;vertical-align:middle;margin-left:6px}
 #cbk-drawer-overlay{position:fixed;inset:0;background:rgba(20,15,8,.42);opacity:0;visibility:hidden;transition:opacity .2s;z-index:9998}
 #cbk-drawer-overlay.open{opacity:1;visibility:visible}
-#cbk-drawer{position:fixed;top:0;left:0;height:100%;width:252px;max-width:82vw;background:var(--bg1);border-right:1px solid var(--bdr2);box-shadow:2px 0 16px rgba(0,0,0,.14);transform:translateX(-100%);transition:transform .22s ease;z-index:9999;overflow-y:auto}
+#cbk-drawer{position:fixed;top:0;left:0;height:100%;width:252px;max-width:82vw;background:linear-gradient(180deg,var(--bg1) 0%,#F6EEDC 58%,#EEDFBE 100%);background-attachment:local;border-right:1px solid var(--bdr2);box-shadow:2px 0 16px rgba(0,0,0,.14);transform:translateX(-100%);transition:transform .22s ease;z-index:9999;overflow-y:auto}
 #cbk-drawer.open{transform:translateX(0)}
-.cbk-drawer-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;font-size:12px;font-weight:800;letter-spacing:2px;color:var(--acc);border-bottom:1px solid var(--bdr);background:#fdf9f4;position:sticky;top:0}
+.cbk-drawer-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;font-size:12px;font-weight:800;letter-spacing:2px;color:#fff;border-bottom:none;background:var(--acc);position:sticky;top:0;z-index:2}.cbk-drawer-hdr *{color:#fff!important}/* rules tinted to the gold so they recede as the background warms */#cbk-drawer .drawer-link,#cbk-drawer a,#cbk-drawer button{border-color:rgba(139,105,20,.14)!important}
 .cbk-drawer-x{cursor:pointer;color:var(--txt3);font-size:16px;line-height:1;padding:0 4px}
 .cbk-drawer-x:hover{color:var(--acc)}
 .cbk-drawer-item{position:relative;border-bottom:1px solid var(--bg2)}
