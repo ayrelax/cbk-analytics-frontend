@@ -2499,6 +2499,78 @@ var _cwdSpreads = [];      /* matching model spreads, used to re-price under a s
 /* Option 3 theming. Team colour carries identity -- panels, badges, borders --
    while W/L, spread and injury keep their semantic red/green. Losing that
    distinction on a stats page costs more than the decoration is worth. */
+/* Panels A and B. off_eff and def_eff are already opponent-adjusted by
+   update_rates.py (40 iterations of schedule stripping), so ranking a team
+   against all 364 is a fair comparison rather than an artefact of who they played. */
+function tpPct(list, val, lowerIsBetter){
+  var v = list.filter(function(x){return x!=null;});
+  if(!v.length || val==null) return null;
+  var below = v.filter(function(x){return lowerIsBetter ? x > val : x < val;}).length;
+  return Math.round(below / v.length * 100);
+}
+function tpBar(label, shown, pctile, th){
+  var col = th ? th.base : 'var(--acc)';
+  return '<div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">'
+    + '<div style="width:74px;font-family:\'Courier New\',monospace;font-size:10px;'
+    + 'font-weight:700;color:var(--txt2)">' + label + '</div>'
+    + '<div style="width:62px;font-family:\'Courier New\',monospace;font-size:11px;'
+    + 'color:var(--txt1)">' + shown + '</div>'
+    + '<div style="flex:1;background:var(--bdr);height:12px;border-radius:6px;position:relative">'
+    + '<div style="width:' + (pctile==null?0:pctile) + '%;height:100%;background:' + col + ';border-radius:6px"></div>'
+    + '<div style="position:absolute;left:50%;top:-2px;height:16px;width:1px;background:var(--bdr2)"></div></div>'
+    + '<div style="width:32px;text-align:right;font-family:\'Courier New\',monospace;'
+    + 'font-size:11px;font-weight:700;color:' + (th?th.onWash:'var(--txt1)') + '">'
+    + (pctile==null?'--':pctile) + '</div></div>';
+}
+function tpDietRow(label, off, def, th){
+  var c1 = th ? th.base : 'var(--acc)', c2 = th ? th.edge : 'var(--acc2)';
+  var o = off==null?0:off*100, d = def==null?0:def*100;
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+    + '<div style="width:44px;font-family:\'Courier New\',monospace;font-size:10px;'
+    + 'font-weight:700;color:var(--txt2)">' + label + '</div>'
+    + '<div style="flex:1;display:flex;justify-content:flex-end">'
+    + '<div style="height:16px;width:' + Math.min(o*1.9,100) + '%;background:' + c1 + ';border-radius:3px 0 0 3px"></div></div>'
+    + '<div style="width:34px;text-align:center;font-family:\'Courier New\',monospace;'
+    + 'font-size:11px;font-weight:700;color:' + (th?th.onWash:'var(--txt1)') + '">' + (off==null?'--':o.toFixed(0)+'%') + '</div>'
+    + '<div style="flex:1"><div style="height:16px;width:' + Math.min(d*1.9,100) + '%;background:' + c2 + ';border-radius:0 3px 3px 0"></div></div>'
+    + '<div style="width:34px;font-family:\'Courier New\',monospace;font-size:11px;'
+    + 'font-weight:700;color:var(--txt3)">' + (def==null?'--':d.toFixed(0)+'%') + '</div></div>';
+}
+function tpProfilePanels(prof, all, th){
+  if(!prof) return '';
+  var hdr = th ? ' style="background:'+th.base+';border-bottom:none"' : '';
+  var htx = th ? ' style="color:'+th.onBase+'"' : '';
+  var col = function(f){ return all.map(function(x){return x[f]==null?null:+x[f];}); };
+  var f1 = function(v,d){ return v==null?'--':(+v).toFixed(d==null?1:d); };
+
+  var diet = '<div class="panel" style="margin-top:12px"><div class="panel-hdr"'+hdr+'>'
+    + '<div class="panel-title"'+htx+'>Shot Profile</div></div><div style="padding:14px">'
+    + '<div style="display:flex;gap:8px;font-family:\'Courier New\',monospace;font-size:9px;'
+    + 'letter-spacing:1px;color:var(--txt3);margin-bottom:9px">'
+    + '<div style="width:44px"></div><div style="flex:1;text-align:right">OFFENSE TAKES</div>'
+    + '<div style="width:34px"></div><div style="flex:1">DEFENSE ALLOWS</div><div style="width:34px"></div></div>'
+    + tpDietRow('RIM',   prof.rim_rate,   prof.d_rim_rate,   th)
+    + tpDietRow('MID',   prof.mid_rate,   null,              th)
+    + tpDietRow('THREE', prof.three_rate, prof.d_three_rate, th)
+    + '<div style="font-family:\'Courier New\',monospace;font-size:9px;color:var(--txt3);margin-top:6px">'
+    + 'shot mix from play-by-play &middot; mid-range allowed is not tracked</div></div></div>';
+
+  var eff = '<div class="panel" style="margin-top:12px"><div class="panel-hdr"'+hdr+'>'
+    + '<div class="panel-title"'+htx+'>Efficiency Profile</div></div><div style="padding:14px">'
+    + tpBar('OFF EFF',  f1(prof.off_eff),          tpPct(col('off_eff'),  +prof.off_eff,  false), th)
+    + tpBar('DEF EFF',  f1(prof.def_eff),          tpPct(col('def_eff'),  +prof.def_eff,  true),  th)
+    + tpBar('NET',      f1(prof.net),              tpPct(col('net'),      +prof.net,      false), th)
+    + tpBar('TEMPO',    f1(prof.poss)+' poss',     tpPct(col('poss'),     +prof.poss,     false), th)
+    + tpBar('3PT RATE', (prof.three_rate*100).toFixed(0)+'%', tpPct(col('three_rate'), +prof.three_rate, false), th)
+    + tpBar('RIM %',    (prof.rim_pct*100).toFixed(1)+'%',    tpPct(col('rim_pct'),    +prof.rim_pct,    false), th)
+    + tpBar('3PT %',    prof.three_pct==null?'--':(prof.three_pct*100).toFixed(1)+'%', tpPct(col('three_pct'), prof.three_pct==null?null:+prof.three_pct, false), th)
+    + tpBar('FT RATE',  f1(prof.ftr,3),            tpPct(col('ftr'),      +prof.ftr,      false), th)
+    + '<div style="font-family:\'Courier New\',monospace;font-size:9px;color:var(--txt3);margin-top:6px">'
+    + 'number at right is percentile among all ' + all.length + ' teams &middot; tick marks average<br>'
+    + 'efficiency is opponent-adjusted &middot; ' + (prof.games||0) + ' games</div></div></div>';
+
+  return diet + eff;
+}
 function cwdTheme(hex){
   if(!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return null;
   var lum = cwdLum(hex);
@@ -2656,7 +2728,7 @@ function cwdRender(spreads, isHomeArr) {
     + '</div>';
 }
 
-function loadTeamProfile(){var sel=document.getElementById('team-select');var teamId=sel.value;if(!teamId)return;currentTeamId=teamId;try{localStorage.setItem('cbk_team',teamId);}catch(e){}var content=document.getElementById('team-profile-content');content.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px">Loading...</div>';sb.from('teams').select('*').eq('id',teamId).single().then(function(res){var team=res.data;if(!team)return;currentTeamData=team;Promise.all([sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference,color), away:away_team_id(id,team,pr,hc,conference,color)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).order('game_date',{ascending:true}).range(0,39),sb.from('rosters').select('*').eq('team_id',teamId),sb.from('injuries').select('*').eq('team_id',teamId).order('created_at',{ascending:false}),sb.from('teams').select('id,team,pr,hc').order('team',{ascending:true}),sb.from('pr_history').select('pr,recorded_at').eq('team_id',teamId).order('recorded_at',{ascending:true}),sb.from('player_stats').select('*').eq('team_id',teamId).order('mpg',{ascending:false})]).then(function(results){var games=results[0].data||[];var roster=results[1].data||[];var allInjuries=results[2].data||[];
+function loadTeamProfile(){var sel=document.getElementById('team-select');var teamId=sel.value;if(!teamId)return;currentTeamId=teamId;try{localStorage.setItem('cbk_team',teamId);}catch(e){}var content=document.getElementById('team-profile-content');content.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px">Loading...</div>';sb.from('teams').select('*').eq('id',teamId).single().then(function(res){var team=res.data;if(!team)return;currentTeamData=team;Promise.all([sb.from('games').select('*, home:home_team_id(id,team,pr,hc,conference,color), away:away_team_id(id,team,pr,hc,conference,color)').or('home_team_id.eq.'+teamId+',away_team_id.eq.'+teamId).order('game_date',{ascending:true}).range(0,39),sb.from('rosters').select('*').eq('team_id',teamId),sb.from('injuries').select('*').eq('team_id',teamId).order('created_at',{ascending:false}),sb.from('teams').select('id,team,pr,hc').order('team',{ascending:true}),sb.from('pr_history').select('pr,recorded_at').eq('team_id',teamId).order('recorded_at',{ascending:true}),sb.from('player_stats').select('*').eq('team_id',teamId).order('mpg',{ascending:false}),sb.from('team_profiles').select('*')]).then(function(results){var _prof=null,_allProf=(results[6]&&results[6].data)||[];var games=results[0].data||[];var roster=results[1].data||[];var allInjuries=results[2].data||[];
   /* the table keeps cleared injuries rather than deleting them, so the history was
      already there -- it just was not being read back */
   var injuries=allInjuries.filter(function(x){return x.active;});
@@ -2669,7 +2741,7 @@ var wins=0,losses=0;
 games.forEach(function(g){if(g.home_score==null||g.away_score==null)return;var isHome=String(g.home_team_id)===String(teamId);var won=isHome?(g.home_score>g.away_score):(g.away_score>g.home_score);if(won)wins++;else losses++;});
 var _tc=(team.color&&/^#[0-9A-Fa-f]{6}$/.test(team.color))?team.color:null;var _ta=(team.alt_color&&/^#[0-9A-Fa-f]{6}$/.test(team.alt_color))?team.alt_color:null;var _tcStyle=_tc?' style="background:linear-gradient(135deg,'+_tc+' 0%,'+cwdShade(_tc,-18)+' 100%)"':'';html+='<div class="team-header"'+_tcStyle+'><div style="display:flex;align-items:center;min-width:0">'+(function(){var lg=teamLogo(team.team);return lg?'<img src="'+lg+'" style="width:52px;height:52px;object-fit:contain;margin-right:16px;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3))" onerror="this.style.display=\'none\'">':'';})()+'<div><div class="team-header-name">'+team.team+'</div><div class="team-header-sub">'+team.conference+'&nbsp;|&nbsp;Coach: '+(team.coach||'--')+'</div><div style="margin-top:8px;font-size:13px;font-weight:700;color:#fff;letter-spacing:1px">'+wins+'-'+losses+'<span style="font-size:10px;opacity:0.7;margin-left:6px">W-L</span></div></div><div style="flex:1;padding:0 16px">'+(prHistory.length>0||team.pr_preseason?buildPRSparkline(prHistory,team.pr,team.pr_preseason):'<div style="font-size:10px;opacity:0.6;color:#fff">PR chart available after first game</div>')+'</div></div><div style="text-align:right"><div style="font-size:28px;font-weight:700;color:#fff">'+team.pr.toFixed(1)+'</div><div style="font-size:11px;opacity:0.8">POWER RATING'+(totalInjAdj>0?' (EFF: '+effPR.toFixed(1)+')':'')+'</div>'+(team.pr_preseason?'<div style="font-size:10px;opacity:0.6;color:#fff">Pre: '+parseFloat(team.pr_preseason).toFixed(1)+'</div>':'')+'</div></div>';
 var _th=cwdTheme(_tc); _TP_THEME=_th;var _cardCss=_th?' style="background:'+_th.wash+';border-color:'+_th.edge+'"':'';var _valCss=_th?' style="color:'+_th.onWash+'"':'';html+='<div class="team-stat-row"><div class="team-stat"'+_cardCss+'><div class="team-stat-label">Overall Exp W</div><div class="team-stat-val"'+_valCss+'>'+totalExpW.toFixed(1)+'</div><div class="team-stat-sub">from '+games.length+' games</div></div><div class="team-stat"'+_cardCss+'><div class="team-stat-label">Conf Exp W</div><div class="team-stat-val"'+_valCss+'>'+confExpW.toFixed(1)+'</div><div class="team-stat-sub">from '+confGames.length+' conf games</div></div><div class="team-stat"><div class="team-stat-label">Home Court</div><div class="team-stat-val" style="color:var(--amb)">'+team.hc.toFixed(1)+'</div><div class="team-stat-sub">pts advantage</div></div><div class="team-stat"><div class="team-stat-label">Injury Adj</div><div class="team-stat-val" style="color:var(--red2)">-'+totalInjAdj.toFixed(1)+'</div><div class="team-stat-sub">'+injuries.length+' player(s) out</div></div></div>';
-CWD_TEAM_COLOR=_tc; html+=cwdRender(_cwdSp,_cwdHome);
+CWD_TEAM_COLOR=_tc; html+=cwdRender(_cwdSp,_cwdHome);_prof=null;for(var _pi=0;_pi<_allProf.length;_pi++){if(_allProf[_pi].team===team.team){_prof=_allProf[_pi];break;}}html+=tpProfilePanels(_prof,_allProf,_th);
 html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div>';
 var _hdrCss=_th?' style="background:'+_th.base+';border-bottom:none"':'';var _hdrTxt=_th?' style="color:'+_th.onBase+'"':'';html+='<div class="panel"><div class="panel-hdr"'+_hdrCss+'><div class="panel-title"'+_hdrTxt+'>Schedule ('+games.length+' games)</div></div><table class="data" style="font-size:11px"><thead><tr><th>#</th><th>OPP</th><th>LOC</th><th>CONF</th><th>SPREAD</th><th>WIN%</th><th>RESULT</th></tr></thead><tbody>';
 for(var i=0;i<40;i++){var g=games[i];if(!g){html+='<tr><td class="muted">'+(i+1)+'</td><td class="muted" colspan="6" style="color:var(--bdr2)">--</td></tr>';continue;}var isHome=String(g.home_team_id)===String(teamId);var opp=isHome?g.away:g.home;if(!opp){html+='<tr><td class="muted">'+(i+1)+'</td><td colspan="6" class="muted">--</td></tr>';continue;}var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);var teamSpRaw=isHome?-sp:sp;var teamSp=Math.round(teamSpRaw*2)/2;var loc=g.neutral_site?'N':(isHome?'H':'A');var isConf=g.home&&g.away&&g.home.conference===g.away.conference;var result='--';if(g.home_score!=null&&g.away_score!=null){var won=isHome?(g.home_score>g.away_score):(g.away_score>g.home_score);var myScore=isHome?g.home_score:g.away_score;var oppScore=isHome?g.away_score:g.home_score;result=(won?'W':'L')+' '+myScore+'-'+oppScore;}var rClass=result.startsWith('W')?'up':result.startsWith('L')?'dn':'muted';var spColor=teamSp<=0?'color:var(--red2)':'color:var(--grn2)';html+='<tr class="tp-srow"><td class="muted">'+(i+1)+'</td><td class="bold">'+TL(opp.team)+'</td><td class="muted">'+loc+'</td><td class="muted">'+(isConf?'Y':'N')+'</td><td style="font-weight:700;'+spColor+';cursor:pointer;text-decoration:underline" title="Game preview" onclick="openGamePreview('+g.away_team_id+','+g.home_team_id+','+(g.neutral_site?'true':'false')+')">'+fmtSp(teamSp)+'</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:32px;height:7px;background:var(--bdr);border-radius:4px;overflow:hidden"><div style="width:'+(wp*100).toFixed(0)+'%;height:100%;background:'+(_th?_th.base:'var(--acc)')+'"></div></div><span class="muted" style="min-width:38px;text-align:right">'+(wp*100).toFixed(1)+'%</span></div></td><td class="'+rClass+'">'+result+'</td></tr>';}
