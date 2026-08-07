@@ -2540,12 +2540,12 @@ function cwdRender(spreads, isHomeArr) {
   var dist = cwdDistribution(spreads, isHomeArr, sigma);
   var n = spreads.length;
 
-  var mean = 0;
-  for (var k = 0; k < dist.length; k++) mean += k * dist[k];
+  var mean = 0, k;
+  for (k = 0; k < dist.length; k++) mean += k * dist[k];
 
-  /* 80% credible interval -- where the season lands four times out of five */
+  /* 80% credible interval */
   var lo = null, hi = null, cum = 0;
-  for (var k = 0; k < dist.length; k++) {
+  for (k = 0; k < dist.length; k++) {
     cum += dist[k];
     if (lo === null && cum >= 0.10) lo = k;
     if (hi === null && cum >= 0.90) hi = k;
@@ -2553,43 +2553,45 @@ function cwdRender(spreads, isHomeArr) {
   if (lo === null) lo = 0;
   if (hi === null) hi = n;
 
-  /* A 20-game conference gives 21 bars, most of them invisible. Show only the
-     range carrying real probability -- everything outside is rounding dust. */
-  var FLOOR = 0.002;
-  var first = 0, last = dist.length - 1;
+  /* Trim the dust so a 20-game league does not draw 21 bars, most invisible. */
+  var FLOOR = 0.002, first = 0, last = dist.length - 1;
   while (first < last && dist[first] < FLOOR) first++;
   while (last > first && dist[last] < FLOOR) last--;
   var trimmed = (first > 0) || (last < dist.length - 1);
   var shown = dist.slice(first, last + 1);
   var span = shown.length;
 
-  /* With many bars there is no room for a number over every one. */
-  var labelEvery = span <= 14 ? 1 : (span <= 20 ? 2 : 3);
-  var showPct = span <= 16;
-  var gap = span <= 14 ? 3 : (span <= 20 ? 2 : 1);
-  var tickSize = span <= 16 ? 10 : 9;
-
   var peak = Math.max.apply(null, shown);
   var modal = dist.indexOf(Math.max.apply(null, dist));
 
+  /* Heights in pixels, not percentages. A percentage height needs a resolved
+     parent height, and the flex row here sizes to content -- which is why an
+     earlier version drew nothing but labels. */
+  var PLOT = 132;
+  var gap = span <= 14 ? 4 : (span <= 20 ? 3 : 2);
+  var labelEvery = span <= 14 ? 1 : (span <= 20 ? 2 : 3);
+  var showPct = span <= 18;
+
   var bars = shown.map(function (p, i) {
-    var k = first + i;
-    var h = peak > 0 ? (p / peak) * 100 : 0;
-    var isModal = (k === modal);
-    var inBand = (k >= lo && k <= hi);
+    var kk = first + i;
+    var h = peak > 0 ? Math.round((p / peak) * PLOT) : 0;
+    if (h < 2) h = 2;
+    var isModal = (kk === modal);
+    var inBand = (kk >= lo && kk <= hi);
     var pct = p * 100;
-    var top = (showPct && pct >= 1) ? Math.round(pct) : '';
-    var tick = (isModal || ((k - first) % labelEvery === 0)) ? k : '';
-    return '<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;'
-      + 'align-items:center;gap:3px;min-width:0">'
-      + '<div style="font-family:\'Courier New\',monospace;font-size:9px;color:var(--txt3);'
-      + 'height:12px">' + top + '</div>'
-      + '<div title="' + k + ' wins: ' + pct.toFixed(1) + '%" style="width:100%;height:' + Math.max(h, 1) + '%;'
-      + 'min-height:2px;background:' + (isModal ? 'var(--acc)' : (inBand ? 'var(--acc2)' : 'var(--bdr2)')) + ';'
+    var top = (showPct && pct >= 0.5) ? pct.toFixed(0) + '%' : '';
+    var tick = (isModal || ((kk - first) % labelEvery === 0)) ? kk : '';
+    var col = isModal ? 'var(--acc)' : (inBand ? 'var(--acc2)' : 'var(--bdr2)');
+    return '<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;'
+      + 'align-items:center;justify-content:flex-end">'
+      + '<div style="font-family:\'Courier New\',monospace;font-size:9px;line-height:12px;'
+      + 'height:12px;color:' + (isModal ? 'var(--acc)' : 'var(--txt3)') + '">' + top + '</div>'
+      + '<div title="' + kk + ' wins: ' + pct.toFixed(1) + '%" '
+      + 'style="width:100%;height:' + h + 'px;background:' + col + ';'
       + 'border-radius:3px 3px 0 0"></div>'
-      + '<div style="font-family:\'Courier New\',monospace;font-size:' + tickSize + 'px;'
-      + 'color:' + (isModal ? 'var(--acc)' : 'var(--txt3)') + ';font-weight:' + (isModal ? '700' : '400') + '">'
-      + tick + '</div>'
+      + '<div style="font-family:\'Courier New\',monospace;font-size:10px;line-height:16px;'
+      + 'height:16px;color:' + (isModal ? 'var(--acc)' : 'var(--txt3)') + ';'
+      + 'font-weight:' + (isModal ? '700' : '400') + '">' + tick + '</div>'
       + '</div>';
   }).join('');
 
@@ -2598,19 +2600,22 @@ function cwdRender(spreads, isHomeArr) {
     + 'padding:14px;margin-top:14px">'
     + '<div style="font-family:\'Courier New\',monospace;font-size:11px;letter-spacing:2px;'
     + 'color:var(--acc);font-weight:700;text-transform:uppercase">Conference Win Distribution</div>'
-    + '<div style="font-size:11px;color:var(--txt3);margin-top:4px">'
+    + '<div style="font-size:11px;color:var(--txt3);margin-top:4px;line-height:1.55">'
     + 'Poisson-binomial over ' + n + ' conference games, widened for rating uncertainty '
-    + '(confidence ' + CWD_CONFIDENCE + ').<br>'
+    + '(confidence ' + CWD_CONFIDENCE + ' &asymp; &plusmn;' + sigma.toFixed(1) + ' pts of rating).<br>'
     + 'Mean <b style="color:var(--txt1)">' + mean.toFixed(1) + '</b> wins &middot; '
     + 'most likely <b style="color:var(--txt1)">' + modal + '</b> &middot; '
     + '80% of seasons land between <b style="color:var(--txt1)">' + lo + '</b> and '
     + '<b style="color:var(--txt1)">' + hi + '</b>'
-    + (trimmed ? '<br><span style="opacity:.75">Outcomes below ' + first + ' and above ' + last
+    + (trimmed ? '<br><span style="opacity:.7">Below ' + first + ' and above ' + last
         + ' wins are under 0.2% each and are not drawn.</span>' : '')
     + '</div>'
-    + '<div style="display:flex;align-items:flex-end;gap:' + gap + 'px;height:150px;margin-top:12px">'
+    + '<div style="display:flex;align-items:flex-end;gap:' + gap + 'px;'
+    + 'margin-top:12px;padding-bottom:2px;border-bottom:1px solid var(--bdr)">'
     + bars
     + '</div>'
+    + '<div style="font-family:\'Courier New\',monospace;font-size:9px;color:var(--txt3);'
+    + 'margin-top:6px;text-align:center">conference wins</div>'
     + '</div>';
 }
 
