@@ -239,31 +239,40 @@ def build_team_profiles(season, tmap):
         zt = pd.DataFrame({"game_id": s2["game_id"], "team_id": s2["team_id"],
                            "is3": is3.astype(int),
                            "rim": (~is3 & rim).astype(int),
-                           "rimmade": ((~is3 & rim) & (s2["scoring_play"] == True)).astype(int)})
+                           "rimmade": ((~is3 & rim) & (s2["scoring_play"] == True)).astype(int),
+                           "t3made": (is3 & (s2["scoring_play"] == True)).astype(int)})
         zg = zt.groupby(["game_id", "team_id"]).agg(
             three_rate=("is3", "mean"), rim_rate=("rim", "mean"),
-            rm=("rimmade", "sum"), ra=("rim", "sum")).reset_index()
+            rm=("rimmade", "sum"), ra=("rim", "sum"),
+            tm=("t3made", "sum"), ta=("is3", "sum")).reset_index()
         zg["rim_pct"] = zg["rm"] / zg["ra"].replace(0, np.nan)
-        tb = tb.merge(zg[["game_id", "team_id", "three_rate", "rim_rate", "rim_pct"]],
+        zg["three_pct"] = zg["tm"] / zg["ta"].replace(0, np.nan)
+        tb = tb.merge(zg[["game_id", "team_id", "three_rate", "rim_rate",
+                          "rim_pct", "three_pct"]],
                       on=["game_id", "team_id"], how="left")
-        oz = zg[["game_id", "team_id", "three_rate"]].rename(
-            columns={"team_id": "opponent_team_id", "three_rate": "opp_three"})
+        oz = zg[["game_id", "team_id", "three_rate", "rim_rate"]].rename(
+            columns={"team_id": "opponent_team_id",
+                     "three_rate": "opp_three", "rim_rate": "opp_rim"})
         tb = tb.merge(oz, on=["game_id", "opponent_team_id"], how="left")
     else:
-        for c in ["three_rate", "rim_rate", "rim_pct", "opp_three"]:
+        for c in ["three_rate", "rim_rate", "rim_pct", "three_pct",
+                  "opp_three", "opp_rim"]:
             tb[c] = np.nan
 
     p = tb.groupby("team_location").agg(
         games=("game_id", "count"), poss=("poss", "mean"), ftr=("ftr", "mean"),
         foul_rate=("foul_rate", "mean"), d_ftr_allowed=("opp_got_ftr", "mean"),
         three_rate=("three_rate", "mean"), rim_rate=("rim_rate", "mean"),
-        rim_pct=("rim_pct", "mean"), d_three_rate=("opp_three", "mean")).join(A)
+        rim_pct=("rim_pct", "mean"), three_pct=("three_pct", "mean"),
+        d_three_rate=("opp_three", "mean"),
+        d_rim_rate=("opp_rim", "mean")).join(A)
     p = p[p["games"] >= 8]
     p["mid_rate"] = 1 - p["three_rate"] - p["rim_rate"]
 
     K = 8
     for c in ["poss", "ftr", "foul_rate", "d_ftr_allowed", "three_rate",
-              "rim_rate", "mid_rate", "rim_pct", "d_three_rate"]:
+              "rim_rate", "mid_rate", "rim_pct", "three_pct",
+              "d_three_rate", "d_rim_rate"]:
         L = p[c].mean()
         w = p["games"] / (p["games"] + K)
         p[c] = w * p[c] + (1 - w) * L
@@ -287,6 +296,8 @@ def build_team_profiles(season, tmap):
              "three_rate": num_or_none(r["three_rate"]), "mid_rate": num_or_none(r["mid_rate"]),
              "rim_rate": num_or_none(r["rim_rate"]), "rim_pct": num_or_none(r["rim_pct"]),
              "d_three_rate": num_or_none(r["d_three_rate"]),
+             "three_pct": num_or_none(r.get("three_pct")),
+             "d_rim_rate": num_or_none(r.get("d_rim_rate")),
              "t3m": num_or_none(r.get("t3m")), "t3m_allowed": num_or_none(r.get("t3m_allowed")),
              "reb": num_or_none(r.get("reb")), "reb_allowed": num_or_none(r.get("reb_allowed")),
              "ast": num_or_none(r.get("ast")), "ast_allowed": num_or_none(r.get("ast_allowed")),
