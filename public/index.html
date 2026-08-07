@@ -3119,6 +3119,24 @@ function loadStandingsSidebar(){
   });
 }
 function spreadToMLJuiced(sp){return spreadToML(sp);}
+/* Sort a slate by tip time. commence_time is stamped by pull_bol_spreads from the
+   Odds API feed, so it only exists once odds have been pulled for a game. Anything
+   without one falls back to its date, then to the biggest matchup, which keeps the
+   ordering stable before the season and for games the book has not posted yet. */
+function cbkByTipoff(a, b){
+  var at = a.commence_time ? Date.parse(a.commence_time) : NaN;
+  var bt = b.commence_time ? Date.parse(b.commence_time) : NaN;
+  var ao = isNaN(at), bo = isNaN(bt);
+  if(!ao && !bo && at !== bt) return at - bt;
+  if(!ao && bo) return -1;              /* a timed game sorts above an untimed one */
+  if(ao && !bo) return 1;
+  var ad = a.game_date || '', bd = b.game_date || '';
+  if(ad < bd) return -1;
+  if(ad > bd) return 1;
+  if(!a.home || !a.away) return 1;
+  if(!b.home || !b.away) return -1;
+  return (b.home.pr + b.away.pr) - (a.home.pr + a.away.pr);
+}
 function loadSpreads(filter){
   try{localStorage.setItem('cbk_spreads_filter',filter);}catch(e){}
   var today=cbkToday();
@@ -3175,17 +3193,10 @@ function loadSpreads(filter){
     if(!games.length){body.innerHTML='<div style="padding:30px;text-align:center;color:var(--txt3);font-size:12px">No games found</div>';document.getElementById('spreads-count').textContent='0 games';return;}
     document.getElementById('spreads-count').textContent=games.length+' game'+(games.length!==1?'s':'');
     if(isToday){
-      var sorted=games.slice().sort(function(a,b){
-        if(!a.home||!a.away)return 1;if(!b.home||!b.away)return -1;
-        return(b.home.pr+b.away.pr)-(a.home.pr+a.away.pr);
-      });
+      var sorted=games.slice().sort(cbkByTipoff);
       body.innerHTML=buildGameCards(sorted,false,true);
     } else {
-      var sorted=games.slice().sort(function(a,b){
-        if(a.game_date<b.game_date)return -1;if(a.game_date>b.game_date)return 1;
-        if(!a.home||!a.away)return 1;if(!b.home||!b.away)return -1;
-        return(b.home.pr+b.away.pr)-(a.home.pr+a.away.pr);
-      });
+      var sorted=games.slice().sort(cbkByTipoff);
       body.innerHTML=buildGameCards(sorted,false,false);
     }
   });
@@ -10635,10 +10646,11 @@ function lsLoad(){
   var date=document.getElementById('ls-date').value||cbkToday();
   var box=document.getElementById('ls-body');
   box.innerHTML='<div style="padding:20px;color:var(--txt3);font-size:12px">Loading '+date+'...</div>';
-  sb.from('games').select('id,game_date,neutral_site,status,home:home_team_id(id,team,pr,hc,conference),away:away_team_id(id,team,pr,hc,conference)')
+  sb.from('games').select('id,game_date,commence_time,neutral_site,status,home:home_team_id(id,team,pr,hc,conference),away:away_team_id(id,team,pr,hc,conference)')
     .eq('game_date',date).order('id',{ascending:true}).range(0,999)
     .then(function(res){
       var g=(res.data||[]).filter(function(x){return x.home&&x.away;});
+      g.sort(cbkByTipoff);
       _lsGames=g;
       if(!g.length){box.innerHTML='<div class="cbk-empty"><b>No games scheduled on '+date+'.</b><br>Pick another date above.</div>';return;}
       lsRender();
