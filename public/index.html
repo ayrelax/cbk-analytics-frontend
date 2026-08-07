@@ -10873,11 +10873,16 @@ function lsLoad(){
   sb.from('games').select('id,game_date,commence_time,neutral_site,status,home_rot,away_rot,opening_total,closing_total,home:home_team_id(id,team,pr,hc,conference),away:away_team_id(id,team,pr,hc,conference)')
     .eq('game_date',date).order('id',{ascending:true}).range(0,999)
     .then(function(res){
+      if(res&&res.error)throw res.error;
       var g=(res.data||[]).filter(function(x){return x.home&&x.away;});
       g.sort(cbkByRotation);
       _lsGames=g;
       if(!g.length){box.innerHTML='<div class="cbk-empty"><b>No games scheduled on '+date+'.</b><br>Pick another date above.</div>';return;}
       lsRender();
+    })
+    .catch(function(e){
+      box.innerHTML='<div class="cbk-empty"><b>Could not load the line sheet.</b><br>'
+        +String(e&&e.message||e)+'</div>';
     });
 }
 function lsRender(){
@@ -10904,7 +10909,7 @@ function lsRender(){
       var line=fmtSp(-Math.abs(rsp));
       var tot=(g.closing_total!=null?parseFloat(g.closing_total).toFixed(1)
               :(g.opening_total!=null?parseFloat(g.opening_total).toFixed(1):'&mdash;'));
-      var zc=(!dated&&z)?' bd-z':'';
+      var zc=z?' bd-z':'';
       out+='<tr class="bd-r'+zc+'">'
         +'<td class="bd-rot">'+(r.a!=null?r.a:'&mdash;')+'</td>'
         +'<td class="bd-t"><span class="'+(!hf?'bd-fav':'bd-tm')+'">'+g.away.team+'</span>'+buyBadge(g)+'</td>'
