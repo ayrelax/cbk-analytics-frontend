@@ -3547,9 +3547,10 @@ function gpAngles(g,away,home,fav,rsp){
   return '<div class="psm-sechdr">Edges &amp; Fades</div>'
     +'<div class="gp-ang"><table>'+body+'</table></div>';
 }
-/* Export the board currently on screen. Mirrors what the table shows: rotation,
-   both teams, my spread and first half on the favourite, moneyline on both sides.
-   Regular board first, then the extra board, in the same order as the page. */
+/* Export the board on screen. One row per game, written as a real workbook rather
+   than CSV so the team columns can carry a set width. Only the favourite has a
+   number, so the spread is written as "Rutgers -3.0" -- unambiguous on a single
+   row without needing a separate favourite column. */
 var _sprGames=[];
 function gsExportBoard(){
   if(!_sprGames.length){alert('No games loaded to export.');return;}
@@ -3561,32 +3562,30 @@ function gsExportBoard(){
   var reg=[],ext=[];
   _sprGames.forEach(function(g){ if(g.home&&g.away)(rot(g).extra?ext:reg).push(g); });
 
-  var out=[['Board','Rot','Team','Opponent','Site','My Spread','ML','1st Half','Total','Date','Tip']];
+  var rows=[['#','Rot #','Team','Opponent','Site','My Spread','Date','Tip','Board']];
+  var i=1;
   function push(list,label){
     list.forEach(function(g){
-      var sp=calcSpreadG(g), rsp=Math.round(sp*2)/2, ml=spreadToMLJuiced(sp);
+      var sp=calcSpreadG(g), rsp=Math.round(sp*2)/2;
       var hf=sp>=0, r=rot(g);
-      var line=fmtSp(-Math.abs(rsp)), h1=firstHalfSpread(rsp)||'';
-      var tot=(g.closing_total!=null?g.closing_total:(g.opening_total!=null?g.opening_total:''));
+      var favTeam=hf?g.home.team:g.away.team;
+      var spread=favTeam+' '+fmtSp(-Math.abs(rsp));
+      var rotTxt=(r.a!=null&&r.h!=null)?(r.a+'/'+r.h):(r.a!=null?String(r.a):(r.h!=null?String(r.h):''));
       var tip=g.commence_time?new Date(g.commence_time).toLocaleString():'';
-      out.push([label,(r.a!=null?r.a:''),g.away.team,g.home.team,'away',
-                (!hf?line:''),(!hf?ml.fav:ml.dog),(!hf?h1:''),tot,g.game_date,tip]);
-      out.push([label,(r.h!=null?r.h:''),g.home.team,g.away.team,
-                (g.neutral_site?'neutral':'home'),
-                (hf?line:''),(hf?ml.fav:ml.dog),(hf?h1:''),tot,g.game_date,tip]);
+      rows.push([i++, rotTxt, g.away.team, g.home.team,
+                 (g.neutral_site?'neutral':'at '+g.home.team),
+                 spread, g.game_date, tip, label]);
     });
   }
   push(reg,'Regular'); push(ext,'Extra');
 
-  var csv=out.map(function(r){
-    return r.map(function(c){
-      c=(c===null||c===undefined)?'':String(c);
-      return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;
-    }).join(',');
-  }).join('\n');
-
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:4},{wch:12},{wch:15},{wch:15},{wch:16},{wch:18},{wch:11},{wch:20},{wch:9}];
+  ws['!freeze']={xSplit:0,ySplit:1};
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Board');
   var lbl=(typeof _spreadsFilter!=='undefined'&&_spreadsFilter)?_spreadsFilter:'board';
-  xDownload('game_spreads_'+lbl+'_'+cbkToday()+'.csv',csv);
+  XLSX.writeFile(wb,'game_spreads_'+lbl+'_'+cbkToday()+'.xlsx');
 }
 function buildGameCards(games,isFinal,isToday){
   /* Board layout: two rows per game, only the favourite carries numbers.
