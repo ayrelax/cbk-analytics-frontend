@@ -13,6 +13,7 @@
 :root{--bg0:#f8f4ef;--bg1:#ffffff;--bg2:#ede8e1;--bg3:#e5ddd4;--bg4:#d4c9b8;--acc:#8b6914;--acc2:#c8a96e;--acc3:#b8860b;--grn:#1b5e20;--grn2:#2e7d32;--red:#b71c1c;--red2:#c62828;--amb:#e65100;--amb2:#ff8f00;--pur:#6a1b9a;--txt1:#1a1208;--txt2:#2c1f0a;--txt3:#4a3510;--bdr:#cabda8;--bdr2:#b6a482;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 body{background:var(--bg0);color:var(--txt1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;min-height:100vh}
 .logo,.nav,.nav-btn,.clock,.live-badge,.fresh-badge,.ticker,.ticker-track,#tipoff,#cbk-theme-toggle,.panel-title,.panel-title-dot,.tp-srow{transition:background .12s}.tp-srow:hover{background:rgba(0,0,0,.035)}.tp-srow.tp-sel{background:rgba(0,0,0,.06)}
+.bd{max-width:680px;background:var(--bg1);border:2px solid var(--txt1);border-radius:8px;overflow:hidden}.bd table{width:100%;border-collapse:collapse;table-layout:fixed}.bd col.c1{width:64px}.bd col.c3{width:66px}.bd col.c4{width:64px}.bd col.c5{width:96px}.bd col.c6{width:76px}.bd col.c7{width:74px}.bd th{padding:7px 9px;font-family:"Courier New",monospace;font-size:10px;letter-spacing:1.5px;background:var(--txt1);color:var(--bg1);text-align:left}.bd th.ra{text-align:right}.bd th.ca{text-align:center}.bd td{padding:6px 9px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bd-z{background:var(--bg2)}.bd-g td{border-bottom:1px solid var(--bdr)}.bd-rot{font-family:"Courier New",monospace;font-size:11px;color:var(--txt3)}.bd-tm{font-weight:600;color:var(--txt2)}.bd-fav{font-weight:700;color:var(--txt1)}.bd-n{font-family:"Courier New",monospace;font-size:13px;font-weight:700;text-align:right;color:var(--acc)}.bd-h1{font-family:"Courier New",monospace;font-size:11px;text-align:right;color:var(--acc)}.bd-ml{font-family:"Courier New",monospace;font-size:12px;text-align:right;color:var(--txt3)}.bd-mlf{font-family:"Courier New",monospace;font-size:12px;text-align:right;color:var(--txt1);font-weight:700}.bd-tot{font-family:"Courier New",monospace;font-size:14px;font-weight:700;text-align:center;vertical-align:middle;background:var(--bg2);border-left:1px solid var(--bdr);color:var(--acc)}.bd-xb{font-family:"Courier New",monospace;font-size:10px;letter-spacing:2px;background:var(--txt1);color:var(--bg1);padding:5px 9px}.bd-date{font-family:"Courier New",monospace;font-size:10px;letter-spacing:1.5px;color:var(--txt3);background:var(--bg2);padding:5px 9px}.bd-pv{text-align:right;vertical-align:middle}.bd-btn{font-family:"Courier New",monospace;font-size:9px;letter-spacing:1px;font-weight:700;background:transparent;color:var(--acc);border:1px solid var(--acc);border-radius:3px;padding:2px 7px;cursor:pointer}.bd-btn:hover{background:var(--acc);color:var(--bg1)}.bd-sc{font-family:"Courier New",monospace;text-align:right;color:var(--txt2)}.bd-scw{font-weight:700;color:var(--txt1)}.bd-w{font-family:"Courier New",monospace;font-size:9px;color:var(--grn2);font-weight:700}.bd-cov{font-size:11px;font-family:"Courier New",monospace}
 .panel-hdr,.cbox-hdr,.cbox-hdr-sub,.gc-section,.psm-sechdr,.psm-scout-hdr,.pru-section-hdr,.pru-header,.pru-team-name,.conf-hdr,.conf-hdr-cols,.ct-seedgroup-hdr,.sim-market-hdr,.tp-group-hdr,.tp-market-hdr,.playin-card-hdr,.qc-title,.qc-label,.b-col-hdr,.sp-col-hdr,.edit-region-col-hdr,.roster-slot-label,.team-stat-label,.team-header-name,.team-header-sub,th{font-family:'Courier New',monospace}
 .top-bar{background:var(--bg1);border-bottom:1px solid var(--bdr2);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .logo{font-size:15px;font-weight:700;letter-spacing:3px;color:var(--acc)}
@@ -3123,6 +3124,17 @@ function spreadToMLJuiced(sp){return spreadToML(sp);}
    Odds API feed, so it only exists once odds have been pulled for a game. Anything
    without one falls back to its date, then to the biggest matchup, which keeps the
    ordering stable before the season and for games the book has not posted yet. */
+function cbkByRotation(a,b){
+  /* Rotation numbers are assigned in tip order, so they are the truest board
+     ordering -- but they only arrive once a book has hung the game. Anything
+     without one falls through to the tip-time comparator. */
+  var ar=(a.away_rot!=null?parseInt(a.away_rot,10):null);
+  var br=(b.away_rot!=null?parseInt(b.away_rot,10):null);
+  if(ar!=null&&br!=null&&ar!==br)return ar-br;
+  if(ar!=null&&br==null)return -1;
+  if(ar==null&&br!=null)return 1;
+  return cbkByTipoff(a,b);
+}
 function cbkByTipoff(a, b){
   var at = a.commence_time ? Date.parse(a.commence_time) : NaN;
   var bt = b.commence_time ? Date.parse(b.commence_time) : NaN;
@@ -3193,10 +3205,10 @@ function loadSpreads(filter){
     if(!games.length){body.innerHTML='<div style="padding:30px;text-align:center;color:var(--txt3);font-size:12px">No games found</div>';document.getElementById('spreads-count').textContent='0 games';return;}
     document.getElementById('spreads-count').textContent=games.length+' game'+(games.length!==1?'s':'');
     if(isToday){
-      var sorted=games.slice().sort(cbkByTipoff);
+      var sorted=games.slice().sort(cbkByRotation);
       body.innerHTML=buildGameCards(sorted,false,true);
     } else {
-      var sorted=games.slice().sort(cbkByTipoff);
+      var sorted=games.slice().sort(cbkByRotation);
       body.innerHTML=buildGameCards(sorted,false,false);
     }
   });
@@ -3420,70 +3432,88 @@ function travelRender(){var body=document.getElementById('travel-body');if(!body
  }
  body.innerHTML=h;}
 function buildGameCards(games,isFinal,isToday){
-  var html='';var lastDate='';
-  var topThreshold=0;
-  if(isToday&&games.length>0&&games[0].home&&games[0].away)topThreshold=(games[0].home.pr+games[0].away.pr)*0.92;
-  if(isToday)html+='<div class="gc-section">Top matchups by combined PR</div>';
-  games.forEach(function(g,idx){
-    if(!g.home||!g.away)return;
-    var sp=calcSpreadG(g);
-    var rsp=Math.round(sp*2)/2;
-    var ml=spreadToMLJuiced(sp);
-    var hf=sp>=0;
-    var favTeam=hf?g.home:g.away;
-    var combPR=g.home.pr+g.away.pr;
-    var isTop=isToday&&combPR>=topThreshold;
-    var isLive=g.status==='live';
-    var isConf=g.home.conference===g.away.conference;
-    var fp=SP[String(-Math.abs(rsp))];if(fp===undefined)fp=0.5;
-    var favWP=hf?fp:1-fp;var favWPpct=Math.round(favWP*100);
-    var homeScore=g.home_score!=null?g.home_score:'';
-    var awayScore=g.away_score!=null?g.away_score:'';
-    var homeWon=g.home_score!=null&&g.away_score!=null&&g.home_score>g.away_score;
-    var awayWon=g.home_score!=null&&g.away_score!=null&&g.away_score>g.home_score;
-    if(isFinal||!isToday){
-      if(g.game_date!==lastDate){html+='<div class="gc-section">'+g.game_date+'</div>';lastDate=g.game_date;}
-    }
-    var cardCls='gc'+(isTop?' gc-top':'')+(isFinal?' gc-final':'')+(isLive?' gc-live':'');
-    html+='<div class="'+cardCls+'">';
-    html+='<div class="gc-main">';
-    html+='<div class="gc-date"><span>'+g.game_date+'</span>';
-    if(!isFinal)html+='<span class="gc-comb">'+combPR.toFixed(1)+' COMB</span>';
-    if(isLive)html+='<span class="gc-badge gc-badge-live">LIVE</span>';
-    html+='</div>';
-    html+='<div class="gc-teams">';
-    html+='<div class="gc-team"><span class="gc-tnm">'+TL(g.away.team)+'</span><span class="gc-tpr">'+g.away.pr.toFixed(1)+'</span>'+(isFinal?'<span class="gc-score'+(awayWon?' gc-win':'')+'">'+awayScore+'</span>':'')+'</div>';
-    html+='<div class="gc-divider"></div>';
-    html+='<div class="gc-team"><span class="gc-tnm">'+TL(g.home.team)+'</span><span class="gc-tpr">'+g.home.pr.toFixed(1)+'</span>'+(isFinal?'<span class="gc-score'+(homeWon?' gc-win':'')+'">'+homeScore+'</span>':'')+'</div>';
-    html+='</div>';
-    html+='<div class="gc-meta">';
-    if(g.neutral_site)html+='<span class="gc-badge gc-badge-neutral">NEUTRAL</span>';
-    else html+='<span class="gc-badge gc-badge-home">'+g.home.team.substring(0,10)+' HOME</span>';
-    html+='<span class="gc-badge '+(isConf?'gc-badge-conf':'gc-badge-nonconf')+'">'+(isConf?'CONF':'NON-CONF')+'</span>';
-    html+=gsSpotBadges(g);
-    html+=buyBadge(g,'gc-badge gc-badge-buy');
-    html+='<span class="gc-badge" style="cursor:pointer;background:var(--acc);color:#fff;border-color:var(--acc)" onclick="openGamePreview('+g.away.id+','+g.home.id+','+(g.neutral_site?'true':'false')+')">PREVIEW</span>';
-    if(isFinal&&g.home_cover!=null){var coverTeam=g.home_cover?g.home.team:g.away.team;var coverMargin=g.cover_margin?Math.abs(parseFloat(g.cover_margin)).toFixed(1):'?';html+='<span class="gc-badge gc-badge-conf" style="margin-left:4px">'+coverTeam+' COV +'+coverMargin+'</span>';}
-    html+='</div></div>';
-    if(!isFinal){
-      html+='<div class="gc-odds">';
-      html+='<div class="gc-fav-team">'+favTeam.team.substring(0,12).toUpperCase()+' FAV</div>';
-      html+='<div class="gc-spread">'+fmtSp(-Math.abs(rsp))+'</div>';
-      html+='<div class="gc-ml-row"><span class="gc-ml-fav">'+fmtOdds(ml.fav)+'</span><span class="gc-ml-sep">/</span><span class="gc-ml-dog">'+fmtOdds(ml.dog)+'</span></div>';
-      html+='<div style="font-size:9px;color:var(--txt3);letter-spacing:.3px;margin-top:2px">1H '+(firstHalfSpread(rsp)||'N/A')+'</div>';
-      html+='<div class="gc-wpbar"><div class="gc-wpfill" style="width:'+favWPpct+'%"></div></div>';
-      html+='<div class="gc-wplabel">'+favWPpct+'% win prob</div>';
-      html+='</div>';
-    } else {
-      html+='<div class="gc-odds gc-odds-final">';
-      html+='<div class="gc-fav-team">MODEL SPREAD</div>';
-      html+='<div class="gc-spread" style="color:var(--acc)">'+favTeam.team.substring(0,10)+' '+fmtSp(-Math.abs(rsp))+'</div>';
-      if(g.home_score!=null){var margin=Math.abs(g.home_score-g.away_score);var winner=homeWon?g.home.team:g.away.team;html+='<div style="font-size:10px;color:var(--txt3);margin-top:4px">'+winner+' won by '+margin+'</div>';if(g.cover_margin!=null){var cm=parseFloat(g.cover_margin);html+='<div class="gc-cover" style="color:'+(cm>0?'var(--grn2)':'var(--red2)')+'">'+(cm>0?'+':'')+cm.toFixed(1)+' vs spread</div>';}}
-      html+='</div>';
-    }
-    html+='</div>';
-  });
-  return html;
+  /* Board layout: two rows per game, only the favourite carries numbers.
+     Rotation numbers lead; six-digit numbers are the extra board and are split
+     into their own section, which is how books hang them. Alternating tint
+     follows the game rather than the row so pairs stay grouped. */
+  function rotOf(g){
+    var a=(g.away_rot!=null?parseInt(g.away_rot,10):null);
+    var h=(g.home_rot!=null?parseInt(g.home_rot,10):null);
+    return {a:a,h:h,extra:((a!=null&&a>=100000)||(h!=null&&h>=100000))};
+  }
+  var reg=[],ext=[];
+  games.forEach(function(g){ if(!g.home||!g.away)return; (rotOf(g).extra?ext:reg).push(g); });
+
+  function section(list,startZebra){
+    var html='',z=startZebra,lastDate='';
+    list.forEach(function(g){
+      var sp=calcSpreadG(g);
+      var rsp=Math.round(sp*2)/2;
+      var ml=spreadToMLJuiced(sp);
+      var hf=sp>=0;                       /* home favoured */
+      var r=rotOf(g);
+      var isLive=g.status==='live';
+      var homeWon=g.home_score!=null&&g.away_score!=null&&g.home_score>g.away_score;
+      var awayWon=g.home_score!=null&&g.away_score!=null&&g.away_score>g.home_score;
+      var zc=z?' bd-z':'';
+      if((isFinal||!isToday)&&g.game_date!==lastDate){
+        html+='<tr><td colspan="6" class="bd-date">'+g.game_date+'</td></tr>';
+        lastDate=g.game_date;
+      }
+      var badges=gsSpotBadges(g)+buyBadge(g,'gc-badge gc-badge-buy');
+      var line=fmtSp(-Math.abs(rsp));
+      var h1=firstHalfSpread(rsp)||'';
+
+      function teamCell(t,won,isFav){
+        return '<span class="'+(isFav?'bd-fav':'bd-tm')+'">'+TL(t.team)+'</span>'
+          + (isLive?' <span class="gc-badge gc-badge-live">LIVE</span>':'')
+          + (isFinal&&won?' <span class="bd-w">W</span>':'');
+      }
+      var scoreA=isFinal&&g.away_score!=null?'<td class="bd-sc'+(awayWon?' bd-scw':'')+'">'+g.away_score+'</td>':'';
+      var scoreH=isFinal&&g.home_score!=null?'<td class="bd-sc'+(homeWon?' bd-scw':'')+'">'+g.home_score+'</td>':'';
+
+      /* away row */
+      html+='<tr class="bd-r'+zc+'">'
+        +'<td class="bd-rot">'+(r.a!=null?r.a:'&mdash;')+'</td>'
+        +'<td class="bd-t">'+teamCell(g.away,awayWon,!hf)+' '+badges+'</td>'
+        +'<td class="bd-n">'+(!hf?line:'')+'</td>'
+        +'<td class="'+(!hf?'bd-mlf':'bd-ml')+'">'+fmtOdds(!hf?ml.fav:ml.dog)+'</td>'
+        +'<td class="bd-h1">'+(!hf?h1:'')+'</td>'
+        +'<td class="bd-pv" rowspan="2"><button class="bd-btn" onclick="openGamePreview('
+          +g.away.id+','+g.home.id+','+(g.neutral_site?'true':'false')+')">PREVIEW</button></td>'
+        +'</tr>';
+
+      /* home row */
+      html+='<tr class="bd-r bd-g'+zc+'">'
+        +'<td class="bd-rot">'+(r.h!=null?r.h:'&mdash;')+'</td>'
+        +'<td class="bd-t">'+teamCell(g.home,homeWon,hf)
+          +(g.neutral_site?' <span class="gc-badge gc-badge-neutral">N</span>':'')+'</td>'
+        +'<td class="bd-n">'+(hf?line:'')+'</td>'
+        +'<td class="'+(hf?'bd-mlf':'bd-ml')+'">'+fmtOdds(hf?ml.fav:ml.dog)+'</td>'
+        +'<td class="bd-h1">'+(hf?h1:'')+'</td>'
+        +'</tr>';
+
+      if(isFinal&&g.cover_margin!=null){
+        var cm=parseFloat(g.cover_margin);
+        var ct=g.home_cover?g.home.team:g.away.team;
+        html+='<tr class="bd-r bd-g'+zc+'"><td></td><td colspan="4" class="bd-cov" style="color:'
+          +(cm>0?'var(--grn2)':'var(--red2)')+'">'+ct+' covered by '+Math.abs(cm).toFixed(1)+'</td></tr>';
+      }
+      z=!z;
+    });
+    return html;
+  }
+
+  if(!reg.length&&!ext.length)return '';
+  var out='<div class="bd"><table><colgroup><col class="c1"><col><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup>'
+    +'<tr><th>ROT</th><th>TEAM</th><th class="ra">MY LINE</th><th class="ra">ML</th><th class="ra">1ST HALF</th><th></th></tr>';
+  out+=section(reg,false);
+  if(ext.length){
+    out+='<tr><td colspan="6" class="bd-xb">EXTRA BOARD</td></tr>';
+    out+=section(ext,false);
+  }
+  out+='</table></div>';
+  return out;
 }
 function getRegions(){return[document.getElementById('reg0').value||'EAST',document.getElementById('reg1').value||'SOUTH',document.getElementById('reg2').value||'MIDWEST',document.getElementById('reg3').value||'WEST'];}
 /* =================== NCAA TOURNAMENT v2 =================== */
@@ -10682,11 +10712,11 @@ function lsLoad(){
   var date=document.getElementById('ls-date').value||cbkToday();
   var box=document.getElementById('ls-body');
   box.innerHTML='<div style="padding:20px;color:var(--txt3);font-size:12px">Loading '+date+'...</div>';
-  sb.from('games').select('id,game_date,commence_time,neutral_site,status,home:home_team_id(id,team,pr,hc,conference),away:away_team_id(id,team,pr,hc,conference)')
+  sb.from('games').select('id,game_date,commence_time,neutral_site,status,home_rot,away_rot,opening_total,closing_total,home:home_team_id(id,team,pr,hc,conference),away:away_team_id(id,team,pr,hc,conference)')
     .eq('game_date',date).order('id',{ascending:true}).range(0,999)
     .then(function(res){
       var g=(res.data||[]).filter(function(x){return x.home&&x.away;});
-      g.sort(cbkByTipoff);
+      g.sort(cbkByRotation);
       _lsGames=g;
       if(!g.length){box.innerHTML='<div class="cbk-empty"><b>No games scheduled on '+date+'.</b><br>Pick another date above.</div>';return;}
       lsRender();
@@ -10695,34 +10725,60 @@ function lsLoad(){
 function lsRender(){
   var box=document.getElementById('ls-body');
   var date=document.getElementById('ls-date').value||cbkToday();
-  var rows='',nHigh=0;
-  _lsGames.forEach(function(g){
-    var sp=calcSpreadG(g);
-    var buy=cbkIsBuy(g);
-    var v=cbkVol(sp,g.game_date,buy,null);
-    if(v.lvl==='HIGH')nHigh++;
-    var ml=spreadToML(sp);
-    var favName=sp>=0?g.home.team:g.away.team;
-    var line=fmtSp(-Math.abs(Math.round(sp*2)/2));
-    rows+='<tr>'
-      +'<td class="ls-dot"><span class="cbk-dot" style="background:'+v.col+'" title="'+v.txt+'"></span></td>'
-      +'<td class="ls-team"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.away.team,g.away.conference)+'"></span>'+g.away.team+'</td>'
-      +'<td class="ls-at">'+(g.neutral_site?'vs':'@')+'</td>'
-      +'<td class="ls-team"><span class="cbk-cbar" style="background:'+cbkTeamColor(g.home.team,g.home.conference)+'"></span>'+g.home.team+'</td>'
-      +'<td class="ls-num">'+favName+' <b>'+line+'</b>'+buyBadge(g)+'</td>'
-      +'<td class="ls-ml tnum">'+fmtOdds(ml.fav)+' / '+fmtOdds(ml.dog)+'</td>'
-      +'<td class="ls-flag" style="color:'+v.col+'">'+v.lvl+(buy?' &middot; BUY':'')+'</td>'
-      +'</tr>';
-  });
+  /* Two rows per game with the total spanning both. Only the favourite carries a
+     spread. Rotation numbers lead; six-digit numbers are the extra board. */
+  function rotOf(g){
+    var a=(g.away_rot!=null?parseInt(g.away_rot,10):null);
+    var h=(g.home_rot!=null?parseInt(g.home_rot,10):null);
+    return {a:a,h:h,extra:((a!=null&&a>=100000)||(h!=null&&h>=100000))};
+  }
+  var reg=[],ext=[];
+  _lsGames.forEach(function(g){ (rotOf(g).extra?ext:reg).push(g); });
+
+  function section(list){
+    var out='',z=false;
+    list.forEach(function(g){
+      var sp=calcSpreadG(g);
+      var rsp=Math.round(sp*2)/2;
+      var ml=spreadToML(sp);
+      var hf=sp>=0;
+      var r=rotOf(g);
+      var line=fmtSp(-Math.abs(rsp));
+      var tot=(g.closing_total!=null?parseFloat(g.closing_total).toFixed(1)
+              :(g.opening_total!=null?parseFloat(g.opening_total).toFixed(1):'&mdash;'));
+      var zc=z?' bd-z':'';
+      out+='<tr class="bd-r'+zc+'">'
+        +'<td class="bd-rot">'+(r.a!=null?r.a:'&mdash;')+'</td>'
+        +'<td class="bd-t"><span class="'+(!hf?'bd-fav':'bd-tm')+'">'+g.away.team+'</span>'+buyBadge(g)+'</td>'
+        +'<td class="bd-n">'+(!hf?line:'')+'</td>'
+        +'<td class="'+(!hf?'bd-mlf':'bd-ml')+'">'+fmtOdds(!hf?ml.fav:ml.dog)+'</td>'
+        +'<td class="bd-tot'+zc+'" rowspan="2">'+tot+'</td>'
+        +'</tr>'
+        +'<tr class="bd-r bd-g'+zc+'">'
+        +'<td class="bd-rot">'+(r.h!=null?r.h:'&mdash;')+'</td>'
+        +'<td class="bd-t"><span class="'+(hf?'bd-fav':'bd-tm')+'">'+g.home.team+'</span>'
+          +(g.neutral_site?' <span class="gc-badge gc-badge-neutral">N</span>':'')+'</td>'
+        +'<td class="bd-n">'+(hf?line:'')+'</td>'
+        +'<td class="'+(hf?'bd-mlf':'bd-ml')+'">'+fmtOdds(hf?ml.fav:ml.dog)+'</td>'
+        +'</tr>';
+      z=!z;
+    });
+    return out;
+  }
+
+  var tbl='<div class="bd"><table><colgroup><col class="c1"><col><col class="c3"><col class="c4"><col class="c7"></colgroup>'
+    +'<tr><th>ROT</th><th>TEAM</th><th class="ra">SPREAD</th><th class="ra">ML</th><th class="ca">TOTAL</th></tr>'
+    +section(reg);
+  if(ext.length) tbl+='<tr><td colspan="5" class="bd-xb">EXTRA BOARD</td></tr>'+section(ext);
+  tbl+='</table></div>';
+
   box.innerHTML='<div class="cbk-sheet-hdr"><div><div style="font-size:15px;font-weight:700">Berbert&rsquo;s Full Court Press &mdash; Line Sheet</div>'
-    +'<div style="font-size:11px;color:var(--txt3)">'+date+' &middot; '+_lsGames.length+' game'+(_lsGames.length===1?'':'s')+' &middot; '+nHigh+' high-variance</div></div>'
-    +cbkBtns('line-sheet')+'</div>'
-    +'<table class="tbl ls-tbl"><thead><tr><th></th><th>AWAY</th><th></th><th>HOME</th><th>OUR NUMBER</th><th>MONEYLINE</th><th>CONFIDENCE</th></tr></thead><tbody>'
-    +rows+'</tbody></table>'
-    +'<div class="cbk-legend"><b>CONFIDENCE</b> &mdash; LOW is market-quality, MED elevated variance, HIGH means widen or lower the limit. '
-    +'Derived from spread size, month and buy-game status. BUY marks a low-major visiting a high or mid-major. '
-    +'State restrictions are on the Compliance tab.</div>';
-}/* ---- print / save-as-PDF ---- */
+    +'<div style="font-size:11px;color:var(--txt3)">'+date+' &middot; '+_lsGames.length+' game'+(_lsGames.length===1?'':'s')
+    +(ext.length?' &middot; '+ext.length+' on the extra board':'')+'</div></div>'
+    +cbkBtns('line-sheet')+'</div>'+tbl
+    +'<div class="cbk-legend">Sorted by rotation number, then tip time. Only the favourite carries a spread. '
+    +'BUY marks a low-major visiting a high or mid-major. State restrictions are on the Compliance tab.</div>';
+}
 function cbkPrint(){document.body.classList.add('cbk-printing');window.print();setTimeout(function(){document.body.classList.remove('cbk-printing');},700);}
 function cbkVisiblePage(){
   var ps=document.querySelectorAll('[id^="page-"]');
