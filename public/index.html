@@ -2576,6 +2576,98 @@ function tpDietRow(label, off, def, th){
     + '<div style="width:34px;font-family:\'Courier New\',monospace;font-size:11px;'
     + 'font-weight:700;color:var(--txt3)">' + (def==null?'--':d.toFixed(0)+'%') + '</div></div>';
 }
+/* Strength of schedule as expected wins for a league-average team.
+   Averaging opponent ratings is the obvious approach and the wrong one: win
+   probability is sigmoid in rating difference, so a 60 and a 40 are not
+   interchangeable with two 50s -- the 60 costs more than the 40 gives back.
+   Summing win probabilities aggregates on the right scale, picks up home court
+   for free, and lands on a number that means something: how many games an average
+   team would win playing this exact schedule. */
+/* National SOS ranks. Needs every team's schedule, so the whole games table is
+   pulled once per session with only the four columns the maths needs -- no joins,
+   which keeps a ~6,000-row season light. Ratings come from the teams list already
+   in memory, and the win probabilities from the same SP table the rest of the site
+   uses, so the ranks cannot drift from the model. */
+var _sosTable=null, _sosLoading=false, _sosCbs=[];
+function tpSOSTable(cb){
+  if(_sosTable){ if(cb)cb(_sosTable); return; }
+  if(cb)_sosCbs.push(cb);
+  if(_sosLoading)return;
+  _sosLoading=true;
+  Promise.all([
+    sb.from('games').select('home_team_id,away_team_id,neutral_site').range(0,19999),
+    sb.from('teams').select('id,pr,hc,conference').range(0,999)
+  ]).then(function(r){
+    var gs=(r[0].data)||[], ts=(r[1].data)||[];
+    var T={}, tot=0, cnt=0;
+    ts.forEach(function(t){
+      T[t.id]={pr:(t.pr!=null?parseFloat(t.pr):null),hc:(t.hc!=null?parseFloat(t.hc):3),cf:t.conference};
+      if(t.pr!=null){tot+=parseFloat(t.pr);cnt++;}
+    });
+    var avg=cnt?tot/cnt:50;
+    var acc={};
+    function bump(id,opp,isHome,neutral,sameConf){
+      var me=T[id], op=T[opp];
+      if(!me||!op||op.pr==null)return;
+      var hc=isHome?me.hc:op.hc;
+      var sp=isHome?((avg+(neutral?0:hc))-op.pr):((op.pr+(neutral?0:hc))-avg);
+      var abs=Math.abs(Math.round(sp*2)/2);
+      var fp=SP[String(-abs)]; if(fp===undefined)fp=0.5;
+      var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);
+      var a=acc[id]||(acc[id]={n:0,w:0,cn:0,cw:0,nn:0,nw:0});
+      a.n++; a.w+=wp;
+      if(sameConf){a.cn++;a.cw+=wp;} else {a.nn++;a.nw+=wp;}
+    }
+    gs.forEach(function(g){
+      var h=g.home_team_id, a=g.away_team_id;
+      if(h==null||a==null||!T[h]||!T[a])return;
+      var same=(T[h].cf&&T[a].cf&&T[h].cf===T[a].cf);
+      bump(h,a,true,g.neutral_site,same);
+      bump(a,h,false,g.neutral_site,same);
+    });
+    /* rank 1 = hardest, so ascending expected wins */
+    function rankBy(key,cntKey){
+      var arr=Object.keys(acc).filter(function(id){return acc[id][cntKey]>0;})
+        .map(function(id){return {id:id,v:acc[id][key]};})
+        .sort(function(x,y){return x.v-y.v;});
+      arr.forEach(function(x,i){ acc[x.id][key+'_rank']=i+1; });
+      return arr.length;
+    }
+    var nAll=rankBy('w','n'), nConf=rankBy('cw','cn'), nNC=rankBy('nw','nn');
+    _sosTable={acc:acc,avg:avg,nAll:nAll,nConf:nConf,nNC:nNC};
+    _sosLoading=false;
+    var cbs=_sosCbs; _sosCbs=[];
+    cbs.forEach(function(f){try{f(_sosTable);}catch(e){}});
+  }).catch(function(){ _sosLoading=false; });
+}
+function tpSOSRank(teamId, which){
+  if(!_sosTable)return null;
+  var a=_sosTable.acc[teamId]; if(!a)return null;
+  var k={all:['w','n',_sosTable.nAll],conf:['cw','cn',_sosTable.nConf],nc:['nw','nn',_sosTable.nNC]}[which];
+  if(!k||!a[k[1]])return null;
+  return {rank:a[k[0]+'_rank'], of:k[2], expW:a[k[0]], n:a[k[1]]};
+}
+function tpSOS(games, teamId, avgPR, teamHC){
+  var out={n:0,expW:0,oppSum:0,home:0,away:0,expW_home:0,expW_away:0};
+  games.forEach(function(g){
+    if(!g.home||!g.away)return;
+    var isHome=String(g.home_team_id)===String(teamId);
+    var opp=isHome?g.away:g.home;
+    if(opp.pr==null)return;
+    var oppPR=parseFloat(opp.pr);
+    /* swap our team for an average one, keeping the venue as it really is */
+    var sp = isHome
+      ? calcSpread(avgPR, (g.home.hc!=null?parseFloat(g.home.hc):teamHC), oppPR, g.neutral_site)
+      : calcSpread(oppPR, (g.home.hc!=null?parseFloat(g.home.hc):teamHC), avgPR, g.neutral_site);
+    var abs=Math.abs(Math.round(sp*2)/2);
+    var fp=SP[String(-abs)];
+    if(fp===undefined)fp=0.5;
+    var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);
+    out.n++; out.expW+=wp; out.oppSum+=oppPR;
+    if(isHome){out.home++;out.expW_home+=wp;} else {out.away++;out.expW_away+=wp;}
+  });
+  return out;
+}
 function tpProfilePanels(prof, all, th){
   if(!prof) return '';
   var hdr = th ? ' style="background:'+th.base+';border-bottom:none"' : '';
@@ -2783,7 +2875,38 @@ var wins=0,losses=0;
 games.forEach(function(g){if(g.home_score==null||g.away_score==null)return;var isHome=String(g.home_team_id)===String(teamId);var won=isHome?(g.home_score>g.away_score):(g.away_score>g.home_score);if(won)wins++;else losses++;});
 var _tc=(team.color&&/^#[0-9A-Fa-f]{6}$/.test(team.color))?team.color:null;var _ta=(team.alt_color&&/^#[0-9A-Fa-f]{6}$/.test(team.alt_color))?team.alt_color:null;var _tcStyle=_tc?' style="background:linear-gradient(135deg,'+_tc+' 0%,'+cwdShade(_tc,-18)+' 100%)"':'';html+='<div class="team-header"'+_tcStyle+'><div style="display:flex;align-items:center;min-width:0">'+(function(){var lg=teamLogo(team.team);return lg?'<img src="'+lg+'" style="width:52px;height:52px;object-fit:contain;margin-right:16px;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3))" onerror="this.style.display=\'none\'">':'';})()+'<div><div class="team-header-name">'+team.team+'</div><div class="team-header-sub">'+team.conference+'&nbsp;|&nbsp;Coach: '+(team.coach||'--')+'</div><div style="margin-top:8px;font-size:13px;font-weight:700;color:#fff;letter-spacing:1px">'+wins+'-'+losses+'<span style="font-size:10px;opacity:0.7;margin-left:6px">W-L</span></div></div><div style="flex:1;padding:0 16px">'+(prHistory.length>0||team.pr_preseason?buildPRSparkline(prHistory,team.pr,team.pr_preseason):'<div style="font-size:10px;opacity:0.6;color:#fff">PR chart available after first game</div>')+'</div></div><div style="text-align:right"><div style="font-size:28px;font-weight:700;color:#fff">'+team.pr.toFixed(1)+'</div><div style="font-size:11px;opacity:0.8">POWER RATING'+(totalInjAdj>0?' (EFF: '+effPR.toFixed(1)+')':'')+'</div>'+(team.pr_preseason?'<div style="font-size:10px;opacity:0.6;color:#fff">Pre: '+parseFloat(team.pr_preseason).toFixed(1)+'</div>':'')+'</div></div>';
 var _th=cwdTheme(_tc); _TP_THEME=_th;var _cardCss=_th?' style="background:'+_th.wash+';border-color:'+_th.edge+'"':'';var _valCss=_th?' style="color:'+_th.onWash+'"':'';html+='<div class="team-stat-row"><div class="team-stat"'+_cardCss+'><div class="team-stat-label">Overall Exp W</div><div class="team-stat-val"'+_valCss+'>'+totalExpW.toFixed(1)+'</div><div class="team-stat-sub">from '+games.length+' games</div></div><div class="team-stat"'+_cardCss+'><div class="team-stat-label">Conf Exp W</div><div class="team-stat-val"'+_valCss+'>'+confExpW.toFixed(1)+'</div><div class="team-stat-sub">from '+confGames.length+' conf games</div></div><div class="team-stat"><div class="team-stat-label">Home Court</div><div class="team-stat-val" style="color:var(--amb)">'+team.hc.toFixed(1)+'</div><div class="team-stat-sub">pts advantage</div></div><div class="team-stat"><div class="team-stat-label">Injury Adj</div><div class="team-stat-val" style="color:var(--red2)">-'+totalInjAdj.toFixed(1)+'</div><div class="team-stat-sub">'+injuries.length+' player(s) out</div></div></div>';
+var _avgPR=(function(){var t=0,c=0;(allTeamsList||[]).forEach(function(x){if(x.pr!=null){t+=parseFloat(x.pr);c++;}});return c?t/c:50;})();
+var _hc=(team.hc!=null?parseFloat(team.hc):3);
+var _sosAll=tpSOS(games,teamId,_avgPR,_hc);
+var _sosConf=tpSOS(confGames,teamId,_avgPR,_hc);
+var _ncGames=games.filter(function(g){return confGames.indexOf(g)===-1;});
+var _sosNC=tpSOS(_ncGames,teamId,_avgPR,_hc);
+function _sosCard(lab,s,sub,which){
+  var v=s.n?s.expW.toFixed(1):'--';
+  return '<div class="team-stat"'+(_th?' style="background:'+_th.wash+';border-color:'+_th.edge+'"':'')+'>'
+    +'<div class="team-stat-label">'+lab+'</div>'
+    +'<div class="team-stat-val"'+(_th?' style="color:'+_th.onWash+'"':'')+'>'+v+'</div>'
+    +'<div class="team-stat-sub">'+sub+'</div>'
+    +'<div class="team-stat-sub sos-rank" data-sos="'+which+'" style="font-weight:700"></div></div>';
+}
+html+='<div class="team-stat-row">'
+  +_sosCard('SOS &mdash; Overall',_sosAll,'avg team wins in '+_sosAll.n+' games','all')
+  +_sosCard('SOS &mdash; Conference',_sosConf,'in '+_sosConf.n+' conf games','conf')
+  +_sosCard('SOS &mdash; Non-Conf',_sosNC,'in '+_sosNC.n+' non-conf games','nc')
+  +'<div class="team-stat"'+(_th?' style="background:'+_th.wash+';border-color:'+_th.edge+'"':'')+'>'
+    +'<div class="team-stat-label">Avg Opp PR</div>'
+    +'<div class="team-stat-val"'+(_th?' style="color:'+_th.onWash+'"':'')+'>'
+      +(_sosAll.n?(_sosAll.oppSum/_sosAll.n).toFixed(1):'--')+'</div>'
+    +'<div class="team-stat-sub">'+_sosAll.home+' home &middot; '+_sosAll.away+' away</div></div>'
+  +'</div>';
 CWD_TEAM_COLOR=_tc; html+=cwdRender(_cwdSp,_cwdHome);_prof=null;for(var _pi=0;_pi<_allProf.length;_pi++){if(_allProf[_pi].team===team.team){_prof=_allProf[_pi];break;}}html+=tpProfilePanels(_prof,_allProf,_th);
+setTimeout(function(){tpSOSTable(function(){
+  var els=document.querySelectorAll('#team-profile-content .sos-rank');
+  for(var i=0;i<els.length;i++){
+    var r=tpSOSRank(teamId,els[i].getAttribute('data-sos'));
+    els[i].textContent = r ? ('#'+r.rank+' of '+r.of+' hardest') : '';
+  }
+});},0);
 html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div>';
 var _hdrCss=_th?' style="background:'+_th.base+';border-bottom:none"':'';var _hdrTxt=_th?' style="color:'+_th.onBase+'"':'';html+='<div class="panel"><div class="panel-hdr"'+_hdrCss+'><div class="panel-title"'+_hdrTxt+'>Schedule ('+games.length+' games)</div></div><table class="data" style="font-size:11px"><thead><tr><th>#</th><th>OPP</th><th>LOC</th><th>CONF</th><th>SPREAD</th><th>WIN%</th><th>RESULT</th></tr></thead><tbody>';
 for(var i=0;i<40;i++){var g=games[i];if(!g){html+='<tr><td class="muted">'+(i+1)+'</td><td class="muted" colspan="6" style="color:var(--bdr2)">--</td></tr>';continue;}var isHome=String(g.home_team_id)===String(teamId);var opp=isHome?g.away:g.home;if(!opp){html+='<tr><td class="muted">'+(i+1)+'</td><td colspan="6" class="muted">--</td></tr>';continue;}var sp=calcSpreadG(g);var abs=Math.abs(Math.round(sp*2)/2);var fp=SP[String(-abs)];if(fp===undefined)fp=0.5;var wp=isHome?(sp>=0?fp:1-fp):(sp<0?fp:1-fp);var teamSpRaw=isHome?-sp:sp;var teamSp=Math.round(teamSpRaw*2)/2;var loc=g.neutral_site?'N':(isHome?'H':'A');var isConf=g.home&&g.away&&g.home.conference===g.away.conference;var result='--';if(g.home_score!=null&&g.away_score!=null){var won=isHome?(g.home_score>g.away_score):(g.away_score>g.home_score);var myScore=isHome?g.home_score:g.away_score;var oppScore=isHome?g.away_score:g.home_score;result=(won?'W':'L')+' '+myScore+'-'+oppScore;}var rClass=result.startsWith('W')?'up':result.startsWith('L')?'dn':'muted';var spColor=teamSp<=0?'color:var(--red2)':'color:var(--grn2)';html+='<tr class="tp-srow"><td class="muted">'+(i+1)+'</td><td class="bold">'+TL(opp.team)+'</td><td class="muted">'+loc+'</td><td class="muted">'+(isConf?'Y':'N')+'</td><td style="font-weight:700;'+spColor+';cursor:pointer;text-decoration:underline" title="Game preview" onclick="openGamePreview('+g.away_team_id+','+g.home_team_id+','+(g.neutral_site?'true':'false')+')">'+fmtSp(teamSp)+'</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:32px;height:7px;background:var(--bdr);border-radius:4px;overflow:hidden"><div style="width:'+(wp*100).toFixed(0)+'%;height:100%;background:'+(_th?_th.base:'var(--acc)')+'"></div></div><span class="muted" style="min-width:38px;text-align:right">'+(wp*100).toFixed(1)+'%</span></div></td><td class="'+rClass+'">'+result+'</td></tr>';}
@@ -4151,8 +4274,17 @@ function cbkInvalidateGameCaches(){
   try{ _fbProfiles = null; }catch(e){}
   try{ _sitT5Loaded = false; }catch(e){}
 }
-async function approvePR(gameId){var as_=parseInt(document.getElementById('away-score-'+gameId).value);var hs=parseInt(document.getElementById('home-score-'+gameId).value);if(isNaN(as_)||isNaN(hs)){alert('Enter both scores first');return;}var g=pruGames.find(function(x){return x.id===gameId;});if(!g)return;var adj=calcPRAdj(hs,as_,g.home.pr,g.home.hc,g.away.pr);var newHomePR=Math.round((g.home.pr+adj.ha)*10)/10;var newAwayPR=Math.round((g.away.pr+adj.aa)*10)/10;var today=cbkToday();var statusEl=document.getElementById('pru-status-'+gameId);if(statusEl){statusEl.textContent='Saving...';statusEl.style.color='var(--txt3)';}var r1=await sb.from('teams').update({pr:newHomePR,updated_at:new Date().toISOString()}).eq('id',g.home_team_id);var r2=await sb.from('teams').update({pr:newAwayPR,updated_at:new Date().toISOString()}).eq('id',g.away_team_id);var r3=await sb.from('games').update({pr_processed:true,pr_processed_at:new Date().toISOString(),home_score:hs,away_score:as_,status:'final'}).eq('id',gameId);await sb.from('pr_history').upsert([{team_id:g.home_team_id,pr:newHomePR,recorded_at:today,game_id:gameId,notes:adj.r},{team_id:g.away_team_id,pr:newAwayPR,recorded_at:today,game_id:gameId,notes:adj.r}],{onConflict:'team_id,game_id'});
-if(r1.error||r2.error||r3.error){if(statusEl){statusEl.textContent='ERROR';statusEl.style.color='var(--red2)';}return;}
+async function approvePR(gameId){var as_=parseInt(document.getElementById('away-score-'+gameId).value);var hs=parseInt(document.getElementById('home-score-'+gameId).value);if(isNaN(as_)||isNaN(hs)){alert('Enter both scores first');return;}var g=pruGames.find(function(x){return x.id===gameId;});if(!g)return;var adj=calcPRAdj(hs,as_,g.home.pr,g.home.hc,g.away.pr);var newHomePR=Math.round((g.home.pr+adj.ha)*10)/10;var newAwayPR=Math.round((g.away.pr+adj.aa)*10)/10;var today=cbkToday();var statusEl=document.getElementById('pru-status-'+gameId);if(statusEl){statusEl.textContent='Saving...';statusEl.style.color='var(--txt3)';}/* One transaction instead of five separate statements. A failure now rolls the
+   whole thing back rather than leaving a rating moved and the game unmarked. */
+var _sp=Math.round(calcSpreadG(g)*2)/2;
+var _rpc=await sb.rpc('approve_pr',{p_game_id:gameId,p_home_score:hs,p_away_score:as_,
+  p_new_home_pr:newHomePR,p_new_away_pr:newAwayPR,p_note:adj.r,p_spread:_sp});
+if(_rpc.error||!_rpc.data||_rpc.data.ok!==true){
+  var _why=(_rpc.error&&_rpc.error.message)||(_rpc.data&&_rpc.data.reason)||'failed';
+  if(statusEl){statusEl.textContent=(_why==='already processed'?'ALREADY GRADED':'ERROR');
+    statusEl.style.color='var(--red2)';statusEl.title=_why;}
+  return;
+}
 g.home.pr=newHomePR;g.away.pr=newAwayPR;
 g.pr_processed=true;g._hs=hs;g._as=as_;g._adjResult=adj;
 pruStats.approved++;
@@ -4161,7 +4293,7 @@ var _gradedSpreadR=Math.round(_gradedSpread*2)/2;
 var _actualMarginH=hs-as_;
 var _homeCoverMargin=_actualMarginH-_gradedSpreadR;
 var _homeCover=_homeCoverMargin>0;var _awayCover=_homeCoverMargin<0;var _push=_homeCoverMargin===0;
-await sb.from('games').update({home_spread:_gradedSpreadR,away_spread:-_gradedSpreadR,home_cover:_push?null:_homeCover,away_cover:_push?null:_awayCover,cover_margin:_homeCoverMargin}).eq('id',gameId);
+/* spread + cover are written inside approve_pr, in the same transaction */
 rebuildATSStats(g.home_team_id);
 rebuildATSStats(g.away_team_id);
 var _raw=calcSpreadG(g);
